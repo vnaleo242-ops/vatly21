@@ -1,0 +1,201 @@
+/* Body colors set by Tailwind classes on the <html> tag */
+
+/* Glass Panel Styling for Light Mode */
+.glass-panel {
+    background: rgba(255, 255, 255, 0.85);
+    /* Slightly more transparent to show purple bg */
+    backdrop-filter: blur(16px);
+    border: 1px solid rgba(206, 156, 217, 0.3);
+    /* Purple tint border */
+    box-shadow: 0 4px 10px rgba(178, 152, 211, 0.1);
+    /* Purple tint shadow */
+    transition: all 0.4s cubic-bezier(0.25, 0.8, 0.25, 1);
+}
+
+/* Dark Mode Glass Panel */
+.dark .glass-panel {
+    background: rgba(30, 41, 59, 0.9);
+    /* lab-dark_panel equivalent */
+    border: 1px solid rgba(51, 65, 85, 0.8);
+    /* Slate 700 equivalent */
+    box-shadow: 0 4px 10px rgba(0, 0, 0, 0.3);
+}
+
+.glass-panel:hover {
+    border-color: rgba(178, 152, 211, 0.8);
+    /* #b298d3 */
+    box-shadow: 0 15px 30px rgba(178, 152, 211, 0.2), 0 4px 8px rgba(0, 0, 0, 0.05);
+    transform: translateY(-4px);
+}
+
+.dark .glass-panel:hover {
+    box-shadow: 0 15px 30px rgba(6, 182, 212, 0.15), 0 4px 8px rgba(0, 0, 0, 0.2);
+    border-color: rgba(6, 182, 212, 1);
+}
+
+/* Scrollbar (Light Mode) */
+::-webkit-scrollbar {
+    width: 6px;
+}
+
+::-webkit-scrollbar-track {
+    background: #f5e1fd;
+}
+
+::-webkit-scrollbar-thumb {
+    background: #ce9cd9;
+    border-radius: 3px;
+}
+
+::-webkit-scrollbar-thumb:hover {
+    background: #b298d3;
+}
+
+/* Scrollbar (Dark Mode) */
+.dark ::-webkit-scrollbar-track {
+    background: #0f172a;
+}
+
+.dark ::-webkit-scrollbar-thumb {
+    background: #475569;
+}
+
+/* Tech Text Shadow (Subtle) */
+.text-tech-shadow {
+    text-shadow: 1px 1px 0px rgba(0, 0, 0, 0.1);
+}
+
+.dark .text-tech-shadow {
+    text-shadow: 1px 1px 0px rgba(255, 255, 255, 0.05);
+}
+
+/* Corner Decoration */
+.corner-marker {
+    position: absolute;
+    width: 8px;
+    height: 8px;
+    border-color: #b298d3;
+    /* Main Purple */
+    border-style: solid;
+    opacity: 0.5;
+    transition: all 0.5s ease;
+}
+
+.top-left {
+    top: 0;
+    left: 0;
+    border-width: 2px 0 0 2px;
+}
+
+.top-right {
+    top: 0;
+    right: 0;
+    border-width: 2px 2px 0 0;
+}
+
+.bottom-left {
+    bottom: 0;
+    left: 0;
+    border-width: 0 0 2px 2px;
+}
+
+.bottom-right {
+    bottom: 0;
+    right: 0;
+    border-width: 0 2px 2px 0;
+}
+
+.group:hover .corner-marker {
+    opacity: 1;
+    border-color: #ce9cd9;
+    /* Accent Purple */
+}
+
+.dark .corner-marker {
+    border-color: #06b6d4;
+}
+
+/* Sidebar link hover effect */
+.nav-link {
+    transition: all 0.3s ease;
+}
+
+.nav-link:hover {
+    box-shadow: 0 2px 4px rgba(178, 152, 211, 0.15);
+    /* Purple shadow */
+    background-color: #ffffff;
+    /* Light hover */
+}
+
+.dark .nav-link:hover {
+    background-color: #334155;
+    /* Dark hover */
+}
+
+/* --- List View Styles --- */
+#module-grid.list-view {
+    grid-template-columns: 1fr !important;
+    /* Force single column */
+    max-width: 900px;
+    /* Constrain width for better readability in list mode */
+    margin-left: auto;
+    margin-right: auto;
+}
+
+#module-grid.list-view .module-card {
+    display: flex;
+    align-items: center;
+    padding: 1.25rem;
+    /* Smaller padding */
+    gap: 1.5rem;
+}
+
+/* Adjust inner elements for List View */
+#module-grid.list-view .module-card>div.flex {
+    margin-bottom: 0;
+    flex-shrink: 0;
+    flex-direction: row-reverse;
+    /* Put Icon left, Tag right?? or default */
+    gap: 1rem;
+}
+
+/* Hide corner markers in list view to reduce noise */
+#module-grid.list-view .corner-marker {
+    display: none;
+}
+
+/* Category Badge in List View */
+#module-grid.list-view .module-card span.uppercase {
+    order: 2;
+}
+
+/* Content Wrapper for List View */
+#module-grid.list-view .module-title {
+    margin-bottom: 0.25rem;
+    font-size: 1.125rem;
+    /* text-lg */
+}
+
+#module-grid.list-view .module-description {
+    margin-bottom: 0;
+    font-size: 0.875rem;
+    /* text-sm */
+    display: -webkit-box;
+    -webkit-line-clamp: 2;
+    /* Limit text lines */
+    -webkit-box-orient: vertical;
+    overflow: hidden;
+    max-width: 600px;
+}
+
+/* Footer (Version/Arrow) in List View */
+#module-grid.list-view .module-card>div.pt-4 {
+    border-top: none;
+    padding-top: 0;
+    margin-left: auto;
+    /* Push to right */
+    flex-shrink: 0;
+    flex-direction: column;
+    align-items: flex-end;
+    gap: 0.5rem;
+}

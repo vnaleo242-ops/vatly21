@@ -1,31 +1,38 @@
 <!DOCTYPE html>
 <html lang="vi">
+
 <head>
     <meta charset="UTF-8">
     <meta name="viewport" content="width=device-width, initial-scale=1.0">
     <title>Mô Phỏng Đo Sóng Âm</title>
     <!-- Tải Tailwind CSS -->
     <script src="https://cdn.tailwindcss.com"></script>
+    <script src="js/tailwind-config.js"></script>
+    <script src="https://unpkg.com/lucide@latest"></script>
+    <link rel="stylesheet" href="css/global.css">
     <style>
         /* Đảm bảo Canvas chiếm toàn bộ không gian container */
         #oscilloscope {
-            background-color: white; /* Màu nền trắng cho light mode */
+            /* background-color handled by JS/Tailwind now */
             border-radius: 0.5rem;
             display: block;
             width: 100%;
             height: 100%;
             cursor: crosshair;
         }
+
         /* Điều chỉnh màu đỏ cho sai số tỷ đối */
         .text-red-experiment {
-            color: #ef4444; 
+            color: #ef4444;
             font-weight: 600;
         }
+
         .grid-container {
             display: grid;
             grid-template-columns: 2fr 1fr;
             gap: 1.5rem;
         }
+
         /* Media query cho mobile */
         @media (max-width: 1024px) {
             .grid-container {
@@ -34,130 +41,163 @@
         }
     </style>
 </head>
-<body class="bg-gray-100 text-gray-800 p-4 lg:p-8 font-sans">
-            <a href="index.html" class="fixed top-4 left-4 z-50 p-3 bg-blue-600 text-white rounded-lg shadow-xl hover:bg-blue-700 transition duration-300 flex items-center space-x-2">
-    <svg xmlns="http://www.w3.org/2000/svg" class="h-5 w-5" viewBox="0 0 20 20" fill="currentColor">
-        <path d="M10.707 2.293a1 1 0 00-1.414 0l-7 7a1 1 0 001.414 1.414L4 10.414V17a1 1 0 001 1h2a1 1 0 001-1v-2a1 1 0 011-1h2a1 1 0 011 1v2a1 1 0 001 1h2a1 1 0 001-1v-6.586l.293.293a1 1 0 001.414-1.414l-7-7z" />
-    </svg>
-    <span class="font-semibold hidden sm:inline">Quay về Trang Chủ</span>
-        </a>
+
+<body
+    class="bg-gray-100 dark:bg-lab-dark_bg text-gray-800 dark:text-lab-dark_text transition-colors duration-300 p-4 lg:p-8 font-sans">
+    <a href="index.html"
+        class="fixed top-4 left-4 z-50 p-3 bg-blue-600 text-white rounded-lg shadow-xl hover:bg-blue-700 transition duration-300 flex items-center space-x-2">
+        <svg xmlns="http://www.w3.org/2000/svg" class="h-5 w-5" viewBox="0 0 20 20" fill="currentColor">
+            <path
+                d="M10.707 2.293a1 1 0 00-1.414 0l-7 7a1 1 0 001.414 1.414L4 10.414V17a1 1 0 001 1h2a1 1 0 001-1v-2a1 1 0 011-1h2a1 1 0 011 1v2a1 1 0 001 1h2a1 1 0 001-1v-6.586l.293.293a1 1 0 001.414-1.414l-7-7z" />
+        </svg>
+        <span class="font-semibold hidden sm:inline">Quay về Trang Chủ</span>
+    </a>
+
+    <!-- Dark Mode Toggle -->
+    <button onclick="toggleDarkMode()"
+        class="fixed top-4 right-4 z-50 p-3 bg-white/80 dark:bg-slate-800/80 backdrop-blur-md text-slate-700 dark:text-slate-200 rounded-full shadow-lg border border-slate-200 dark:border-slate-700 hover:bg-slate-100 dark:hover:bg-slate-700 transition-all duration-300 group">
+        <i id="theme-icon" data-lucide="moon" class="w-5 h-5 group-hover:rotate-12 transition-transform"></i>
+    </button>
 
     <div class="max-w-7xl mx-auto">
-        <h1 class="text-3xl font-bold mb-6 text-center text-blue-600">
+        <h1 class="text-3xl font-bold mb-6 text-center text-blue-600 dark:text-blue-400">
             Mô Phỏng Thực Hành Đo Sóng Âm
         </h1>
 
         <div class="grid-container">
             <!-- Cột 1: Điều khiển và Đồ thị Sóng Âm -->
             <div class="space-y-6">
-                
+
                 <!-- Bảng Điều khiển Nguồn Âm -->
-                <div class="bg-white p-4 rounded-xl shadow-lg border border-gray-300">
-                    <h2 class="text-xl font-semibold mb-3 text-green-700">1. Điều Khiển Nguồn Âm</h2>
+                <div
+                    class="bg-white dark:bg-lab-dark_panel p-4 rounded-xl shadow-lg border border-gray-300 dark:border-slate-700">
+                    <h2 class="text-xl font-semibold mb-3 text-green-700 dark:text-green-400">1. Điều Khiển Nguồn Âm
+                    </h2>
                     <div class="grid md:grid-cols-2 gap-4">
-                        
+
                         <!-- Tần Số Có Sẵn -->
-                        <div class="p-3 bg-gray-200 rounded-lg space-y-2">
-                            <h3 class="font-medium text-lg text-indigo-700">Tạo Tần Số (500 Hz - 2000 Hz)</h3>
+                        <div class="p-3 bg-gray-200 dark:bg-slate-700 rounded-lg space-y-2">
+                            <h3 class="font-medium text-lg text-indigo-700 dark:text-indigo-400">Tạo Tần Số (500 Hz -
+                                2000 Hz)</h3>
                             <div class="flex items-center justify-between">
-                                <label for="freqInput" class="text-sm w-1/3">Tần số (Hz):</label>
-                                <input type="number" id="freqInput" value="1000" min="500" max="2000" class="w-2/3 p-1 rounded bg-white text-center border border-gray-400 text-gray-800">
+                                <label for="freqInput" class="text-sm w-1/3 text-gray-800 dark:text-gray-200">Tần số
+                                    (Hz):</label>
+                                <input type="number" id="freqInput" value="1000" min="500" max="2000"
+                                    class="w-2/3 p-1 rounded bg-white dark:bg-slate-600 text-center border border-gray-400 dark:border-slate-500 text-gray-800 dark:text-gray-100">
                             </div>
-                            <input type="range" id="freqRange" min="500" max="2000" value="1000" class="w-full h-2 bg-gray-300 rounded-lg appearance-none cursor-pointer">
-                            
+                            <input type="range" id="freqRange" min="500" max="2000" value="1000"
+                                class="w-full h-2 bg-gray-300 rounded-lg appearance-none cursor-pointer">
+
                             <div class="flex items-center justify-between">
                                 <label for="volumeInput" class="text-sm w-1/3">Độ lớn:</label>
-                                <input type="range" id="volumeInput" min="0" max="1" step="0.01" value="0.5" class="w-2/3 h-2 bg-gray-300 rounded-lg appearance-none cursor-pointer">
+                                <input type="range" id="volumeInput" min="0" max="1" step="0.01" value="0.5"
+                                    class="w-2/3 h-2 bg-gray-300 rounded-lg appearance-none cursor-pointer">
                             </div>
-                            
+
                             <div class="flex justify-between pt-2">
-                                <button id="toggleSoundBtn" class="bg-blue-600 hover:bg-blue-700 text-white font-bold py-2 px-4 rounded-lg transition duration-200 w-[48%]">
+                                <button id="toggleSoundBtn"
+                                    class="bg-blue-600 hover:bg-blue-700 text-white font-bold py-2 px-4 rounded-lg transition duration-200 w-[48%]">
                                     Bật Âm Thanh
                                 </button>
-                                <button id="microphoneBtn" class="bg-teal-600 hover:bg-teal-700 text-white font-bold py-2 px-4 rounded-lg transition duration-200 w-[48%]">
+                                <button id="microphoneBtn"
+                                    class="bg-teal-600 hover:bg-teal-700 text-white font-bold py-2 px-4 rounded-lg transition duration-200 w-[48%]">
                                     Dùng Micro
                                 </button>
                             </div>
                         </div>
 
                         <!-- Điều khiển Hiển thị -->
-                        <div class="p-3 bg-gray-200 rounded-lg space-y-2">
-                            <h3 class="font-medium text-lg text-indigo-700">Điều Khiển Hiển Thị</h3>
+                        <div class="p-3 bg-gray-200 dark:bg-slate-700 rounded-lg space-y-2">
+                            <h3 class="font-medium text-lg text-indigo-700 dark:text-indigo-400">Điều Khiển Hiển Thị
+                            </h3>
                             <div class="flex justify-between space-x-2">
-                                <button id="pauseBtn" class="bg-yellow-500 hover:bg-yellow-600 text-white font-bold py-2 px-4 rounded-lg transition duration-200 w-1/2">
+                                <button id="pauseBtn"
+                                    class="bg-yellow-500 hover:bg-yellow-600 text-white font-bold py-2 px-4 rounded-lg transition duration-200 w-1/2">
                                     <span id="pauseText">Tạm Dừng</span>
                                 </button>
-                                <button id="saveBtn" class="bg-green-600 hover:bg-green-700 text-white font-bold py-2 px-4 rounded-lg transition duration-200 w-1/2">
+                                <button id="saveBtn"
+                                    class="bg-green-600 hover:bg-green-700 text-white font-bold py-2 px-4 rounded-lg transition duration-200 w-1/2">
                                     Lưu Lần Đo
                                 </button>
                             </div>
 
                             <label class="block text-sm pt-2">Time/Div (ms): <span id="timeDivDisplay">5</span></label>
-                            <input type="range" id="timeDivRange" min="1" max="50" value="5" class="w-full h-2 bg-gray-300 rounded-lg appearance-none cursor-pointer">
-                            
+                            <input type="range" id="timeDivRange" min="1" max="50" value="5"
+                                class="w-full h-2 bg-gray-300 rounded-lg appearance-none cursor-pointer">
+
                             <label class="block text-sm">Volt/Div (V): <span id="voltDivDisplay">50</span></label>
-                            <input type="range" id="voltDivRange" min="10" max="100" value="50" class="w-full h-2 bg-gray-300 rounded-lg appearance-none cursor-pointer">
+                            <input type="range" id="voltDivRange" min="10" max="100" value="50"
+                                class="w-full h-2 bg-gray-300 rounded-lg appearance-none cursor-pointer">
                         </div>
                     </div>
                 </div>
 
                 <!-- Đồ Thị Sóng Âm (Canvas) -->
-                <div class="bg-gray-200 p-2 rounded-xl shadow-inner border border-blue-600 h-[400px]">
+                <div class="bg-gray-200 dark:bg-slate-900 p-2 rounded-xl shadow-inner border border-blue-600 h-[400px]">
                     <canvas id="oscilloscope"></canvas>
                 </div>
 
                 <!-- Bảng Thông Số Tự Động -->
-                <div class="bg-white p-4 rounded-xl shadow-lg border border-gray-300">
-                    <h2 class="text-xl font-semibold mb-3 text-green-700">2. Thông Số Tự Động (Real-time)</h2>
+                <div
+                    class="bg-white dark:bg-lab-dark_panel p-4 rounded-xl shadow-lg border border-gray-300 dark:border-slate-700">
+                    <h2 class="text-xl font-semibold mb-3 text-green-700 dark:text-green-400">2. Thông Số Tự Động
+                        (Real-time)</h2>
                     <div class="grid grid-cols-3 gap-4 text-center">
-                        <div class="bg-gray-200 p-3 rounded-lg">
-                            <div class="text-sm text-gray-500">Tần số (Hz)</div>
-                            <div id="displayFrequency" class="text-2xl font-mono text-indigo-600">0.00</div>
+                        <div class="bg-gray-200 dark:bg-slate-700 p-3 rounded-lg">
+                            <div class="text-sm text-gray-500 dark:text-gray-300">Tần số (Hz)</div>
+                            <div id="displayFrequency" class="text-2xl font-mono text-indigo-600 dark:text-indigo-400">
+                                0.00</div>
                         </div>
-                        <div class="bg-gray-200 p-3 rounded-lg">
-                            <div class="text-sm text-gray-500">Chu kỳ (s)</div>
-                            <div id="displayPeriod" class="text-2xl font-mono text-indigo-600">0.0000</div>
+                        <div class="bg-gray-200 dark:bg-slate-700 p-3 rounded-lg">
+                            <div class="text-sm text-gray-500 dark:text-gray-300">Chu kỳ (s)</div>
+                            <div id="displayPeriod" class="text-2xl font-mono text-indigo-600 dark:text-indigo-400">
+                                0.0000</div>
                         </div>
-                        <div class="bg-gray-200 p-3 rounded-lg">
-                            <div class="text-sm text-gray-500">Biên độ (A)</div>
-                            <div id="displayAmplitude" class="text-2xl font-mono text-indigo-600">0.00</div>
+                        <div class="bg-gray-200 dark:bg-slate-700 p-3 rounded-lg">
+                            <div class="text-sm text-gray-500 dark:text-gray-300">Biên độ (A)</div>
+                            <div id="displayAmplitude" class="text-2xl font-mono text-indigo-600 dark:text-indigo-400">
+                                0.00</div>
                         </div>
                     </div>
 
                     <!-- Hiển thị con trỏ điểm -->
                     <div id="pointCursorDisplay" class="mt-4 text-center p-2 border-t border-gray-300 hidden">
-                        <span class="font-medium text-blue-600">Điểm Chọn: </span>
-                        Thời gian (t): <span id="cursorTime" class="font-mono text-gray-800"></span>, 
-                        Biên độ (A): <span id="cursorAmplitude" class="font-mono text-gray-800"></span>
+                        <span class="font-medium text-blue-600 dark:text-blue-400">Điểm Chọn: </span>
+                        Thời gian (t): <span id="cursorTime" class="font-mono text-gray-800 dark:text-gray-200"></span>,
+                        Biên độ (A): <span id="cursorAmplitude"
+                            class="font-mono text-gray-800 dark:text-gray-200"></span>
                     </div>
                 </div>
             </div>
 
             <!-- Cột 2: Bảng Lịch Sử Đo -->
             <div class="space-y-6">
-                <div class="bg-white p-4 rounded-xl shadow-lg border border-gray-300">
-                    <h2 class="text-xl font-semibold mb-3 text-green-700">3. Bảng Lịch Sử Đo</h2>
-                    
+                <div
+                    class="bg-white dark:bg-lab-dark_panel p-4 rounded-xl shadow-lg border border-gray-300 dark:border-slate-700">
+                    <h2 class="text-xl font-semibold mb-3 text-green-700 dark:text-green-400">3. Bảng Lịch Sử Đo</h2>
+
                     <div class="overflow-y-auto max-h-[300px] mb-4">
                         <table class="min-w-full text-sm">
-                            <thead class="bg-gray-200 sticky top-0">
+                            <thead class="bg-gray-200 dark:bg-slate-700 sticky top-0">
                                 <tr>
                                     <th class="p-2 text-left">Lần Đo</th>
                                     <th class="p-2 text-right">Tần số (Hz)</th>
                                     <th class="p-2 text-right">Chu kỳ (s)</th>
                                 </tr>
                             </thead>
-                            <tbody id="historyTableBody" class="text-gray-700">
+                            <tbody id="historyTableBody" class="text-gray-700 dark:text-gray-300">
                                 <!-- Dữ liệu lịch sử sẽ được chèn vào đây -->
                             </tbody>
                         </table>
                     </div>
-                    
-                    <button id="clearHistoryBtn" class="bg-red-600 hover:bg-red-700 text-white font-bold py-2 px-4 rounded-lg transition duration-200 w-full mb-4">
+
+                    <button id="clearHistoryBtn"
+                        class="bg-red-600 hover:bg-red-700 text-white font-bold py-2 px-4 rounded-lg transition duration-200 w-full mb-4">
                         Xóa Lịch Sử Đo
                     </button>
-                    
-                    <h3 class="text-xl font-semibold mb-3 text-green-700 border-t border-gray-300 pt-3">Kết Quả Tổng Kết</h3>
+
+                    <h3 class="text-xl font-semibold mb-3 text-green-700 border-t border-gray-300 pt-3">Kết Quả Tổng Kết
+                    </h3>
                     <div id="summaryResults" class="space-y-2">
                         <!-- Kết quả tổng kết sẽ được chèn vào đây -->
                         <p class="text-sm text-gray-500 italic">Chưa có kết quả đo nào.</p>
@@ -172,8 +212,8 @@
         const audioContext = new (window.AudioContext || window.webkitAudioContext)();
         const canvas = document.getElementById('oscilloscope');
         const ctx = canvas.getContext('2d');
-        
-        let analyser, source, oscillator; 
+
+        let analyser, source, oscillator;
         let generatorGainNode; // Nút khuếch đại cho Generator
         let micGainNode;       // Nút khuếch đại cho Micro
         let currentStream;     // Biến để quản lý luồng micro một cách rõ ràng
@@ -192,7 +232,7 @@
         let history = JSON.parse(localStorage.getItem('soundScopeHistory')) || [];
 
         // Trạng thái kéo điểm (di chuyển)
-        let isDraggingCursor = false; 
+        let isDraggingCursor = false;
 
         // Lưu trữ mảng dữ liệu cuối cùng khi tạm dừng
         let lastDataArray = null;
@@ -240,13 +280,13 @@
         function startToneGenerator() {
             setupAudio();
             if (oscillator) {
-                try { oscillator.stop(); } catch (e) {}
+                try { oscillator.stop(); } catch (e) { }
                 oscillator = null;
             }
 
             // Tạo Gain Node mới và lưu vào generatorGainNode
             generatorGainNode = audioContext.createGain();
-            
+
             oscillator = audioContext.createOscillator();
             oscillator.type = 'sine';
             oscillator.frequency.setValueAtTime(parseFloat(freqInput.value), audioContext.currentTime);
@@ -265,14 +305,14 @@
             // Thay đổi màu nút cho light mode: Bật (Đỏ)
             toggleSoundBtn.classList.remove('bg-blue-600', 'bg-teal-600');
             toggleSoundBtn.classList.add('bg-red-600');
-            
+
             isMicOn = false;
             microphoneBtn.textContent = 'Dùng Micro';
             // Thay đổi màu nút cho light mode: Tắt (Xanh Teal)
             microphoneBtn.classList.remove('bg-yellow-600');
             microphoneBtn.classList.add('bg-teal-600');
             // Dừng micro nếu đang bật
-            stopMicrophone(); 
+            stopMicrophone();
         }
 
         function stopToneGenerator() {
@@ -296,7 +336,7 @@
         async function startMicrophone() {
             setupAudio();
             stopToneGenerator();
-            
+
             try {
                 const stream = await navigator.mediaDevices.getUserMedia({ audio: true });
                 currentStream = stream; // Lưu trữ stream để dễ dàng tắt hoàn toàn
@@ -308,10 +348,10 @@
                 // Kết nối: Source -> MicGainNode -> Analyser (Visual)
                 source.connect(micGainNode);
                 micGainNode.connect(analyser);
-                
+
                 // Áp dụng giá trị volume hiện tại từ thanh trượt
                 updateVolume(volumeInput.value);
-                
+
                 isMicOn = true;
                 microphoneBtn.textContent = 'Dừng Micro';
                 // Thay đổi màu nút cho light mode: Bật (Vàng)
@@ -340,12 +380,12 @@
                 source.disconnect();
                 source = null;
             }
-            
+
             if (micGainNode) {
                 micGainNode.disconnect();
                 micGainNode = null;
             }
-            
+
             isMicOn = false;
             microphoneBtn.textContent = 'Dùng Micro';
             // Thay đổi màu nút cho light mode: Tắt (Xanh Teal)
@@ -388,7 +428,7 @@
                 oscillator.frequency.setValueAtTime(parseFloat(freqInput.value), audioContext.currentTime);
             }
         });
-        
+
         // Cập nhật: Gọi updateVolume khi thay đổi thanh trượt
         volumeInput.addEventListener('input', (e) => {
             updateVolume(e.target.value);
@@ -409,16 +449,19 @@
             const w = canvas.width;
             const h = canvas.height;
             const center = h / 2;
-            
+
+            // Xóa canvas
             // Xóa canvas
             ctx.clearRect(0, 0, w, h);
-            ctx.fillStyle = 'white'; // Màu nền trắng cho light mode
+
+            const isDark = document.documentElement.classList.contains('dark');
+            ctx.fillStyle = isDark ? '#0f172a' : 'white';
             ctx.fillRect(0, 0, w, h);
 
             // Vẽ lưới (gray lines)
-            ctx.strokeStyle = '#e0e0e0'; // Màu xám nhạt cho lưới
+            ctx.strokeStyle = isDark ? '#334155' : '#e0e0e0';
             ctx.lineWidth = 1;
-            
+
             // Vẽ trục ngang (Y)
             const h_div = h / GRID_DIVISIONS;
             for (let i = 0; i <= GRID_DIVISIONS; i++) {
@@ -436,17 +479,17 @@
                 ctx.lineTo(i * w_div, h);
                 ctx.stroke();
             }
-            
+
             // Vẽ trục chính (X và Y)
-            ctx.strokeStyle = '#bdbdbd'; // Màu xám đậm hơn cho trục chính
+            ctx.strokeStyle = isDark ? '#64748b' : '#bdbdbd';
             ctx.lineWidth = 2;
             ctx.beginPath();
             // Trục ngang chính (Y=0)
             ctx.moveTo(0, center);
             ctx.lineTo(w, center);
             // Trục dọc chính (X=0)
-            ctx.moveTo(w/2, 0); 
-            ctx.lineTo(w/2, h);
+            ctx.moveTo(w / 2, 0);
+            ctx.lineTo(w / 2, h);
             ctx.stroke();
         }
 
@@ -457,20 +500,20 @@
             const w = canvas.width;
             const h = canvas.height;
             const center = h / 2;
-            
+
             // Giữ con trỏ trong phạm vi canvas
             const clampedX = Math.max(0, Math.min(w, x));
             const clampedY = Math.max(0, Math.min(h, y));
 
             // Tính toán giá trị thực
             const totalTimeMs = timeDiv * GRID_DIVISIONS;
-            
+
             // Biên độ (Giả định biên độ max là 100 đơn vị, center là 0)
             // Lấy giá trị từ -100 (đỉnh dưới) đến 100 (đỉnh trên)
-            const amplitude = ((center - clampedY) / (h / 2)) * 100; 
+            const amplitude = ((center - clampedY) / (h / 2)) * 100;
 
             // Thời gian (Giả định 0ms là góc trái)
-            const time_ms = (clampedX / w) * totalTimeMs; 
+            const time_ms = (clampedX / w) * totalTimeMs;
 
             pointCursor = { x: clampedX, y: clampedY, time: time_ms, amplitude: amplitude };
             updateCursorDisplay();
@@ -490,7 +533,7 @@
                     // Nếu không gần, đặt điểm mới (click)
                     updateCursor(x, y);
                     // Buộc vẽ lại để hiển thị ngay cả khi Tạm Dừng
-                    drawWave(true); 
+                    drawWave(true);
                 }
             } else {
                 // Nếu đang chạy, chỉ đặt điểm mới (click)
@@ -508,7 +551,7 @@
                 // Kéo điểm
                 updateCursor(x, y);
                 // Buộc vẽ lại để hiển thị ngay cả khi Tạm Dừng
-                drawWave(true); 
+                drawWave(true);
             } else if (isPaused && pointCursor && Math.hypot(x - pointCursor.x, y - pointCursor.y) < 15) {
                 // Thay đổi con trỏ nếu đang tạm dừng và di chuột gần điểm
                 canvas.style.cursor = 'grab';
@@ -538,16 +581,17 @@
         }
 
         function drawPointCursor() {
+            const isDark = document.documentElement.classList.contains('dark');
             if (pointCursor) {
-                ctx.fillStyle = '#006400'; // Màu xanh đậm cho điểm trong light mode
+                ctx.fillStyle = isDark ? '#22c55e' : '#006400';
                 ctx.beginPath();
                 ctx.arc(pointCursor.x, pointCursor.y, 5, 0, 2 * Math.PI);
                 ctx.fill();
 
                 // Vẽ đường gióng
-                ctx.strokeStyle = '#006400';
+                ctx.strokeStyle = isDark ? '#22c55e' : '#006400';
                 ctx.setLineDash([5, 5]); // Nét đứt
-                
+
                 // Trục X (Thời gian)
                 ctx.beginPath();
                 ctx.moveTo(pointCursor.x, 0);
@@ -563,7 +607,7 @@
                 ctx.setLineDash([]); // Tắt nét đứt
             }
         }
-        
+
         /**
          * Vẽ đồ thị sóng âm.
          * @param {boolean} forceRedraw Buộc vẽ lại ngay cả khi đang tạm dừng (dùng khi thay đổi zoom/cursor).
@@ -583,10 +627,10 @@
                 if (!isPaused) animationFrameId = requestAnimationFrame(drawWave);
                 return;
             }
-            
+
             const bufferLength = analyser.frequencyBinCount;
             let dataArray;
-            
+
             if (isPaused) {
                 // Nếu đang tạm dừng (và bị forceRedraw), dùng mảng dữ liệu đã lưu
                 dataArray = lastDataArray || new Uint8Array(bufferLength);
@@ -598,7 +642,7 @@
             }
 
             // 3. Tính toán thông số hiển thị
-            
+
             // FIX: Tính toán sliceWidth - độ rộng pixel cho mỗi mẫu
             // 1. Tính toán sliceWidth cơ bản
             let sliceWidth = canvas.width * 1.0 / bufferLength;
@@ -608,30 +652,31 @@
             const defaultTimeDiv = 5;
             const zoomFactor = defaultTimeDiv / timeDiv; // Tỷ lệ phóng (TimeDiv nhỏ -> Zoom lớn)
             sliceWidth *= zoomFactor; // Áp dụng zoom
-            
+
             let x = 0;
 
             // 4. Vẽ sóng
+            const isDark = document.documentElement.classList.contains('dark');
             ctx.lineWidth = 2;
-            ctx.strokeStyle = '#007bff'; // Màu xanh dương sáng hơn cho sóng trong light mode
+            ctx.strokeStyle = isDark ? '#60a5fa' : '#007bff'; // Blue 400 for dark, Blue 500 for light
             ctx.beginPath();
 
-            for(let i = 0; i < bufferLength; i++) {
+            for (let i = 0; i < bufferLength; i++) {
                 let v = dataArray[i] / 128.0; // Chuẩn hóa về 0-2
                 // Điều chỉnh theo Volt/Div (Mức mặc định Volt/Div = 50)
                 const defaultVoltDiv = 50;
                 const voltZoomFactor = defaultVoltDiv / voltDiv; // VoltDiv nhỏ -> Zoom lớn
-                
+
                 // Chuẩn hóa Y theo voltDiv
                 let y = (v - 1) * (canvas.height / 2) * voltZoomFactor + (canvas.height / 2);
 
-                if(i === 0) {
+                if (i === 0) {
                     ctx.moveTo(x, y);
                 } else {
                     ctx.lineTo(x, y);
                 }
 
-                x += sliceWidth; 
+                x += sliceWidth;
             }
 
             ctx.lineTo(canvas.width, canvas.height / 2);
@@ -643,9 +688,9 @@
             // 6. Cập nhật thông số tự động
             // CHỈ cập nhật khi KHÔNG tạm dừng
             if (!isPaused) {
-                 updateRealtimeValues(dataArray, bufferLength);
+                updateRealtimeValues(dataArray, bufferLength);
             }
-           
+
             // 7. Tiếp tục vòng lặp (CHỈ khi KHÔNG tạm dừng)
             if (!isPaused) {
                 animationFrameId = requestAnimationFrame(drawWave);
@@ -692,7 +737,7 @@
             document.getElementById('displayFrequency').textContent = frequency.toFixed(2);
             document.getElementById('displayPeriod').textContent = period.toFixed(4);
         }
-        
+
         // --- XỬ LÝ LỊCH SỬ ĐO & SAI SỐ ---
         function saveMeasurement() {
             // Lấy giá trị từ lần đo cuối cùng, không phải giá trị realtime (nếu đang tạm dừng)
@@ -706,15 +751,15 @@
                 return;
             }
 
-            history.push({ 
-                F: freq, 
+            history.push({
+                F: freq,
                 T: period,
                 id: Date.now()
             });
 
             // Lưu vào localStorage
             localStorage.setItem('soundScopeHistory', JSON.stringify(history));
-            
+
             // Cập nhật lại UI
             updateHistoryTable();
             updateSummaryResults();
@@ -724,8 +769,7 @@
             historyTableBody.innerHTML = '';
             history.forEach((item, index) => {
                 const row = historyTableBody.insertRow();
-                // Thay đổi màu hover cho light mode
-                row.classList.add('border-b', 'border-gray-300', 'hover:bg-gray-200');
+                row.classList.add('border-b', 'border-gray-300', 'dark:border-slate-600', 'hover:bg-gray-200', 'dark:hover:bg-slate-600');
                 row.innerHTML = `
                     <td class="p-2">${index + 1}</td>
                     <td class="p-2 text-right">${item.F.toFixed(2)}</td>
@@ -745,8 +789,8 @@
 
             // Tính sai số tuyệt đối ($\Delta X_{tb}$) - Lấy trung bình làm tham chiếu để tính sai số thống kê
             if (N < 2) {
-                 // Nếu chỉ có 1 lần đo, không thể tính sai số thống kê
-                 return { avg: avg, delta: 0.00, epsilon: 0.00 };
+                // Nếu chỉ có 1 lần đo, không thể tính sai số thống kê
+                return { avg: avg, delta: 0.00, epsilon: 0.00 };
             }
 
             const varianceSum = values.reduce((sum, val) => sum + Math.pow(val - avg, 2), 0);
@@ -772,16 +816,16 @@
             const T_values = history.map(item => item.T);
             const T_summary = calculateSummary(T_values);
 
-            // Thay đổi màu nền/viền cho light mode
+            // Thay đổi màu nền/viền
             summaryResults.innerHTML = `
-                <div class="bg-gray-200 p-3 rounded-lg">
-                    <h4 class="font-medium text-lg text-indigo-700 mb-1">Tần số (Hz)</h4>
+                <div class="bg-gray-200 dark:bg-slate-700 p-3 rounded-lg">
+                    <h4 class="font-medium text-lg text-indigo-700 dark:text-indigo-400 mb-1">Tần số (Hz)</h4>
                     <p class="text-sm">Kết quả trung bình: ${F_summary.avg.toFixed(2)} Hz</p>
                     <p class="text-sm">Sai số tuyệt đối: ± ${F_summary.delta.toFixed(2)} Hz</p>
                     <p class="text-sm text-red-experiment">Sai số tỷ đối: ${F_summary.epsilon.toFixed(2)} %</p>
                 </div>
-                <div class="bg-gray-200 p-3 rounded-lg">
-                    <h4 class="font-medium text-lg text-indigo-700 mb-1">Chu kỳ (s)</h4>
+                <div class="bg-gray-200 dark:bg-slate-700 p-3 rounded-lg">
+                    <h4 class="font-medium text-lg text-indigo-700 dark:text-indigo-400 mb-1">Chu kỳ (s)</h4>
                     <p class="text-sm">Kết quả trung bình: ${T_summary.avg.toFixed(4)} s</p>
                     <p class="text-sm">Sai số tuyệt đối: ± ${T_summary.delta.toFixed(4)} s</p>
                     <p class="text-sm text-red-experiment">Sai số tỷ đối: ${T_summary.epsilon.toFixed(2)} %</p>
@@ -807,19 +851,19 @@
                 // Khi tạm dừng, dừng vòng lặp animation và đảm bảo đã lưu dữ liệu cuối cùng
                 cancelAnimationFrame(animationFrameId);
                 // Cập nhật lại một lần cuối cùng để lưu lại hình ảnh tĩnh và dữ liệu lastDataArray
-                drawWave(true); 
+                drawWave(true);
             } else {
                 document.getElementById('pauseText').textContent = 'Tạm Dừng';
                 // Khi tiếp tục, gọi lại drawWave để bắt đầu lại vòng lặp
-                drawWave(); 
+                drawWave();
             }
         });
 
         timeDivRange.addEventListener('input', (e) => {
             timeDiv = parseFloat(e.target.value);
             // Giới hạn phạm vi Time/Div mượt mà hơn (ví dụ: 0.5ms đến 100ms)
-            if (timeDiv < 1) timeDiv = 1; 
-            if (timeDiv > 50) timeDiv = 50; 
+            if (timeDiv < 1) timeDiv = 1;
+            if (timeDiv > 50) timeDiv = 50;
             timeDivDisplay.textContent = timeDiv;
             // Kích hoạt vẽ lại để cập nhật zoom ngay lập tức, chỉ 1 lần nếu đang Tạm Dừng
             if (isPaused) drawWave(true);
@@ -828,7 +872,7 @@
         voltDivRange.addEventListener('input', (e) => {
             voltDiv = parseFloat(e.target.value);
             voltDivDisplay.textContent = voltDiv;
-             // Kích hoạt vẽ lại để cập nhật zoom ngay lập tức, chỉ 1 lần nếu đang Tạm Dừng
+            // Kích hoạt vẽ lại để cập nhật zoom ngay lập tức, chỉ 1 lần nếu đang Tạm Dừng
             if (isPaused) drawWave(true);
         });
 
@@ -838,7 +882,7 @@
             // Cập nhật lại bảng lịch sử và tổng kết từ localStorage
             updateHistoryTable();
             updateSummaryResults();
-            
+
             // Bắt đầu vòng lặp vẽ đồ thị
             drawWave();
         }
@@ -846,4 +890,5 @@
         init();
     </script>
 </body>
+
 </html>

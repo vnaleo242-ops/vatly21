@@ -1,11 +1,15 @@
 <!DOCTYPE html>
 <html lang="vi">
+
 <head>
     <meta charset="UTF-8">
     <meta name="viewport" content="width=device-width, initial-scale=1.0">
     <title>Phân tích Dao động Tắt dần Nâng cao</title>
     <!-- Tailwind CSS CDN -->
     <script src="https://cdn.tailwindcss.com"></script>
+    <script src="js/tailwind-config.js"></script>
+    <script src="https://unpkg.com/lucide@latest"></script>
+    <link rel="stylesheet" href="css/global.css">
     <!-- Chart.js CDN for plotting the waveform -->
     <script src="https://cdn.jsdelivr.net/npm/chart.js@4.4.2/dist/chart.umd.min.js"></script>
     <style>
@@ -13,6 +17,7 @@
         .chart-wrapper {
             position: relative;
         }
+
         .chart-container {
             position: relative;
             height: 50vh;
@@ -26,7 +31,8 @@
             appearance: none;
             width: 100%;
             height: 8px;
-            background: #cbd5e1; /* gray-300 */
+            background: #cbd5e1;
+            /* gray-300 */
             border-radius: 4px;
             cursor: pointer;
             position: absolute;
@@ -35,7 +41,7 @@
             padding: 0;
             /* Căn chỉnh với trục X của Chart.js */
             left: 0;
-            bottom: 10px; 
+            bottom: 10px;
             transform: translateY(100%);
         }
 
@@ -44,7 +50,8 @@
             appearance: none;
             width: 18px;
             height: 18px;
-            background: #ef4444; /* red-500 */
+            background: #ef4444;
+            /* red-500 */
             cursor: grab;
             border-radius: 50%;
             border: 3px solid white;
@@ -54,68 +61,80 @@
         .scrub-slider::-moz-range-thumb {
             width: 18px;
             height: 18px;
-            background: #ef4444; 
+            background: #ef4444;
             cursor: grab;
             border-radius: 50%;
             border: 3px solid white;
             box-shadow: 0 0 5px rgba(0, 0, 0, 0.5);
         }
-
     </style>
 </head>
-<body class="bg-gray-50 min-h-screen p-4 sm:p-8 font-sans">
-    <a href="index.html" class="fixed top-4 left-4 z-50 p-3 bg-blue-600 text-white rounded-lg shadow-xl hover:bg-blue-700 transition duration-300 flex items-center space-x-2">
-    <svg xmlns="http://www.w3.org/2000/svg" class="h-5 w-5" viewBox="0 0 20 20" fill="currentColor">
-        <path d="M10.707 2.293a1 1 0 00-1.414 0l-7 7a1 1 0 001.414 1.414L4 10.414V17a1 1 0 001 1h2a1 1 0 001-1v-2a1 1 0 011-1h2a1 1 0 011 1v2a1 1 0 001 1h2a1 1 0 001-1v-6.586l.293.293a1 1 0 001.414-1.414l-7-7z" />
-    </svg>
-    <span class="font-semibold hidden sm:inline">Quay về Trang Chủ</span>
+
+<body
+    class="bg-gray-50 dark:bg-lab-dark_bg text-lab-text dark:text-lab-dark_text transition-colors duration-300 min-h-screen p-4 sm:p-8 font-sans">
+    <a href="index.html"
+        class="fixed top-4 left-4 z-50 p-3 bg-blue-600 text-white rounded-lg shadow-xl hover:bg-blue-700 transition duration-300 flex items-center space-x-2">
+        <svg xmlns="http://www.w3.org/2000/svg" class="h-5 w-5" viewBox="0 0 20 20" fill="currentColor">
+            <path
+                d="M10.707 2.293a1 1 0 00-1.414 0l-7 7a1 1 0 001.414 1.414L4 10.414V17a1 1 0 001 1h2a1 1 0 001-1v-2a1 1 0 011-1h2a1 1 0 011 1v2a1 1 0 001 1h2a1 1 0 001-1v-6.586l.293.293a1 1 0 001.414-1.414l-7-7z" />
+        </svg>
+        <span class="font-semibold hidden sm:inline">Quay về Trang Chủ</span>
     </a>
 
-    <div class="max-w-6xl mx-auto bg-white shadow-xl rounded-xl p-6 lg:p-10">
-        <h1 class="text-3xl sm:text-4xl font-bold text-gray-800 mb-6 border-b-2 pb-2">
+    <!-- Dark Mode Toggle -->
+    <button onclick="toggleDarkMode()"
+        class="fixed top-4 right-4 z-50 p-3 bg-white/80 dark:bg-slate-800/80 backdrop-blur-md text-slate-700 dark:text-slate-200 rounded-full shadow-lg border border-slate-200 dark:border-slate-700 hover:bg-slate-100 dark:hover:bg-slate-700 transition-all duration-300 group">
+        <i id="theme-icon" data-lucide="moon" class="w-5 h-5 group-hover:rotate-12 transition-transform"></i>
+    </button>
+
+    <div class="max-w-6xl mx-auto bg-white dark:bg-lab-dark_panel shadow-xl rounded-xl p-6 lg:p-10">
+        <h1 class="text-3xl sm:text-4xl font-bold text-gray-800 dark:text-white mb-6 border-b-2 pb-2">
             Mô phỏng & Phân Tích Sóng Dao Động Tắt Dần
         </h1>
-        <p class="text-gray-600 mb-6 italic">
+        <p class="text-gray-600 dark:text-gray-300 mb-6 italic">
             Điều chỉnh các điều kiện ban đầu (Biên độ, Tần số, Pha) và Mức độ Suy giảm Biên độ sau mỗi chu kỳ.
         </p>
 
         <div class="grid grid-cols-1 lg:col-cols-3 gap-8">
 
             <!-- Khu vực Input Tham số -->
-            <div class="lg:col-span-1 bg-gray-100 p-6 rounded-lg shadow-inner h-fit">
-                
+            <div class="lg:col-span-1 bg-gray-100 dark:bg-slate-800 p-6 rounded-lg shadow-inner h-fit">
+
                 <!-- 1. Điều kiện Ban đầu -->
-                <h2 class="text-xl font-semibold text-gray-700 mb-4">1. Điều kiện Ban đầu</h2>
-                
+                <h2 class="text-xl font-semibold text-gray-700 dark:text-gray-200 mb-4">1. Điều kiện Ban đầu</h2>
+
                 <!-- Input Biên độ ban đầu (A) -->
                 <div class="mb-4">
-                    <label for="initialAmplitude" class="block text-sm font-medium text-gray-700">Biên độ (A) [cm]</label>
+                    <label for="initialAmplitude" class="block text-sm font-medium text-gray-700">Biên độ (A)
+                        [cm]</label>
                     <input type="number" id="initialAmplitude" value="10.0" step="1" min="0"
-                           class="mt-1 block w-full rounded-md border-gray-300 shadow-sm p-2 border focus:border-blue-500 focus:ring-blue-500">
+                        class="mt-1 block w-full rounded-md border-gray-300 shadow-sm p-2 border focus:border-blue-500 focus:ring-blue-500">
                 </div>
 
                 <!-- Input Tần số dao động (f) -->
                 <div class="mb-4">
                     <label for="frequency" class="block text-sm font-medium text-gray-700">Tần số (f) [Hz]</label>
                     <input type="number" id="frequency" value="2.0" step="0.1" min="0.1"
-                           class="mt-1 block w-full rounded-md border-gray-300 shadow-sm p-2 border focus:border-blue-500 focus:ring-blue-500">
+                        class="mt-1 block w-full rounded-md border-gray-300 shadow-sm p-2 border focus:border-blue-500 focus:ring-blue-500">
                 </div>
 
                 <!-- Input Pha ban đầu (phi) -->
                 <div class="mb-4">
-                    <label for="initialPhase" class="block text-sm font-medium text-gray-700">Pha ban đầu (&phi;) [rad]</label>
+                    <label for="initialPhase" class="block text-sm font-medium text-gray-700">Pha ban đầu (&phi;)
+                        [rad]</label>
                     <input type="number" id="initialPhase" value="0.0" step="0.1"
-                           class="mt-1 block w-full rounded-md border-gray-300 shadow-sm p-2 border focus:border-blue-500 focus:ring-blue-500">
+                        class="mt-1 block w-full rounded-md border-gray-300 shadow-sm p-2 border focus:border-blue-500 focus:ring-blue-500">
                 </div>
 
                 <!-- 2. Hệ số Cản / Môi trường -->
-                <h2 class="text-xl font-semibold text-gray-700 mb-4 mt-6 border-t pt-4 border-gray-300">2. Mức độ Tắt dần</h2>
+                <h2 class="text-xl font-semibold text-gray-700 mb-4 mt-6 border-t pt-4 border-gray-300">2. Mức độ Tắt
+                    dần</h2>
 
-                 <!-- Selector Môi trường -->
+                <!-- Selector Môi trường -->
                 <div class="mb-4">
                     <label for="environment" class="block text-sm font-medium text-gray-700">Lựa chọn Môi trường</label>
                     <select id="environment" onchange="updateDampingPercentage()"
-                            class="mt-1 block w-full rounded-md border-gray-300 shadow-sm p-2 border focus:border-blue-500 focus:ring-blue-500 bg-white">
+                        class="mt-1 block w-full rounded-md border-gray-300 shadow-sm p-2 border focus:border-blue-500 focus:ring-blue-500 bg-white">
                         <option value="vacuum">Chân không (0.1% giảm)</option>
                         <option value="air" selected>Không khí (10% giảm)</option>
                         <option value="water">Nước (50% giảm)</option>
@@ -125,35 +144,36 @@
 
                 <!-- Input Phần trăm biên độ giảm sau 1 chu kỳ -->
                 <div class="mb-4">
-                    <label for="reductionPercentage" class="block text-sm font-medium text-gray-700">Giảm Biên độ sau 1 Chu kỳ (%)</label>
+                    <label for="reductionPercentage" class="block text-sm font-medium text-gray-700">Giảm Biên độ sau 1
+                        Chu kỳ (%)</label>
                     <input type="number" id="reductionPercentage" value="10.0" step="1" min="0" max="99"
-                           class="mt-1 block w-full rounded-md border-gray-300 shadow-sm p-2 border focus:border-blue-500 focus:ring-blue-500 bg-gray-200" disabled>
+                        class="mt-1 block w-full rounded-md border-gray-300 shadow-sm p-2 border focus:border-blue-500 focus:ring-blue-500 bg-gray-200"
+                        disabled>
                     <p class="text-xs text-gray-500 mt-1">Hệ số suy giảm ($\delta$) được tính tự động.</p>
                 </div>
 
                 <button id="plotButton" onclick="plotDampedOscillation()"
-                        class="w-full bg-blue-600 text-white py-3 mt-6 rounded-lg shadow-lg hover:bg-blue-700 transition duration-200 font-bold">
+                    class="w-full bg-blue-600 text-white py-3 mt-6 rounded-lg shadow-lg hover:bg-blue-700 transition duration-200 font-bold">
                     Vẽ Đồ thị Sóng
                 </button>
             </div>
 
             <!-- Khu vực Đồ thị và Điều khiển Chất điểm -->
             <div class="lg:col-span-2">
-                <div class="bg-white p-6 rounded-lg shadow-md mb-2">
+                <div class="bg-white dark:bg-lab-dark_panel p-6 rounded-lg shadow-md mb-2">
                     <h2 class="text-xl font-semibold text-gray-700 mb-4">Đồ thị Li độ theo Thời gian</h2>
-                    
+
                     <div class="chart-wrapper">
                         <!-- Canvas cho đồ thị -->
                         <div class="chart-container">
                             <canvas id="oscillationChart"></canvas>
                         </div>
-                        
+
                         <!-- Thanh trượt điều khiển chất điểm (Ngay dưới trục X) -->
                         <input type="range" id="timeSlider" min="0" max="10" value="0" step="0.01"
-                            oninput="setTime(this.value)"
-                            class="scrub-slider">
+                            oninput="setTime(this.value)" class="scrub-slider">
                     </div>
-                    
+
                     <!-- Kiểm soát Phát/Tạm dừng và Hiển thị Thời gian -->
                     <div class="mt-16 pt-4 border-t border-gray-300">
                         <div class="flex items-center justify-between mb-3">
@@ -163,12 +183,12 @@
                         <div class="flex space-x-2">
                             <!-- Nút Phát / Tạm dừng -->
                             <button id="toggleAnimation" onclick="toggleAnimation()"
-                                    class="flex-1 py-2 rounded-lg text-white font-bold transition duration-200 bg-green-600 hover:bg-green-700 shadow-md">
+                                class="flex-1 py-2 rounded-lg text-white font-bold transition duration-200 bg-green-600 hover:bg-green-700 shadow-md">
                                 ▶️ Phát
                             </button>
                             <!-- Nút Đặt lại -->
                             <button id="resetButton" onclick="resetAnimation()"
-                                    class="flex-1 py-2 rounded-lg text-white font-bold transition duration-200 bg-gray-500 hover:bg-gray-600 shadow-md">
+                                class="flex-1 py-2 rounded-lg text-white font-bold transition duration-200 bg-gray-500 hover:bg-gray-600 shadow-md">
                                 🔄 Đặt lại
                             </button>
                         </div>
@@ -183,10 +203,10 @@
         let oscillationChart;
         let animationFrameId = null;
         let chartStartTime = null;
-        let isRunning = false; 
-        let maxSimTime = 10.0; 
-        let particleTime = 0; 
-        
+        let isRunning = false;
+        let maxSimTime = 10.0;
+        let particleTime = 0;
+
         const PI = Math.PI;
 
         // Định nghĩa các Phần trăm Biên độ Giảm sau 1 Chu kỳ (%)
@@ -194,9 +214,9 @@
             vacuum: 0.1, // Rất nhỏ
             air: 10.0,   // Suy giảm yếu
             water: 50.0, // Suy giảm mạnh
-            custom: 10.0 
+            custom: 10.0
         };
-        
+
         // Hàm cập nhật phần trăm giảm biên độ và bật/tắt ô nhập liệu
         function updateDampingPercentage() {
             const environment = document.getElementById('environment').value;
@@ -229,7 +249,7 @@
             const ratio = 1 - (P / 100);
             if (ratio <= 0) {
                 // Trường hợp cản quá mạnh (P >= 100%), coi như tắt dần tức thời
-                return 100 * f; 
+                return 100 * f;
             }
             // Logarit tự nhiên của tỉ lệ còn lại
             return -f * Math.log(ratio);
@@ -243,21 +263,21 @@
             const omega = 2 * PI * f;
             return A0_m * Math.exp(-delta * t) * Math.cos(omega * t + phi_rad);
         }
-        
+
         // Lấy các tham số động từ UI
         function getDynamicParams() {
-             const A0_cm = parseFloat(document.getElementById('initialAmplitude').value); // cm
-             const f = parseFloat(document.getElementById('frequency').value); // Hz
-             const phi_rad = parseFloat(document.getElementById('initialPhase').value); // rad
-             const P = parseFloat(document.getElementById('reductionPercentage').value); // %
-             
-             // Chuyển Biên độ sang đơn vị chuẩn (mét)
-             const A0_m = A0_cm / 100.0; 
-             
-             // Tính toán delta
-             const delta = calculateDelta(f, P);
+            const A0_cm = parseFloat(document.getElementById('initialAmplitude').value); // cm
+            const f = parseFloat(document.getElementById('frequency').value); // Hz
+            const phi_rad = parseFloat(document.getElementById('initialPhase').value); // rad
+            const P = parseFloat(document.getElementById('reductionPercentage').value); // %
 
-             return { A0_m, f, phi_rad, P, delta, A0_cm };
+            // Chuyển Biên độ sang đơn vị chuẩn (mét)
+            const A0_m = A0_cm / 100.0;
+
+            // Tính toán delta
+            const delta = calculateDelta(f, P);
+
+            return { A0_m, f, phi_rad, P, delta, A0_cm };
         }
 
         // === CONTROL FUNCTIONS ===
@@ -268,10 +288,10 @@
          */
         function updateParticleState(timeValue) {
             particleTime = parseFloat(timeValue);
-            
+
             // Cập nhật hiển thị thời gian
             document.getElementById('currentTimeDisplay').textContent = `t = ${particleTime.toFixed(2)} s`;
-            
+
             // Tính toán vị trí hạt tại thời điểm mới
             const { A0_m, f, phi_rad, delta } = getDynamicParams();
             const x_t = calculatePosition(particleTime, A0_m, f, phi_rad, delta);
@@ -279,8 +299,8 @@
             // Cập nhật vị trí hạt trên đồ thị và đường chiếu
             if (oscillationChart && oscillationChart.data.datasets.length >= 2) {
                 // Dataset 0 là hạt mô phỏng
-                oscillationChart.data.datasets[0].data = [{ x: particleTime, y: x_t }]; 
-                
+                oscillationChart.data.datasets[0].data = [{ x: particleTime, y: x_t }];
+
                 // Dataset 1 là đường kẻ chiếu vuông góc với trục thời gian (y=0)
                 oscillationChart.data.datasets[1].data = [
                     { x: particleTime, y: x_t }, // Từ vị trí hạt
@@ -288,10 +308,10 @@
                 ];
 
                 // Cập nhật mà không chạy lại animation
-                oscillationChart.update('none'); 
+                oscillationChart.update('none');
             }
         }
-        
+
         /**
          * Xử lý khi người dùng kéo thanh trượt (Scrubbing).
          * Nó phải dừng mọi hoạt ảnh đang chạy để cho phép xem thủ công.
@@ -317,7 +337,7 @@
                 button.textContent = '⏸ Tạm dừng';
                 // Bắt đầu lại animation loop nếu nó đã dừng
                 if (!animationFrameId) {
-                    chartStartTime = null; 
+                    chartStartTime = null;
                     animationFrameId = requestAnimationFrame(animateParticle);
                 }
             } else {
@@ -339,13 +359,13 @@
             isRunning = false;
             chartStartTime = null;
             particleTime = 0;
-            
+
             // 2. Cập nhật nút
             document.getElementById('toggleAnimation').textContent = '▶️ Phát';
-            
+
             // 3. Chạy lại hàm plot để đặt lại maxSimTime, slider max và vẽ lại đường cong
-            plotDampedOscillation(); 
-            
+            plotDampedOscillation();
+
             // 4. Đảm bảo chất điểm được đặt về 0 và cập nhật UI/Chart
             document.getElementById('timeSlider').value = 0; // Đặt lại slider
             updateParticleState(0); // Cập nhật trạng thái hạt tại t=0
@@ -358,11 +378,11 @@
                 // Đã dừng, không tiếp tục loop
                 return;
             }
-            
+
             // 1. Khởi tạo/Tái khởi tạo thời gian bắt đầu
             if (chartStartTime === null) {
                 // Tính toán thời gian bắt đầu dựa trên thời gian hạt hiện tại (nếu đang tạm dừng)
-                chartStartTime = timestamp - particleTime * 1000; 
+                chartStartTime = timestamp - particleTime * 1000;
             }
 
             // 2. Tính thời gian đã trôi qua
@@ -386,7 +406,7 @@
 
             // 4. Cập nhật slider và vị trí hạt 
             document.getElementById('timeSlider').value = particleTime;
-            updateParticleState(particleTime); 
+            updateParticleState(particleTime);
 
             // 5. Tiếp tục loop 
             if (isRunning && particleTime < maxSimTime) {
@@ -414,22 +434,22 @@
                 if (oscillationChart) { oscillationChart.destroy(); }
                 console.error("Lỗi tham số đầu vào. Vui lòng kiểm tra Biên độ (A >= 0), Tần số (f > 0), và % Giảm (0 <= P < 100).");
                 return;
-            } 
+            }
 
             // 2. Tính toán thời gian mô phỏng động
             let calculatedMaxSimTime;
             if (delta > 0) {
                 // Thời gian để biên độ giảm còn 1% so với ban đầu (ln(100)/delta)
-                calculatedMaxSimTime = Math.log(100) / delta; 
+                calculatedMaxSimTime = Math.log(100) / delta;
             } else {
                 // Không suy giảm (SHM) hoặc delta quá nhỏ: 10 chu kỳ
-                calculatedMaxSimTime = 10 * (1/f); 
+                calculatedMaxSimTime = 10 * (1 / f);
             }
-            
-            // Đảm bảo thời gian mô phỏng tối thiểu 5s và tối đa 30s
-            maxSimTime = Math.min(Math.max(calculatedMaxSimTime, 5.0), 30.0); 
 
-            const timePoints = 500; 
+            // Đảm bảo thời gian mô phỏng tối thiểu 5s và tối đa 30s
+            maxSimTime = Math.min(Math.max(calculatedMaxSimTime, 5.0), 30.0);
+
+            const timePoints = 500;
             const timeStep = maxSimTime / timePoints;
 
             // Cập nhật thanh trượt thời gian với giá trị max mới và reset về 0
@@ -441,14 +461,14 @@
             let envelopeUpper = [];
             let envelopeLower = [];
             let max_x_t_abs = 0;
-            
+
             // 3. Tính toán dữ liệu đồ thị và đường bao suy giảm
             for (let i = 0; i <= timePoints; i++) {
                 const t = i * timeStep;
                 const x_t = calculatePosition(t, A0_m, f, phi_rad, delta);
-                
+
                 dataPoints.push({ x: t, y: x_t });
-                
+
                 max_x_t_abs = Math.max(max_x_t_abs, Math.abs(x_t));
 
                 const envelope = A0_m * Math.exp(-delta * t);
@@ -463,12 +483,12 @@
             // Hạt mô phỏng
             const particleDataset = {
                 label: 'Chất điểm mô phỏng',
-                data: [{ x: 0, y: calculatePosition(0, A0_m, f, phi_rad, delta) }], 
+                data: [{ x: 0, y: calculatePosition(0, A0_m, f, phi_rad, delta) }],
                 backgroundColor: 'rgb(239, 68, 68)', // Đỏ
-                borderColor: 'rgb(239, 68, 68)', 
+                borderColor: 'rgb(239, 68, 68)',
                 borderWidth: 1,
-                pointRadius: 8, 
-                type: 'scatter', 
+                pointRadius: 8,
+                type: 'scatter',
                 showLine: false
             };
 
@@ -476,11 +496,11 @@
             const initialX = calculatePosition(0, A0_m, f, phi_rad, delta);
             const projectionDataset = {
                 label: 'Đường chiếu thời gian',
-                data: [{ x: 0, y: initialX }, { x: 0, y: 0 }], 
+                data: [{ x: 0, y: initialX }, { x: 0, y: 0 }],
                 // Tăng độ đậm đường chiếu
-                borderColor: 'rgba(239, 68, 68, 0.8)', 
-                borderWidth: 2, 
-                borderDash: [5, 5], 
+                borderColor: 'rgba(239, 68, 68, 0.8)',
+                borderWidth: 2,
+                borderDash: [5, 5],
                 pointRadius: 0,
                 fill: false,
                 tension: 0,
@@ -503,7 +523,7 @@
                     fill: false,
                     type: 'line'
                 },
-                 {
+                {
                     label: 'Đường bao suy giảm',
                     data: envelopeUpper,
                     borderColor: 'rgba(251, 191, 36, 0.9)', // Vàng (tăng độ mờ)
@@ -517,13 +537,13 @@
                 {
                     label: 'Đường bao suy giảm (dưới)',
                     data: envelopeLower,
-                    borderColor: 'rgba(251, 191, 36, 0.9)', 
-                    borderWidth: 2, 
+                    borderColor: 'rgba(251, 191, 36, 0.9)',
+                    borderWidth: 2,
                     borderDash: [5, 5],
                     pointRadius: 0,
                     fill: false,
                     tension: 0.2,
-                    hidden: true, 
+                    hidden: true,
                     type: 'line'
                 }
             ];
@@ -534,12 +554,12 @@
             // Cấu hình Chart.js
             const chartConfig = {
                 data: {
-                    datasets: datasets 
+                    datasets: datasets
                 },
                 options: {
                     responsive: true,
                     maintainAspectRatio: false,
-                    animation: false, 
+                    animation: false,
                     scales: {
                         x: {
                             title: {
@@ -548,7 +568,7 @@
                                 color: '#4b5563'
                             },
                             min: 0,
-                            max: maxSimTime, 
+                            max: maxSimTime,
                             type: 'linear',
                             grid: {
                                 // Độ đậm lưới trục X (ĐÃ TĂNG)
@@ -575,7 +595,7 @@
                         legend: {
                             position: 'top',
                             labels: {
-                                filter: function(item, chart) {
+                                filter: function (item, chart) {
                                     // Ẩn nhãn của đường bao suy giảm dưới và đường chiếu thời gian
                                     return item.text !== 'Đường bao suy giảm (dưới)' && item.text !== 'Đường chiếu thời gian';
                                 }
@@ -599,16 +619,16 @@
 
             // Tạo biểu đồ mới
             oscillationChart = new Chart(ctx, chartConfig);
-            
+
             // Khởi tạo vị trí hạt tại t=0
             updateParticleState(0);
 
         }
 
         // Tự động vẽ đồ thị khi tải trang lần đầu
-        window.onload = function() {
+        window.onload = function () {
             // Thiết lập % giảm ban đầu theo môi trường mặc định (Không khí)
-            updateDampingPercentage(); 
+            updateDampingPercentage();
 
             // Gán sự kiện cho các input động để cập nhật đồ thị ngay lập tức
             document.getElementById('initialAmplitude').addEventListener('change', plotDampedOscillation);
@@ -617,5 +637,7 @@
             document.getElementById('reductionPercentage').addEventListener('change', plotDampedOscillation);
         }
     </script>
+    <script src="js/theme.js"></script>
 </body>
+
 </html>

@@ -1,16 +1,22 @@
 <!DOCTYPE html>
 <html lang="vi">
+
 <head>
     <meta charset="UTF-8">
     <meta name="viewport" content="width=device-width, initial-scale=1.0">
     <title>Mô Phỏng Sóng Dừng (Hai Đầu Cố Định)</title>
     <script src="https://cdn.tailwindcss.com"></script>
+    <script src="js/tailwind-config.js"></script>
+    <script src="https://unpkg.com/lucide@latest"></script>
+    <link rel="stylesheet" href="css/global.css">
     <style>
         @import url('https://fonts.googleapis.com/css2?family=Inter:wght@400;600;700&display=swap');
+
+        /* Body color handled by utility classes now */
         body {
             font-family: 'Inter', sans-serif;
-            background-color: #f7f9fb;
         }
+
         .container-card {
             background-color: white;
             padding: 1.5rem;
@@ -18,20 +24,33 @@
             box-shadow: 0 10px 15px -3px rgba(0, 0, 0, 0.1), 0 4px 6px -2px rgba(0, 0, 0, 0.05);
             transition: all 0.3s ease;
         }
+
+        .dark .container-card {
+            background-color: #1e293b;
+            /* slate-800 */
+            box-shadow: 0 10px 15px -3px rgba(0, 0, 0, 0.3);
+        }
+
         input[type="range"] {
             -webkit-appearance: none;
             width: 100%;
             height: 8px;
-            background: #d1d5db;
+            background: #cbd5e1;
             border-radius: 4px;
             outline: none;
             opacity: 0.7;
             -webkit-transition: .2s;
             transition: opacity .2s;
         }
+
+        .dark input[type="range"] {
+            background: #475569;
+        }
+
         input[type="range"]:hover {
             opacity: 1;
         }
+
         input[type="range"]::-webkit-slider-thumb {
             -webkit-appearance: none;
             appearance: none;
@@ -42,27 +61,39 @@
             cursor: pointer;
             box-shadow: 0 0 5px rgba(0, 0, 0, 0.2);
         }
+
         #simulationCanvas {
-            background-color: #262626; /* Dark background for better wave contrast */
+            /* background-color handled by JS for consistency */
             border-radius: 0.75rem;
             border: 2px solid #4f46e5;
         }
     </style>
 </head>
-<body class="p-4 sm:p-8">
-            <a href="index.html" class="fixed top-4 left-4 z-50 p-3 bg-blue-600 text-white rounded-lg shadow-xl hover:bg-blue-700 transition duration-300 flex items-center space-x-2">
-    <svg xmlns="http://www.w3.org/2000/svg" class="h-5 w-5" viewBox="0 0 20 20" fill="currentColor">
-        <path d="M10.707 2.293a1 1 0 00-1.414 0l-7 7a1 1 0 001.414 1.414L4 10.414V17a1 1 0 001 1h2a1 1 0 001-1v-2a1 1 0 011-1h2a1 1 0 011 1v2a1 1 0 001 1h2a1 1 0 001-1v-6.586l.293.293a1 1 0 001.414-1.414l-7-7z" />
-    </svg>
-    <span class="font-semibold hidden sm:inline">Quay về Trang Chủ</span>
-        </a>
+</head>
+
+<body
+    class="p-4 sm:p-8 bg-gray-50 dark:bg-lab-dark_bg text-gray-900 dark:text-lab-dark_text transition-colors duration-300">
+    <a href="index.html"
+        class="fixed top-4 left-4 z-50 p-3 bg-blue-600 text-white rounded-lg shadow-xl hover:bg-blue-700 transition duration-300 flex items-center space-x-2">
+        <svg xmlns="http://www.w3.org/2000/svg" class="h-5 w-5" viewBox="0 0 20 20" fill="currentColor">
+            <path
+                d="M10.707 2.293a1 1 0 00-1.414 0l-7 7a1 1 0 001.414 1.414L4 10.414V17a1 1 0 001 1h2a1 1 0 001-1v-2a1 1 0 011-1h2a1 1 0 011 1v2a1 1 0 001 1h2a1 1 0 001-1v-6.586l.293.293a1 1 0 001.414-1.414l-7-7z" />
+        </svg>
+        <span class="font-semibold hidden sm:inline">Quay về Trang Chủ</span>
+    </a>
+
+    <!-- Dark Mode Toggle -->
+    <button onclick="toggleDarkMode()"
+        class="fixed top-4 right-4 z-50 p-3 bg-white/80 dark:bg-slate-800/80 backdrop-blur-md text-slate-700 dark:text-slate-200 rounded-full shadow-lg border border-slate-200 dark:border-slate-700 hover:bg-slate-100 dark:hover:bg-slate-700 transition-all duration-300 group">
+        <i id="theme-icon" data-lucide="moon" class="w-5 h-5 group-hover:rotate-12 transition-transform"></i>
+    </button>
 
     <div class="max-w-4xl mx-auto space-y-8">
         <header class="text-center">
-            <h1 class="text-3xl sm:text-4xl font-extrabold text-gray-900">
+            <h1 class="text-3xl sm:text-4xl font-extrabold text-gray-900 dark:text-white">
                 Mô Phỏng Sóng Dừng (Hai Đầu Cố Định)
             </h1>
-            <p class="text-gray-500 mt-2">Điều chỉnh thông số để quan sát hình ảnh sóng dừng</p>
+            <p class="text-gray-500 dark:text-gray-400 mt-2">Điều chỉnh thông số để quan sát hình ảnh sóng dừng</p>
         </header>
 
         <!-- Đã điều chỉnh bố cục grid: Cột 1 là điều khiển, Cột 2 là Canvas -->
@@ -70,28 +101,35 @@
 
             <!-- Cột 1: Điều khiển -->
             <div class="lg:col-span-1 container-card h-full">
-                <h2 class="text-xl font-bold text-indigo-700 mb-4">Điều Khiển Tham Số</h2>
+                <h2 class="text-xl font-bold text-indigo-700 dark:text-indigo-400 mb-4">Điều Khiển Tham Số</h2>
                 <div class="space-y-4 text-sm">
 
                     <!-- Biên độ -->
                     <div>
-                        <label for="amplitude" class="block font-medium text-gray-700 mb-1">Biên độ Sóng (A): <span id="amplitudeValue" class="font-semibold text-indigo-600">1.0</span> cm</label>
+                        <label for="amplitude" class="block font-medium text-gray-700 dark:text-gray-300 mb-1">Biên độ
+                            Sóng (A): <span id="amplitudeValue"
+                                class="font-semibold text-indigo-600 dark:text-indigo-400">1.0</span> cm</label>
                         <input type="range" id="amplitude" min="0.1" max="2.0" step="0.1" value="1.0" class="w-full">
                     </div>
 
                     <!-- Chế độ Sóng Dừng (Mode k) -->
                     <div>
-                        <label for="mode" class="block font-medium text-gray-700 mb-1">Chế độ Sóng Dừng (k): <span id="modeValue" class="font-semibold text-indigo-600">1</span></label>
+                        <label for="mode" class="block font-medium text-gray-700 dark:text-gray-300 mb-1">Chế độ Sóng
+                            Dừng (k): <span id="modeValue"
+                                class="font-semibold text-indigo-600 dark:text-indigo-400">1</span></label>
                         <input type="range" id="mode" min="1" max="8" step="1" value="1" class="w-full">
                     </div>
 
                     <!-- Sức căng dây -->
                     <div>
-                        <label for="tension" class="block font-medium text-gray-700 mb-1">Sức Căng Dây (T): <span id="tensionValue" class="font-semibold text-indigo-600">10.0</span> N</label>
+                        <label for="tension" class="block font-medium text-gray-700 dark:text-gray-300 mb-1">Sức Căng
+                            Dây (T): <span id="tensionValue"
+                                class="font-semibold text-indigo-600 dark:text-indigo-400">10.0</span> N</label>
                         <input type="range" id="tension" min="1" max="50" step="1.0" value="10.0" class="w-full">
                     </div>
 
-                    <button id="resetButton" class="w-full mt-6 py-2 bg-indigo-600 text-white font-semibold rounded-lg hover:bg-indigo-700 transition duration-150 shadow-md">
+                    <button id="resetButton"
+                        class="w-full mt-6 py-2 bg-indigo-600 text-white font-semibold rounded-lg hover:bg-indigo-700 transition duration-150 shadow-md">
                         Đặt Lại Mô Phỏng
                     </button>
                 </div>
@@ -102,7 +140,7 @@
 
                 <!-- Canvas Mô Phỏng -->
                 <div class="container-card h-full flex flex-col">
-                    <h2 class="text-xl font-bold text-indigo-700 mb-4">Mô Phỏng Sóng Dừng</h2>
+                    <h2 class="text-xl font-bold text-indigo-700 dark:text-indigo-400 mb-4">Mô Phỏng Sóng Dừng</h2>
                     <canvas id="simulationCanvas" width="800" height="200" class="w-full flex-grow"></canvas>
                     <!-- Thêm thông báo trạng thái nhỏ thay thế cho Result Box -->
                     <p class="mt-4 text-sm text-center text-green-700 font-semibold bg-green-100 p-2 rounded-lg">
@@ -160,10 +198,10 @@
         function updateCalculations() {
             // 1. Tốc độ sóng (v = sqrt(T/μ))
             const v = calculateVelocity(tension, MU);
-            
+
             // 2. Bước sóng cần thiết cho mode k: λk = 2 * L / k
-            const lambda_k = (2 * L) / mode; 
-            
+            const lambda_k = (2 * L) / mode;
+
             // 3. Tần số cần thiết (tần số cộng hưởng): fk = v / λk
             resonantFrequency = v / lambda_k;
 
@@ -192,10 +230,20 @@
 
         function drawSimulation() {
             // Xóa canvas
+            // Xóa canvas
             ctx.clearRect(0, 0, canvas.width, canvas.height);
+            // Adaptive background
+            const isDark = document.documentElement.classList.contains('dark');
+            ctx.fillStyle = isDark ? '#1f2937' : '#262626'; // Keep dark for high contrast in bot modes or slightly lighter in dark mode? 
+            // Actually let's trust the previous design choice of dark background for wave contrast (#262626)
+            // But let's allow it to be light in Light Mode ?? 
+            // The Original was always dark #262626.
+            // Let's make it Light Gray in Light Mode and Dark in Dark Mode.
+            ctx.fillStyle = isDark ? '#0f172a' : '#f1f5f9';
+            ctx.fillRect(0, 0, canvas.width, canvas.height);
 
             // Vẽ trục giữa (dây khi chưa dao động)
-            ctx.strokeStyle = '#525252'; // gray-700
+            ctx.strokeStyle = isDark ? '#4b5563' : '#9ca3af'; // gray-600 vs gray-400
             ctx.lineWidth = 1;
             ctx.beginPath();
             ctx.moveTo(0, Y_CENTER);
@@ -203,7 +251,7 @@
             ctx.stroke();
 
             // Vẽ sóng dừng
-            ctx.strokeStyle = '#8b5cf6'; // violet-500
+            ctx.strokeStyle = isDark ? '#a78bfa' : '#6366f1'; // violet-400 vs indigo-500
             ctx.lineWidth = 3;
             ctx.beginPath();
 
@@ -300,5 +348,7 @@
         animate(0);
 
     </script>
+    <script src="js/theme.js"></script>
 </body>
+
 </html>

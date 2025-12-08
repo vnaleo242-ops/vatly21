@@ -1,16 +1,22 @@
 <!DOCTYPE html>
 <html lang="vi">
+
 <head>
     <meta charset="UTF-8">
     <meta name="viewport" content="width=device-width, initial-scale=1.0">
     <title>Mô Phỏng Sóng Dừng</title>
     <!-- Tải Tailwind CSS -->
     <script src="https://cdn.tailwindcss.com"></script>
+    <script src="js/tailwind-config.js"></script>
+    <script src="https://unpkg.com/lucide@latest"></script>
+    <link rel="stylesheet" href="css/global.css">
     <style>
         /* Đảm bảo canvas có kích thước linh hoạt và có viền đẹp */
+        /* Đảm bảo canvas có kích thước linh hoạt và có viền đẹp */
         #waveCanvas {
-            border: 2px solid #3b82f6; /* Màu xanh dương */
-            background-color: #f8fafc; /* Màu nền nhẹ */
+            border: 2px solid #3b82f6;
+            /* Màu xanh dương */
+            /* background-color handled by JS/Tailwind */
             border-radius: 0.5rem;
             box-shadow: 0 10px 15px -3px rgba(0, 0, 0, 0.1), 0 4px 6px -2px rgba(0, 0, 0, 0.05);
         }
@@ -29,48 +35,63 @@
         }
     </script>
 </head>
-<body class="bg-gray-100 min-h-screen flex items-center justify-center p-4 font-sans">
-            <a href="index.html" class="fixed top-4 left-4 z-50 p-3 bg-blue-600 text-white rounded-lg shadow-xl hover:bg-blue-700 transition duration-300 flex items-center space-x-2">
-    <svg xmlns="http://www.w3.org/2000/svg" class="h-5 w-5" viewBox="0 0 20 20" fill="currentColor">
-        <path d="M10.707 2.293a1 1 0 00-1.414 0l-7 7a1 1 0 001.414 1.414L4 10.414V17a1 1 0 001 1h2a1 1 0 001-1v-2a1 1 0 011-1h2a1 1 0 011 1v2a1 1 0 001 1h2a1 1 0 001-1v-6.586l.293.293a1 1 0 001.414-1.414l-7-7z" />
-    </svg>
-    <span class="font-semibold hidden sm:inline">Quay về Trang Chủ</span>
-        </a>
 
-    <div class="w-full max-w-4xl bg-white p-6 rounded-xl shadow-2xl">
-        <h1 class="text-3xl font-bold text-center text-blue-700 mb-6 border-b pb-2">
+<body
+    class="bg-gray-100 dark:bg-lab-dark_bg text-gray-900 dark:text-lab-dark_text transition-colors duration-300 min-h-screen flex items-center justify-center p-4 font-sans">
+    <a href="index.html"
+        class="fixed top-4 left-4 z-50 p-3 bg-blue-600 text-white rounded-lg shadow-xl hover:bg-blue-700 transition duration-300 flex items-center space-x-2">
+        <svg xmlns="http://www.w3.org/2000/svg" class="h-5 w-5" viewBox="0 0 20 20" fill="currentColor">
+            <path
+                d="M10.707 2.293a1 1 0 00-1.414 0l-7 7a1 1 0 001.414 1.414L4 10.414V17a1 1 0 001 1h2a1 1 0 001-1v-2a1 1 0 011-1h2a1 1 0 011 1v2a1 1 0 001 1h2a1 1 0 001-1v-6.586l.293.293a1 1 0 001.414-1.414l-7-7z" />
+        </svg>
+        <span class="font-semibold hidden sm:inline">Quay về Trang Chủ</span>
+    </a>
+
+    <!-- Dark Mode Toggle -->
+    <button onclick="toggleDarkMode()"
+        class="fixed top-4 right-4 z-50 p-3 bg-white/80 dark:bg-slate-800/80 backdrop-blur-md text-slate-700 dark:text-slate-200 rounded-full shadow-lg border border-slate-200 dark:border-slate-700 hover:bg-slate-100 dark:hover:bg-slate-700 transition-all duration-300 group">
+        <i id="theme-icon" data-lucide="moon" class="w-5 h-5 group-hover:rotate-12 transition-transform"></i>
+    </button>
+
+    <div
+        class="w-full max-w-4xl bg-white dark:bg-lab-dark_panel p-6 rounded-xl shadow-2xl border border-gray-100 dark:border-slate-700">
+        <h1
+            class="text-3xl font-bold text-center text-blue-700 dark:text-blue-400 mb-6 border-b dark:border-slate-700 pb-2">
             Sóng Dừng - Một Đầu Cố Định, Một Đầu Tự Do
         </h1>
 
         <div class="flex flex-col lg:flex-row gap-6">
-            
+
             <!-- Khu vực điều khiển -->
-            <div class="lg:w-1/3 space-y-4 p-4 bg-blue-50 rounded-lg shadow-inner">
-                <h2 class="text-xl font-semibold text-blue-600 mb-4">Tham số Sóng</h2>
+            <div class="lg:w-1/3 space-y-4 p-4 bg-blue-50 dark:bg-slate-700/50 rounded-lg shadow-inner">
+                <h2 class="text-xl font-semibold text-blue-600 dark:text-blue-300 mb-4">Tham số Sóng</h2>
 
                 <!-- Tần số (Frequency) -->
                 <div>
-                    <label for="frequency" class="block text-sm font-medium text-gray-700">Tần số (Hz): <span id="freqValue" class="font-bold text-blue-600">1.0</span></label>
+                    <label for="frequency" class="block text-sm font-medium text-gray-700 dark:text-gray-300">Tần số
+                        (Hz): <span id="freqValue" class="font-bold text-blue-600 dark:text-blue-400">1.0</span></label>
                     <input type="range" id="frequency" min="0.5" max="5.0" step="0.05" value="1.0"
-                           class="w-full h-2 bg-blue-200 rounded-lg appearance-none cursor-pointer range-lg"
-                           oninput="document.getElementById('freqValue').textContent = this.value; drawWave();">
+                        class="w-full h-2 bg-blue-200 dark:bg-slate-600 rounded-lg appearance-none cursor-pointer range-lg"
+                        oninput="document.getElementById('freqValue').textContent = this.value; drawWave();">
                 </div>
 
                 <!-- Biên độ (Amplitude) -->
                 <div>
-                    <label for="amplitude" class="block text-sm font-medium text-gray-700">Biên độ Sóng (Đơn vị tương đối): <span id="ampValue" class="font-bold text-blue-600">40</span></label>
+                    <label for="amplitude" class="block text-sm font-medium text-gray-700 dark:text-gray-300">Biên độ
+                        Sóng (Đơn vị tương đối): <span id="ampValue"
+                            class="font-bold text-blue-600 dark:text-blue-400">40</span></label>
                     <input type="range" id="amplitude" min="10" max="100" step="1" value="40"
-                           class="w-full h-2 bg-blue-200 rounded-lg appearance-none cursor-pointer range-lg"
-                           oninput="document.getElementById('ampValue').textContent = this.value; drawWave();">
+                        class="w-full h-2 bg-blue-200 dark:bg-slate-600 rounded-lg appearance-none cursor-pointer range-lg"
+                        oninput="document.getElementById('ampValue').textContent = this.value; drawWave();">
                 </div>
             </div>
 
             <!-- Khu vực Canvas -->
             <div class="lg:w-2/3 flex flex-col items-center">
                 <canvas id="waveCanvas" width="600" height="300" class="w-full h-auto"></canvas>
-                <div class="mt-2 text-sm text-gray-600 flex justify-between w-full">
-                    <span class="font-medium text-red-600">Đầu Cố Định (Nút)</span>
-                    <span class="font-medium text-green-600">Đầu Tự Do (Bụng)</span>
+                <div class="mt-2 text-sm text-gray-600 dark:text-gray-400 flex justify-between w-full">
+                    <span class="font-medium text-red-600 dark:text-red-400">Đầu Cố Định (Nút)</span>
+                    <span class="font-medium text-green-600 dark:text-green-400">Đầu Tự Do (Bụng)</span>
                 </div>
             </div>
 
@@ -98,14 +119,19 @@
             const t = (Date.now() - startTime) / 1000; // Thời gian hiện tại (giây)
 
             // Xóa canvas
+            // Xóa canvas
             ctx.clearRect(0, 0, canvas.width, canvas.height);
+            // Vẽ nền
+            const isDark = document.documentElement.classList.contains('dark');
+            ctx.fillStyle = isDark ? '#0f172a' : '#f8fafc';
+            ctx.fillRect(0, 0, canvas.width, canvas.height);
 
             // Tọa độ trung tâm (đường cân bằng)
             const centerY = canvas.height / 2;
 
             // --- Vẽ đường dây cân bằng (Trục Ox) ---
             ctx.beginPath();
-            ctx.strokeStyle = '#9ca3af'; // Màu xám
+            ctx.strokeStyle = isDark ? '#475569' : '#9ca3af';
             ctx.lineWidth = 1;
             ctx.moveTo(0, centerY);
             ctx.lineTo(L, centerY);
@@ -113,7 +139,7 @@
 
             // --- Bắt đầu vẽ sóng ---
             ctx.beginPath();
-            ctx.strokeStyle = '#1d4ed8'; // Màu xanh đậm cho sóng
+            ctx.strokeStyle = isDark ? '#60a5fa' : '#1d4ed8'; // Blue 400 vs Blue 700
             ctx.lineWidth = 3;
 
             // Điểm bắt đầu
@@ -133,9 +159,9 @@
 
             // --- Vẽ biên độ tối đa (Envelope) ---
             ctx.beginPath();
-            ctx.strokeStyle = 'rgba(29, 78, 216, 0.4)'; // Màu xanh nhạt hơn cho Envelope
+            ctx.strokeStyle = isDark ? 'rgba(96, 165, 250, 0.3)' : 'rgba(29, 78, 216, 0.4)';
             ctx.lineWidth = 1;
-            
+
             // Biên độ dương
             ctx.moveTo(0, centerY);
             for (let x = 0; x <= L; x += 1) {
@@ -175,14 +201,16 @@
          * Bắt đầu vòng lặp animation khi trang web tải xong.
          */
         window.onload = function () {
-            
+
             // Bắt đầu vẽ sóng
-            drawWave(); 
-            
+            drawWave();
+
             // Thiết lập sự kiện thay đổi để cập nhật ngay lập tức
             document.getElementById('frequency').addEventListener('input', drawWave);
             document.getElementById('amplitude').addEventListener('input', drawWave);
         }
     </script>
+    <script src="js/theme.js"></script>
 </body>
+
 </html>
