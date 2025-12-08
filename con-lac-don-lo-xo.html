@@ -1,0 +1,793 @@
+<!DOCTYPE html>
+<html lang="vi">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Phân Tích Dao Động Điều Hòa</title>
+    <script src="https://cdn.tailwindcss.com"></script>
+    <style>
+        @import url('https://fonts.googleapis.com/css2?family=Inter:wght@400;600;700&display=swap');
+        body {
+            font-family: 'Inter', sans-serif;
+            background-color: #f7f7f9;
+        }
+        .container-bg {
+            background: linear-gradient(145deg, #ffffff, #e6e6e6);
+            box-shadow: 0 10px 30px rgba(0, 0, 0, 0.1);
+        }
+        .input-group label {
+            font-weight: 600;
+            color: #4a5568;
+        }
+        .input-group input[type="range"] {
+            -webkit-appearance: none;
+            width: 100%;
+            height: 8px;
+            background: #ddd;
+            border-radius: 4px;
+            outline: none;
+            opacity: 0.7;
+            transition: opacity .2s;
+        }
+        .input-group input[type="range"]::-webkit-slider-thumb {
+            -webkit-appearance: none;
+            appearance: none;
+            width: 16px;
+            height: 16px;
+            border-radius: 50%;
+            background: #4f46e5;
+            cursor: pointer;
+            box-shadow: 0 0 5px rgba(0, 0, 0, 0.2);
+        }
+        .sim-canvas {
+            border: 1px solid #cbd5e1;
+            border-radius: 0.5rem;
+            background-color: #f9fafb;
+            margin-bottom: 1rem;
+        }
+        .energy-graph-canvas {
+            border: 1px solid #cbd5e1;
+            border-radius: 0.5rem;
+            background-color: #ffffff;
+        }
+    </style>
+</head>
+<body class="p-4 md:p-8">
+
+        <a href="index.html" class="fixed top-4 left-4 z-50 p-3 bg-blue-600 text-white rounded-lg shadow-xl hover:bg-blue-700 transition duration-300 flex items-center space-x-2">
+    <svg xmlns="http://www.w3.org/2000/svg" class="h-5 w-5" viewBox="0 0 20 20" fill="currentColor">
+        <path d="M10.707 2.293a1 1 0 00-1.414 0l-7 7a1 1 0 001.414 1.414L4 10.414V17a1 1 0 001 1h2a1 1 0 001-1v-2a1 1 0 011-1h2a1 1 0 011 1v2a1 1 0 001 1h2a1 1 0 001-1v-6.586l.293.293a1 1 0 001.414-1.414l-7-7z" />
+    </svg>
+    <span class="font-semibold hidden sm:inline">Quay về Trang Chủ</span>
+        </a>
+
+    <div class="max-w-7xl mx-auto container-bg rounded-xl p-6 lg:p-10">
+        <h1 class="text-3xl font-bold text-center text-indigo-700 mb-6">Mô Phỏng Dao Động Điều Hòa (SHM)</h1>
+
+        <div class="mb-6 flex justify-center space-x-4">
+            <button id="springSelect" class="px-6 py-3 rounded-lg font-semibold transition duration-200 bg-indigo-600 text-white shadow-md hover:bg-indigo-700">
+                Con Lắc Lò Xo
+            </button>
+            <button id="pendulumSelect" class="px-6 py-3 rounded-lg font-semibold transition duration-200 bg-gray-200 text-gray-700 hover:bg-gray-300">
+                Con Lắc Đơn
+            </button>
+        </div>
+
+        <div class="grid grid-cols-1 lg:grid-cols-3 gap-8">
+            <div class="lg:col-span-1 space-y-6 p-4 bg-white rounded-lg shadow-inner">
+                <h2 class="text-xl font-bold text-gray-700 border-b pb-2 mb-4">Điều Khiển & Tham Số</h2>
+
+                <div class="flex space-x-3 mb-4">
+                    <button id="playPauseBtn" class="flex-1 px-4 py-2 bg-green-500 text-white rounded-lg hover:bg-green-600 font-medium transition duration-150 shadow-md">
+                        ▶ Chơi
+                    </button>
+                    <button id="restartBtn" class="flex-1 px-4 py-2 bg-red-500 text-white rounded-lg hover:bg-red-600 font-medium transition duration-150 shadow-md">
+                        ↺ Restart
+                    </button>
+                </div>
+
+                <div class="flex space-x-2 border-t pt-4">
+                    <span class="text-sm font-semibold text-gray-600 mb-2 w-full">Bước nhảy (Ưu tiên vị trí đặc biệt):</span>
+                </div>
+                <div class="flex space-x-3">
+                    <button id="stepBackBtn" disabled class="flex-1 px-3 py-2 bg-yellow-500 text-white rounded-lg hover:bg-yellow-600 font-medium transition duration-150 disabled:opacity-50 shadow-md">
+                        Lùi
+                    </button>
+                    <button id="stepForwardBtn" disabled class="flex-1 px-3 py-2 bg-yellow-500 text-white rounded-lg hover:bg-yellow-600 font-medium transition duration-150 disabled:opacity-50 shadow-md">
+                        Tiến
+                    </button>
+                </div>
+
+
+                <div id="springParams" class="space-y-4 pt-4 border-t">
+                    <h3 class="text-lg font-semibold text-indigo-600 mb-2">Con Lắc Lò Xo</h3>
+                    
+                    <div class="flex space-x-4 mb-4 bg-gray-100 p-2 rounded-md">
+                        <label class="flex items-center cursor-pointer">
+                            <input type="radio" name="springType" value="vertical" checked class="form-radio h-4 w-4 text-indigo-600">
+                            <span class="ml-2 text-sm text-gray-700 font-medium">Thẳng đứng</span>
+                        </label>
+                        <label class="flex items-center cursor-pointer">
+                            <input type="radio" name="springType" value="horizontal" class="form-radio h-4 w-4 text-indigo-600">
+                            <span class="ml-2 text-sm text-gray-700 font-medium">Nằm ngang</span>
+                        </label>
+                    </div>
+
+                    <div class="input-group">
+                        <label for="mass">Khối lượng (m): <span id="massValue" class="font-normal text-indigo-500">1.0</span> kg</label>
+                        <input type="range" id="mass" min="0.1" max="5.0" step="0.1" value="1.0">
+                    </div>
+                    <div class="input-group">
+                        <label for="stiffness">Độ cứng (k): <span id="stiffnessValue" class="font-normal text-indigo-500">10.0</span> N/m</label>
+                        <input type="range" id="stiffness" min="1.0" max="50.0" step="0.5" value="10.0">
+                    </div>
+                    <div class="input-group">
+                        <label for="amplitude">Biên độ (A): <span id="amplitudeValue" class="font-normal text-indigo-500">10.0</span> cm</label>
+                        <input type="range" id="amplitude" min="1.0" max="30.0" step="1.0" value="10.0">
+                    </div>
+                    <div class="input-group">
+                        <label for="lengthSpring">Chiều dài tự nhiên (L₀): <span id="lengthSpringValue" class="font-normal text-indigo-500">0.5</span> m</label>
+                        <input type="range" id="lengthSpring" min="0.1" max="1.0" step="0.05" value="0.5">
+                    </div>
+                    <div class="input-group">
+                        <label for="gravitySpring">Gia tốc trọng trường (g): <span id="gravitySpringValue" class="font-normal text-indigo-500">9.8</span> m/s²</label>
+                        <input type="range" id="gravitySpring" min="9.0" max="10.0" step="0.01" value="9.8">
+                    </div>
+                </div>
+
+                <div id="pendulumParams" class="space-y-4 pt-4 border-t hidden">
+                    <h3 class="text-lg font-semibold text-indigo-600">Con Lắc Đơn (Góc nhỏ)</h3>
+                    <div class="input-group">
+                        <label for="massPendulum">Khối lượng (m): <span id="massPendulumValue" class="font-normal text-indigo-500">0.5</span> kg</label>
+                        <input type="range" id="massPendulum" min="0.1" max="5.0" step="0.1" value="0.5">
+                    </div>
+                    <div class="input-group">
+                        <!-- Cập nhật: Chiều dài dây (l) -->
+                        <label for="lengthPendulum">Chiều dài dây (l): <span id="lengthPendulumValue" class="font-normal text-indigo-500">1.0</span> m</label>
+                        <input type="range" id="lengthPendulum" min="0.1" max="5.0" step="0.1" value="1.0">
+                    </div>
+                    <div class="input-group">
+                        <label for="angleAmplitude">Biên độ Góc (A₀): <span id="angleAmplitudeValue" class="font-normal text-indigo-500">10.0</span> độ</label>
+                        <input type="range" id="angleAmplitude" min="1.0" max="30.0" step="1.0" value="10.0">
+                    </div>
+                    <div class="input-group">
+                        <label for="gravityPendulum">Gia tốc trọng trường (g): <span id="gravityPendulumValue" class="font-normal text-indigo-500">9.8</span> m/s²</label>
+                        <input type="range" id="gravityPendulum" min="9.0" max="10.0" step="0.01" value="9.8">
+                    </div>
+                </div>
+            </div>
+
+            <div class="lg:col-span-2 relative">
+                <h2 class="text-xl font-bold text-gray-700 border-b pb-2 mb-4">Hình Ảnh Trực Quan</h2>
+                <canvas id="simCanvas" class="sim-canvas w-full h-96"></canvas>
+
+                <div class="mt-4 p-4 bg-indigo-50 rounded-lg border border-indigo-200">
+                    <h3 class="text-lg font-bold text-indigo-700 mb-2">Thông số tức thời</h3>
+                    <div class="grid grid-cols-4 gap-4 text-sm font-mono">
+                        <div id="displayTime" class="p-2 bg-white rounded-md shadow-sm border whitespace-nowrap overflow-hidden">Thời gian (t): 0.00 s</div>
+                        <div id="displayPosition" class="p-2 bg-white rounded-md shadow-sm border whitespace-nowrap overflow-hidden">Vị trí (x): 0.00 cm</div>
+                        
+                        <div id="displayPeriod" class="p-2 bg-white rounded-md shadow-sm border font-semibold text-purple-700 whitespace-nowrap overflow-hidden">Chu kỳ (T): 0.00 s</div>
+                        <div id="displayFrequency" class="p-2 bg-white rounded-md shadow-sm border font-semibold text-purple-700 whitespace-nowrap overflow-hidden">Tần số (f): 0.00 Hz</div>
+
+                        <div id="displayKinetic" class="p-2 bg-green-50 border-green-300 border rounded-md shadow-sm font-semibold text-green-700 whitespace-nowrap overflow-hidden min-w-0">Eđ: 0.0000 J</div>
+                        <div id="displayPotential" class="p-2 bg-red-50 border-red-300 border rounded-md shadow-sm font-semibold text-red-700 whitespace-nowrap overflow-hidden min-w-0">Et: 0.0000 J</div>
+                        
+                        <div id="displayTotalEnergy" class="p-2 bg-blue-100 border-blue-400 border rounded-md shadow-sm col-span-2 font-bold text-base text-blue-700 whitespace-nowrap overflow-hidden min-w-0">
+                            Cơ năng (E = Eđ + Et): <span id="totalEnergyValue">0.0000</span> J (Không đổi)
+                        </div>
+                    </div>
+                </div>
+            </div>
+        </div>
+
+        <div class="mt-8">
+            <h2 class="text-xl font-bold text-gray-700 border-b pb-2 mb-4">Đồ Thị Năng Lượng - Thời Gian (Eđ + Et = E)</h2>
+            <canvas id="energyGraphCanvas" class="energy-graph-canvas w-full h-80"></canvas>
+        </div>
+    </div>
+
+    <script type="module">
+        // --- CÁC HẰNG SỐ CƠ BẢN ---
+        const PI = Math.PI;
+        // Các giá trị cos(omega*t) cho vị trí đặc biệt
+        const SPECIAL_COS_VALUES = [1.0, Math.sqrt(3)/2, Math.sqrt(2)/2, 0.5, 0.0, -0.5, -Math.sqrt(2)/2, -Math.sqrt(3)/2, -1.0];
+        const STEP_TIME_FRACTION = 1/80; 
+        const GRAPH_WINDOW_TIME = 5.0; // Hiển thị 5 giây trên đồ thị tại một thời điểm
+        const MAX_PENDULUM_L_INPUT = 5.0; // Giá trị max của slider l
+
+        // --- CÁC BIẾN TRẠNG THÁI ---
+        let animationFrameId;
+        let isPlaying = false;
+        let currentTime = 0;
+        let currentPendulum = 'spring'; 
+        let maxEnergy = 0;
+
+        // DOM & Canvas
+        const simCanvas = document.getElementById('simCanvas');
+        const energyGraphCanvas = document.getElementById('energyGraphCanvas');
+        const ctxSim = simCanvas.getContext('2d');
+        const ctxGraph = energyGraphCanvas.getContext('2d');
+        const playPauseBtn = document.getElementById('playPauseBtn');
+        const restartBtn = document.getElementById('restartBtn');
+        const stepForwardBtn = document.getElementById('stepForwardBtn');
+        const stepBackBtn = document.getElementById('stepBackBtn');
+
+        // Params
+        const params = {
+            m: 1.0, k: 10.0, A: 0.1, L0_spring: 0.5, g_spring: 9.8, springType: 'vertical',
+            m_pendulum: 0.5, l: 1.0, A0: 10 * PI / 180, g_pendulum: 9.8
+        };
+
+        // Graph data: Lưu trữ lịch sử, nhưng chỉ vẽ cửa sổ thời gian
+        // E (Cơ năng) sẽ lưu giá trị HẰNG SỐ (E_constant) để đồ thị là đường thẳng
+        const energyData = { t: [], Ed: [], Et: [], E: [] };
+        
+        // --- HÀM HỖ TRỢ ---
+        const round = (num, dp) => Math.round(num * Math.pow(10, dp)) / Math.pow(10, dp);
+        const degToRad = (deg) => deg * PI / 180;
+        const radToDeg = (rad) => rad * 180 / PI;
+
+        // --- TÍNH TOÁN VẬT LÝ ---
+        function getPhysicsConstants(type, time) {
+            let T, omega, x, v, Ed, Et, E_constant, E_current;
+
+            if (type === 'spring') {
+                const m = params.m;
+                const k = params.k;
+                const A = params.A; 
+                omega = Math.sqrt(k / m);
+                T = 2 * PI / omega;
+                // x=0 tại VTCB, chiều dương hướng ra xa điểm cố định (xuống hoặc phải)
+                x = A * Math.cos(omega * time);
+                v = -A * omega * Math.sin(omega * time);
+                Ed = 0.5 * m * v * v;
+                Et = 0.5 * k * x * x;
+                // E_constant là cơ năng bảo toàn (tính bằng năng lượng cực đại tại biên)
+                E_constant = 0.5 * k * A * A; 
+            } else {
+                const m = params.m_pendulum;
+                const l = params.l;
+                const A0 = params.A0;
+                const g = params.g_pendulum;
+                omega = Math.sqrt(g / l);
+                T = 2 * PI / omega;
+                // x là góc alpha
+                x = A0 * Math.cos(omega * time); 
+                const omega_angle = -A0 * omega * Math.sin(omega * time);
+                
+                // Tính thế năng (lấy mốc tại VTCB)
+                const h = l * (1 - Math.cos(x)); 
+                Et = m * g * h;
+                
+                // Tính động năng (v = l * omega_angle)
+                const v_sq = (l * omega_angle)**2;
+                Ed = 0.5 * m * v_sq;
+                
+                // E_constant là cơ năng bảo toàn (tính bằng năng lượng cực đại tại biên)
+                const h_max = l * (1 - Math.cos(A0));
+                E_constant = m * g * h_max;
+            }
+            
+            // Tính tổng năng lượng hiện tại (chỉ để hiển thị text tức thời, không dùng để vẽ đồ thị E)
+            E_current = Ed + Et;
+
+            // Tính tần số f
+            const f = 1 / T;
+            
+            return { T, f, omega, x, Ed, Et, E_constant: Math.max(1e-6, E_constant), E_current: Math.max(1e-6, E_current) };
+        }
+
+        // --- VẼ TRỰC QUAN (SIMULATION) ---
+        function resizeCanvas() {
+            simCanvas.width = simCanvas.offsetWidth;
+            simCanvas.height = simCanvas.offsetHeight;
+            energyGraphCanvas.width = energyGraphCanvas.offsetWidth;
+            energyGraphCanvas.height = energyGraphCanvas.offsetHeight;
+            drawGraph();
+            updateStateAndDraw(currentTime);
+        }
+
+        function drawSpringPendulum(time, x, A, L0, w, h) {
+            ctxSim.clearRect(0, 0, w, h);
+            
+            // Xử lý chung: Tỷ lệ và Vị trí
+            const PADDING = 40;
+            const BLOCK_SIZE = 40;
+            const FIXED_SIZE = 100; // Kích thước tường/trần cố định
+
+            // Phân biệt vẽ theo loại lò xo
+            if (params.springType === 'vertical') {
+                // --- LÒ XO THẲNG ĐỨNG ---
+                const C_x = w / 2;
+                const Fixed_Y = PADDING; 
+
+                const deltaL = params.m * params.g_spring / params.k; 
+                const L_eq = params.L0_spring + deltaL; 
+                const totalSimHeight = h - 2 * PADDING - BLOCK_SIZE;
+                const maxSimLength = L_eq + params.A;
+                const SCALE_FACTOR = maxSimLength > 0.01 ? totalSimHeight / maxSimLength : 100;
+                const L_eq_px = L_eq * SCALE_FACTOR;
+
+                const Y_eq_center = Fixed_Y + L_eq_px + BLOCK_SIZE / 2; 
+                const Y_current_center = Y_eq_center + x * SCALE_FACTOR; // x dương hướng xuống
+                const Y_current_top = Y_current_center - BLOCK_SIZE / 2;
+
+                // Vẽ Điểm cố định
+                ctxSim.fillStyle = '#4a5568';
+                ctxSim.fillRect(C_x - 50, 0, 100, Fixed_Y);
+
+                // Vẽ Lò xo
+                const spring_y_end = Y_current_top;
+                const numCoils = 15;
+                const coilHeight = spring_y_end - Fixed_Y;
+                ctxSim.strokeStyle = '#4f46e5';
+                ctxSim.lineWidth = 3;
+                ctxSim.beginPath();
+                ctxSim.moveTo(C_x, Fixed_Y);
+                for (let i = 0; i < numCoils; i++) {
+                    const y = Fixed_Y + (coilHeight / numCoils) * (i + 0.5);
+                    const offset = (i % 2 === 0) ? 10 : -10;
+                    ctxSim.lineTo(C_x + offset, y);
+                }
+                ctxSim.lineTo(C_x, spring_y_end);
+                ctxSim.stroke();
+
+                // Vẽ Vật
+                ctxSim.fillStyle = '#3b82f6';
+                ctxSim.fillRect(C_x - BLOCK_SIZE / 2, Y_current_top, BLOCK_SIZE, BLOCK_SIZE);
+                ctxSim.strokeStyle = '#1e40af';
+                ctxSim.lineWidth = 2;
+                ctxSim.strokeRect(C_x - BLOCK_SIZE / 2, Y_current_top, BLOCK_SIZE, BLOCK_SIZE);
+
+                // Vẽ Trục VTCB và Biên độ
+                ctxSim.strokeStyle = 'rgba(0, 0, 0, 0.3)';
+                ctxSim.lineWidth = 1;
+                ctxSim.setLineDash([5, 5]);
+                // Ngang VTCB
+                ctxSim.beginPath(); ctxSim.moveTo(C_x - 100, Y_eq_center); ctxSim.lineTo(C_x + 100, Y_eq_center); ctxSim.stroke();
+                // Dọc
+                ctxSim.beginPath(); ctxSim.moveTo(C_x, Y_eq_center - params.A*SCALE_FACTOR - 20); ctxSim.lineTo(C_x, Y_eq_center + params.A*SCALE_FACTOR + 20); ctxSim.stroke();
+                ctxSim.setLineDash([]);
+
+                ctxSim.fillStyle = 'rgba(0, 0, 0, 0.7)'; ctxSim.font = '12px Inter'; ctxSim.textAlign = 'left';
+                ctxSim.fillText('VTCB', C_x + 40, Y_eq_center + 5);
+
+                // Biên độ
+                const A_px = params.A * SCALE_FACTOR;
+                ctxSim.strokeStyle = 'rgba(255, 0, 0, 0.7)'; ctxSim.lineWidth = 1; ctxSim.fillStyle = 'red';
+                // +A (dưới)
+                ctxSim.beginPath(); ctxSim.moveTo(C_x - 20, Y_eq_center + A_px); ctxSim.lineTo(C_x + 20, Y_eq_center + A_px); ctxSim.stroke();
+                ctxSim.textAlign = 'right'; ctxSim.fillText(`+A`, C_x - 25, Y_eq_center + A_px + 5);
+                // -A (trên)
+                ctxSim.beginPath(); ctxSim.moveTo(C_x - 20, Y_eq_center - A_px); ctxSim.lineTo(C_x + 20, Y_eq_center - A_px); ctxSim.stroke();
+                ctxSim.fillText(`-A`, C_x - 25, Y_eq_center - A_px + 5);
+
+                // Marker vị trí hiện tại (x cm)
+                ctxSim.fillStyle = '#f97316'; ctxSim.textAlign = 'left';
+                ctxSim.fillText(`x=${round(x * 100, 1)} cm`, C_x + 30, Y_current_center + 5);
+                ctxSim.beginPath(); ctxSim.arc(C_x, Y_current_center, 4, 0, 2*PI); ctxSim.fill();
+
+            } else {
+                // --- LÒ XO NẰM NGANG ---
+                const Fixed_X = PADDING; 
+                const Center_Y = h / 2;
+                
+                // Vị trí cân bằng là L0 (do nằm ngang không có deltaL do trọng lực trong phương chuyển động)
+                const L_eq = params.L0_spring; 
+                const totalSimWidth = w - 2 * PADDING - BLOCK_SIZE;
+                const maxSimLength = L_eq + params.A;
+                const SCALE_FACTOR = maxSimLength > 0.01 ? totalSimWidth / maxSimLength : 100;
+                
+                const L_eq_px = L_eq * SCALE_FACTOR;
+                const X_eq_center = Fixed_X + L_eq_px + BLOCK_SIZE / 2;
+                const X_current_center = X_eq_center + x * SCALE_FACTOR; // x dương hướng phải
+                const X_current_left = X_current_center - BLOCK_SIZE / 2;
+
+                // Vẽ Tường (Bên trái)
+                ctxSim.fillStyle = '#4a5568';
+                ctxSim.fillRect(0, Center_Y - 50, Fixed_X, 100);
+                
+                // Vẽ Sàn
+                ctxSim.strokeStyle = '#9ca3af'; ctxSim.lineWidth = 2;
+                ctxSim.beginPath(); ctxSim.moveTo(0, Center_Y + BLOCK_SIZE/2); ctxSim.lineTo(w, Center_Y + BLOCK_SIZE/2); ctxSim.stroke();
+
+                // Vẽ Lò xo
+                const spring_x_end = X_current_left;
+                const numCoils = 15;
+                const coilWidth = 20; // Chiều cao cuộn trong vẽ ngang
+                const coilLength = spring_x_end - Fixed_X;
+                ctxSim.strokeStyle = '#4f46e5'; ctxSim.lineWidth = 3;
+                ctxSim.beginPath(); ctxSim.moveTo(Fixed_X, Center_Y);
+                for (let i = 0; i < numCoils; i++) {
+                    const x_pos = Fixed_X + (coilLength / numCoils) * (i + 0.5);
+                    const offset = (i % 2 === 0) ? 10 : -10;
+                    ctxSim.lineTo(x_pos, Center_Y + offset);
+                }
+                ctxSim.lineTo(spring_x_end, Center_Y);
+                ctxSim.stroke();
+
+                // Vẽ Vật
+                ctxSim.fillStyle = '#3b82f6';
+                ctxSim.fillRect(X_current_left, Center_Y - BLOCK_SIZE / 2, BLOCK_SIZE, BLOCK_SIZE);
+                ctxSim.strokeStyle = '#1e40af'; ctxSim.lineWidth = 2;
+                ctxSim.strokeRect(X_current_left, Center_Y - BLOCK_SIZE / 2, BLOCK_SIZE, BLOCK_SIZE);
+
+                // Vẽ Trục VTCB và Biên độ
+                ctxSim.strokeStyle = 'rgba(0, 0, 0, 0.3)'; ctxSim.lineWidth = 1; ctxSim.setLineDash([5, 5]);
+                
+                // Dọc VTCB
+                ctxSim.beginPath(); ctxSim.moveTo(X_eq_center, Center_Y - 60); ctxSim.lineTo(X_eq_center, Center_Y + 60); ctxSim.stroke();
+                // Ngang Trục
+                ctxSim.beginPath(); ctxSim.moveTo(X_eq_center - params.A*SCALE_FACTOR - 20, Center_Y); ctxSim.lineTo(X_eq_center + params.A*SCALE_FACTOR + 20, Center_Y); ctxSim.stroke();
+                ctxSim.setLineDash([]);
+
+                ctxSim.fillStyle = 'rgba(0, 0, 0, 0.7)'; ctxSim.font = '12px Inter'; ctxSim.textAlign = 'center';
+                ctxSim.fillText('VTCB', X_eq_center, Center_Y - 70);
+
+                // Biên độ
+                const A_px = params.A * SCALE_FACTOR;
+                ctxSim.strokeStyle = 'rgba(255, 0, 0, 0.7)'; ctxSim.lineWidth = 1; ctxSim.fillStyle = 'red';
+                
+                // +A (Phải)
+                ctxSim.beginPath(); ctxSim.moveTo(X_eq_center + A_px, Center_Y - 20); ctxSim.lineTo(X_eq_center + A_px, Center_Y + 20); ctxSim.stroke();
+                ctxSim.fillText(`+A`, X_eq_center + A_px, Center_Y - 30);
+                
+                // -A (Trái)
+                ctxSim.beginPath(); ctxSim.moveTo(X_eq_center - A_px, Center_Y - 20); ctxSim.lineTo(X_eq_center - A_px, Center_Y + 20); ctxSim.stroke();
+                ctxSim.fillText(`-A`, X_eq_center - A_px, Center_Y - 30);
+
+                // Marker vị trí hiện tại
+                ctxSim.fillStyle = '#f97316'; ctxSim.textAlign = 'center';
+                ctxSim.fillText(`x=${round(x * 100, 1)} cm`, X_current_center, Center_Y + BLOCK_SIZE + 15);
+                ctxSim.beginPath(); ctxSim.arc(X_current_center, Center_Y, 4, 0, 2*PI); ctxSim.fill();
+            }
+        }
+
+        function drawSimplePendulum(time, alpha, A0, l, w, h) {
+            ctxSim.clearRect(0, 0, w, h);
+            const C_x = w / 2;
+            const C_y = 50; 
+            const BLOCK_RADIUS = 20;
+
+            // Tính độ dài pixel dựa trên giá trị l
+            const MAX_VISUAL_L = Math.min(h - C_y - 50, C_x * 0.9);
+            // L_PX sẽ tỷ lệ thuận với l so với giá trị l max (5.0m)
+            const L_PX = (l / MAX_PENDULUM_L_INPUT) * MAX_VISUAL_L;
+
+            const x_mass = C_x + L_PX * Math.sin(alpha);
+            const y_mass = C_y + L_PX * Math.cos(alpha);
+
+            // Vẽ Điểm treo cố định
+            ctxSim.fillStyle = '#4a5568';
+            ctxSim.fillRect(C_x - 50, 0, 100, C_y);
+            ctxSim.beginPath(); ctxSim.arc(C_x, C_y, 5, 0, 2*PI); ctxSim.fill();
+
+            // Vẽ Dây treo
+            ctxSim.strokeStyle = '#4f46e5';
+            ctxSim.lineWidth = 3;
+            ctxSim.beginPath(); ctxSim.moveTo(C_x, C_y); ctxSim.lineTo(x_mass, y_mass); ctxSim.stroke();
+
+            // Vẽ Quả nặng
+            ctxSim.fillStyle = '#f97316';
+            ctxSim.beginPath(); ctxSim.arc(x_mass, y_mass, BLOCK_RADIUS, 0, 2*PI); ctxSim.fill();
+            ctxSim.strokeStyle = '#a16207'; ctxSim.lineWidth = 2; ctxSim.stroke();
+
+            // VTCB (Trục Y)
+            ctxSim.strokeStyle = 'rgba(0,0,0,0.3)';
+            ctxSim.setLineDash([5,5]);
+            ctxSim.beginPath(); ctxSim.moveTo(C_x, C_y); ctxSim.lineTo(C_x, C_y + L_PX + 20); ctxSim.stroke();
+            ctxSim.setLineDash([]);
+            
+            // Cung dao động (Biên độ góc)
+            ctxSim.strokeStyle = 'rgba(255,0,0,0.4)';
+            ctxSim.beginPath(); ctxSim.arc(C_x, C_y, L_PX, PI/2 - A0, PI/2 + A0); ctxSim.stroke();
+
+            // Nhãn góc
+            ctxSim.fillStyle = '#059669';
+            ctxSim.font = '14px Inter';
+            ctxSim.textAlign = 'center';
+            ctxSim.fillText(`α=${round(radToDeg(alpha), 1)}°`, x_mass, y_mass + BLOCK_RADIUS + 20);
+        }
+
+        // --- VẼ ĐỒ THỊ NĂNG LƯỢNG (SCROLLING) ---
+        function drawGraph() {
+            const W = energyGraphCanvas.width;
+            const H = energyGraphCanvas.height;
+            ctxGraph.clearRect(0, 0, W, H);
+
+            const PADDING = 40;
+            const GRAPH_W = W - PADDING - 10;
+            const GRAPH_H = H - 2 * PADDING;
+
+            // Xác định cửa sổ thời gian hiển thị: [t_end - GRAPH_WINDOW_TIME, t_end]
+            let t_end = Math.max(currentTime, GRAPH_WINDOW_TIME);
+            let t_start = t_end - GRAPH_WINDOW_TIME;
+
+            // Cơ năng toàn phần (E_constant) dùng để scale trục Y
+            // Dùng E_constant (Năng lượng lý thuyết) cho trục Y cố định
+            const { E_constant } = getPhysicsConstants(currentPendulum, 0); 
+            const maxE = E_constant * 1.2; 
+
+            // Vẽ Trục
+            ctxGraph.strokeStyle = '#4a5568';
+            ctxGraph.lineWidth = 1;
+            ctxGraph.beginPath();
+            ctxGraph.moveTo(PADDING, PADDING); // Top Y
+            ctxGraph.lineTo(PADDING, H - PADDING); // Bottom Y (Origin)
+            ctxGraph.lineTo(W - 10, H - PADDING); // Right X
+            ctxGraph.stroke();
+
+            // Label trục
+            ctxGraph.fillStyle = '#4a5568';
+            ctxGraph.font = '10px Inter';
+            ctxGraph.textAlign = 'right';
+            ctxGraph.fillText('Thời gian (s)', W - 10, H - PADDING + 30);
+            ctxGraph.textAlign = 'left';
+            ctxGraph.fillText('Năng lượng (J)', 5, PADDING - 10);
+            ctxGraph.fillText(round(E_constant, 3), 0, H - PADDING - (E_constant/maxE)*GRAPH_H);
+            ctxGraph.fillText('0', 5, H - PADDING);
+
+            if (energyData.t.length === 0) return;
+
+            // Hàm chuyển đổi tọa độ
+            const getX = (t) => PADDING + ((t - t_start) / GRAPH_WINDOW_TIME) * GRAPH_W;
+            const getY = (e) => H - PADDING - (e / maxE) * GRAPH_H;
+
+            // Clip region để đồ thị không vẽ đè lên trục
+            ctxGraph.save();
+            ctxGraph.beginPath();
+            ctxGraph.rect(PADDING, PADDING, GRAPH_W, GRAPH_H);
+            ctxGraph.clip();
+
+            // Vẽ các đường
+            const drawLine = (dataArr, color) => {
+                ctxGraph.strokeStyle = color;
+                ctxGraph.lineWidth = 2;
+                ctxGraph.beginPath();
+                let started = false;
+                for (let i = 0; i < energyData.t.length; i++) {
+                    const t = energyData.t[i];
+                    if (t < t_start) continue; 
+                    if (t > t_end) break;
+
+                    const x = getX(t);
+                    const y = getY(dataArr[i]);
+                    if (!started) {
+                        ctxGraph.moveTo(x, y);
+                        started = true;
+                    } else {
+                        ctxGraph.lineTo(x, y);
+                    }
+                }
+                ctxGraph.stroke();
+            };
+
+            drawLine(energyData.Et, 'red'); // Thế năng (Et)
+            drawLine(energyData.Ed, 'green'); // Động năng (Ed)
+            // Cập nhật: Vẽ Cơ năng (E) bằng giá trị HẰNG SỐ (E_constant)
+            drawLine(energyData.E, 'blue'); 
+
+            ctxGraph.restore();
+
+            // Vẽ mốc thời gian hiện tại
+            if (currentTime >= t_start && currentTime <= t_end) {
+                const curX = getX(currentTime);
+                ctxGraph.strokeStyle = '#333';
+                ctxGraph.setLineDash([4, 4]);
+                ctxGraph.beginPath();
+                ctxGraph.moveTo(curX, PADDING);
+                ctxGraph.lineTo(curX, H - PADDING);
+                ctxGraph.stroke();
+                ctxGraph.setLineDash([]);
+            }
+
+            // Chú thích
+            ctxGraph.font = '12px Inter';
+            ctxGraph.textAlign = 'right';
+            const legendX = W - 20;
+            ctxGraph.fillStyle = 'green'; ctxGraph.fillText('Động năng (Eđ)', legendX, PADDING + 10);
+            ctxGraph.fillStyle = 'red'; ctxGraph.fillText('Thế năng (Et)', legendX, PADDING + 25);
+            ctxGraph.fillStyle = 'blue'; ctxGraph.fillText('Cơ năng (E)', legendX, PADDING + 40);
+        }
+
+        // --- CẬP NHẬT TRẠNG THÁI ---
+        let lastTime = 0;
+        function updateSimulation(timestamp) {
+            if (!isPlaying) { lastTime = timestamp; return; }
+            const dt = (timestamp - lastTime) / 1000;
+            lastTime = timestamp;
+            currentTime += dt;
+            updateStateAndDraw(currentTime);
+            animationFrameId = requestAnimationFrame(updateSimulation);
+        }
+
+        function updateStateAndDraw(time) {
+            // Lấy T, f, x, Ed, Et, E_constant (max lý thuyết), và E_current (Ed+Et)
+            const { T, f, x, Ed, Et, E_constant, E_current } = getPhysicsConstants(currentPendulum, time);
+            
+            const posDisplay = currentPendulum === 'spring' ? x * 100 : radToDeg(x);
+            const unit = currentPendulum === 'spring' ? 'cm' : '°';
+            const label = currentPendulum === 'spring' ? 'x' : 'α';
+
+            document.getElementById('displayTime').textContent = `Thời gian (t): ${round(time, 2)} s`;
+            document.getElementById('displayPosition').textContent = `Vị trí (${label}): ${round(posDisplay, 2)} ${unit}`;
+            
+            // Cập nhật giá trị Chu kỳ và Tần số
+            document.getElementById('displayPeriod').textContent = `Chu kỳ (T): ${round(T, 3)} s`;
+            document.getElementById('displayFrequency').textContent = `Tần số (f): ${round(f, 3)} Hz`;
+
+            // Cập nhật giá trị Động năng và Thế năng (Đã rút gọn nhãn hiển thị)
+            document.getElementById('displayKinetic').textContent = `Eđ: ${round(Ed, 4)} J`;
+            document.getElementById('displayPotential').textContent = `Et: ${round(Et, 4)} J`;
+            
+            // Cập nhật: Hiển thị giá trị Cơ năng LÝ THUYẾT KHÔNG ĐỔI (E_constant)
+            document.getElementById('totalEnergyValue').textContent = round(E_constant, 4); 
+
+            if (currentPendulum === 'spring') {
+                drawSpringPendulum(time, x, params.A, params.L0_spring, simCanvas.width, simCanvas.height);
+            } else {
+                // Truyền tham số l vào hàm vẽ con lắc đơn
+                drawSimplePendulum(time, x, params.A0, params.l, simCanvas.width, simCanvas.height);
+            }
+
+            if (energyData.t.length === 0 || time > energyData.t[energyData.t.length-1]) {
+                energyData.t.push(time);
+                energyData.Ed.push(Ed);
+                energyData.Et.push(Et);
+                // Cập nhật: LƯU GIÁ TRỊ CƠ NĂNG KHÔNG ĐỔI (E_constant) để vẽ đường thẳng hoàn hảo
+                energyData.E.push(E_constant); 
+                
+                maxEnergy = Math.max(maxEnergy, E_constant * 1.05); 
+
+                while (energyData.t.length > 0 && energyData.t[0] < time - GRAPH_WINDOW_TIME - 2) {
+                    energyData.t.shift();
+                    energyData.Ed.shift();
+                    energyData.Et.shift();
+                    energyData.E.shift();
+                }
+            }
+            drawGraph();
+        }
+
+        // --- ĐIỀU KHIỂN & BƯỚC NHẢY ---
+        function togglePlayPause() {
+            isPlaying = !isPlaying;
+            if (isPlaying) {
+                playPauseBtn.textContent = '⏸ Tạm dừng';
+                stepForwardBtn.disabled = true;
+                stepBackBtn.disabled = true;
+                lastTime = performance.now();
+                animationFrameId = requestAnimationFrame(updateSimulation);
+            } else {
+                playPauseBtn.textContent = '▶ Chơi';
+                stepForwardBtn.disabled = false;
+                stepBackBtn.disabled = false;
+                cancelAnimationFrame(animationFrameId);
+            }
+        }
+
+        function restartSimulation() {
+            if (isPlaying) togglePlayPause();
+            currentTime = 0;
+            energyData.t = []; energyData.Ed = []; energyData.Et = []; energyData.E = [];
+            updateStateAndDraw(0);
+        }
+
+        function calculateStepTime(direction) {
+            if (isPlaying) return;
+            const { T, omega } = getPhysicsConstants(currentPendulum, currentTime);
+            if (!T || !omega) return;
+
+            const standardStep = direction * T * STEP_TIME_FRACTION;
+            let targetTime = currentTime + standardStep;
+            let bestJumpTime = null;
+            let minDiff = Infinity;
+
+            for (let cosVal of SPECIAL_COS_VALUES) {
+                const phiBase = Math.acos(Math.max(-1, Math.min(1, cosVal)));
+                const phases = [phiBase];
+                if (phiBase > 0 && phiBase < PI) phases.push(2 * PI - phiBase);
+
+                for (let phi of phases) {
+                    let t_spec_base = phi / omega;
+                    let k = Math.round((currentTime - t_spec_base) / T);
+                    let t_spec = t_spec_base + k * T;
+
+                    if (Math.abs(t_spec - currentTime) > T/2) {
+                        t_spec = t_spec_base + (k + 1) * T;
+                        if (Math.abs(t_spec - currentTime) > T/2) t_spec = t_spec_base + (k - 1) * T;
+                    }
+
+                    if (direction > 0 && t_spec <= currentTime + 1e-5) t_spec += T;
+                    if (direction < 0 && t_spec >= currentTime - 1e-5) t_spec -= T;
+
+                    if (Math.abs(t_spec - currentTime) > Math.abs(standardStep) * 1.5) continue;
+
+                    const diff = Math.abs(targetTime - t_spec);
+                    if (diff < minDiff) {
+                        minDiff = diff;
+                        bestJumpTime = t_spec;
+                    }
+                }
+            }
+
+            if (bestJumpTime !== null) targetTime = bestJumpTime;
+            
+            targetTime = Math.max(0, targetTime);
+            
+            if (targetTime < currentTime) {
+                let idx = energyData.t.findIndex(t => t >= targetTime - 1e-5);
+                if (idx !== -1) {
+                    energyData.t.splice(idx);
+                    energyData.Ed.splice(idx);
+                    energyData.Et.splice(idx);
+                    energyData.E.splice(idx);
+                }
+            }
+            currentTime = targetTime;
+            updateStateAndDraw(currentTime);
+        }
+
+        // --- INIT ---
+        window.addEventListener('resize', resizeCanvas);
+        window.addEventListener('load', () => {
+            resizeCanvas(); restartSimulation();
+        });
+        playPauseBtn.onclick = togglePlayPause;
+        restartBtn.onclick = restartSimulation;
+        stepForwardBtn.onclick = () => calculateStepTime(1);
+        stepBackBtn.onclick = () => calculateStepTime(-1);
+
+        // Inputs Setup
+        const setParam = (key, val, displayId, factor=1) => {
+            params[key] = val * factor;
+            document.getElementById(displayId).textContent = val.toFixed(key.startsWith('g') ? 2 : 1);
+            restartSimulation(); // Đảm bảo mô phỏng được khởi động lại và vẽ lại
+        };
+
+        const springRadios = document.getElementsByName('springType');
+        springRadios.forEach(radio => {
+            radio.addEventListener('change', (e) => {
+                params.springType = e.target.value;
+                restartSimulation();
+            });
+        });
+
+        document.getElementById('springSelect').onclick = () => {
+            currentPendulum = 'spring';
+            document.getElementById('springParams').classList.remove('hidden');
+            document.getElementById('pendulumParams').classList.add('hidden');
+            document.getElementById('springSelect').classList.replace('bg-gray-200','bg-indigo-600');
+            document.getElementById('springSelect').classList.replace('text-gray-700','text-white');
+            document.getElementById('pendulumSelect').classList.replace('bg-indigo-600','bg-gray-200');
+            document.getElementById('pendulumSelect').classList.replace('text-white','text-gray-700');
+            restartSimulation();
+        };
+        document.getElementById('pendulumSelect').onclick = () => {
+            currentPendulum = 'pendulum';
+            document.getElementById('springParams').classList.add('hidden');
+            document.getElementById('pendulumParams').classList.remove('hidden');
+            document.getElementById('pendulumSelect').classList.replace('bg-gray-200','bg-indigo-600');
+            document.getElementById('pendulumSelect').classList.replace('text-gray-700','text-white');
+            document.getElementById('springSelect').classList.replace('bg-indigo-600','bg-gray-200');
+            document.getElementById('springSelect').classList.replace('text-white','text-gray-700');
+            restartSimulation();
+        };
+
+        // Bind Inputs
+        document.getElementById('mass').oninput = e => setParam('m', +e.target.value, 'massValue');
+        document.getElementById('stiffness').oninput = e => setParam('k', +e.target.value, 'stiffnessValue');
+        document.getElementById('amplitude').oninput = e => setParam('A', +e.target.value, 'amplitudeValue', 0.01);
+        document.getElementById('lengthSpring').oninput = e => setParam('L0_spring', +e.target.value, 'lengthSpringValue');
+        document.getElementById('gravitySpring').oninput = e => setParam('g_spring', +e.target.value, 'gravitySpringValue');
+        
+        document.getElementById('massPendulum').oninput = e => setParam('m_pendulum', +e.target.value, 'massPendulumValue');
+        // Kích hoạt setParam để cập nhật l và gọi restartSimulation
+        document.getElementById('lengthPendulum').oninput = e => setParam('l', +e.target.value, 'lengthPendulumValue');
+        document.getElementById('angleAmplitude').oninput = e => setParam('A0', +e.target.value, 'angleAmplitudeValue', PI/180);
+        document.getElementById('gravityPendulum').oninput = e => setParam('g_pendulum', +e.target.value, 'gravityPendulumValue');
+
+    </script>
+</body>
+</html>

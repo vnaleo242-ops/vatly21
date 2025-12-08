@@ -1,0 +1,742 @@
+<!DOCTYPE html>
+<html lang="vi">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Physics Lab Interface</title>
+    <script src="https://cdn.tailwindcss.com"></script>
+    <link href="https://fonts.googleapis.com/css2?family=Inter:wght@300;400;500;600&family=Rajdhani:wght@500;600;700&family=JetBrains+Mono:wght@400;500&display=swap" rel="stylesheet">
+    
+    <!-- Icons: Lucide Icons -->
+    <script src="https://unpkg.com/lucide@latest"></script>
+
+    <script>
+        tailwind.config = {
+            darkMode: 'class', // BẬT DARK MODE BẰNG CLASS
+            theme: {
+                extend: {
+                    fontFamily: {
+                        sans: ['Inter', 'sans-serif'],
+                        tech: ['Rajdhani', 'sans-serif'],
+                        mono: ['JetBrains Mono', 'monospace'],
+                    },
+                    colors: {
+                        lab: {
+                            // Light Mode (Updated with Purple Theme)
+                            bg: '#f5e1fd',      // Main Background (Updated)
+                            panel: '#ffffff',   // White panels
+                            surface: '#fae8ff', // Lighter purple for surface areas
+                            cyan: '#b298d3',    // Primary Brand Color (Updated - Purple)
+                            accent: '#ce9cd9',  // Secondary Accent (Updated - Light Purple)
+                            
+                            success: '#059669', // Emerald 600
+                            warning: '#d97706', // Amber 600
+                            danger: '#dc2626',  // Red 600
+                            text: '#0f172a',    // Slate 900 - Dark text
+                            muted: '#64748b',   // Slate 500
+                            
+                            // Dark Mode specific colors (Kept Original)
+                            dark_bg: '#0f172a',    // Slate 900
+                            dark_panel: '#1e293b',  // Slate 800
+                            dark_surface: '#334155',// Slate 700
+                            dark_text: '#f1f5f9',  // Slate 100
+                            dark_muted: '#94a3b8'   // Slate 400
+                        }
+                    },
+                    backgroundImage: {
+                        'grid-pattern': "linear-gradient(to right, #e2e8f0 1px, transparent 1px), linear-gradient(to bottom, #e2e8f0 1px, transparent 1px)",
+                    },
+                    animation: {
+                        'pulse-slow': 'pulse 3s cubic-bezier(0.4, 0, 0.6, 1) infinite',
+                        'scan': 'scan 4s linear infinite',
+                    },
+                    keyframes: {
+                        scan: {
+                            '0%': { transform: 'translateY(-100%)' },
+                            '100%': { transform: 'translateY(100%)' }
+                        }
+                    }
+                }
+            }
+        }
+    </script>
+
+    <style>
+        /* Body colors set by Tailwind classes on the <html> tag */
+        
+        /* Glass Panel Styling for Light Mode */
+        .glass-panel {
+            background: rgba(255, 255, 255, 0.85); /* Slightly more transparent to show purple bg */
+            backdrop-filter: blur(16px); 
+            border: 1px solid rgba(206, 156, 217, 0.3); /* Purple tint border */
+            box-shadow: 0 4px 10px rgba(178, 152, 211, 0.1); /* Purple tint shadow */
+            transition: all 0.4s cubic-bezier(0.25, 0.8, 0.25, 1);
+        }
+        
+        /* Dark Mode Glass Panel */
+        .dark .glass-panel {
+            background: rgba(30, 41, 59, 0.9); /* lab-dark_panel equivalent */
+            border: 1px solid rgba(51, 65, 85, 0.8); /* Slate 700 equivalent */
+            box-shadow: 0 4px 10px rgba(0, 0, 0, 0.3);
+        }
+
+        .glass-panel:hover {
+            border-color: rgba(178, 152, 211, 0.8); /* #b298d3 */
+            box-shadow: 0 15px 30px rgba(178, 152, 211, 0.2), 0 4px 8px rgba(0, 0, 0, 0.05); 
+            transform: translateY(-4px); 
+        }
+        
+        .dark .glass-panel:hover {
+            box-shadow: 0 15px 30px rgba(6, 182, 212, 0.15), 0 4px 8px rgba(0, 0, 0, 0.2);
+            border-color: rgba(6, 182, 212, 1);
+        }
+
+        /* Scrollbar (Light Mode) */
+        ::-webkit-scrollbar { width: 6px; }
+        ::-webkit-scrollbar-track { background: #f5e1fd; }
+        ::-webkit-scrollbar-thumb { background: #ce9cd9; border-radius: 3px; }
+        ::-webkit-scrollbar-thumb:hover { background: #b298d3; }
+        
+        /* Scrollbar (Dark Mode) */
+        .dark ::-webkit-scrollbar-track { background: #0f172a; }
+        .dark ::-webkit-scrollbar-thumb { background: #475569; }
+
+        /* Tech Text Shadow (Subtle) */
+        .text-tech-shadow {
+            text-shadow: 1px 1px 0px rgba(0,0,0,0.1);
+        }
+        .dark .text-tech-shadow {
+            text-shadow: 1px 1px 0px rgba(255,255,255,0.05);
+        }
+        
+        /* Corner Decoration */
+        .corner-marker {
+            position: absolute;
+            width: 8px;
+            height: 8px;
+            border-color: #b298d3; /* Main Purple */
+            border-style: solid;
+            opacity: 0.5;
+            transition: all 0.5s ease;
+        }
+        .top-left { top: 0; left: 0; border-width: 2px 0 0 2px; }
+        .top-right { top: 0; right: 0; border-width: 2px 2px 0 0; }
+        .bottom-left { bottom: 0; left: 0; border-width: 0 0 2px 2px; }
+        .bottom-right { bottom: 0; right: 0; border-width: 0 2px 2px 0; }
+
+        .group:hover .corner-marker {
+            opacity: 1; 
+            border-color: #ce9cd9; /* Accent Purple */
+        }
+        
+        .dark .corner-marker {
+            border-color: #06b6d4;
+        }
+
+        /* Sidebar link hover effect */
+        .nav-link {
+            transition: all 0.3s ease;
+        }
+        .nav-link:hover {
+            box-shadow: 0 2px 4px rgba(178, 152, 211, 0.15); /* Purple shadow */
+            background-color: #ffffff; /* Light hover */
+        }
+        .dark .nav-link:hover {
+             background-color: #334155; /* Dark hover */
+        }
+
+    </style>
+</head>
+<!-- APPLY DARK MODE CLASSES TO BODY/HTML -->
+<body class="h-screen flex overflow-hidden selection:bg-lab-cyan selection:text-white bg-lab-bg dark:bg-lab-dark_bg text-lab-text dark:text-lab-dark_text transition-colors duration-300">
+
+    <!-- Background Grid -->
+    <div class="fixed inset-0 bg-grid-pattern opacity-[0.3] pointer-events-none z-0 dark:opacity-[0.1] dark:bg-[linear-gradient(to_right,rgba(255,255,255,0.05)_1px,transparent_1px),linear-gradient(to_bottom,rgba(255,255,255,0.05)_1px,transparent_1px)]"></div>
+
+    <!-- SIDEBAR -->
+    <aside class="w-[280px] bg-white/80 dark:bg-lab-dark_panel backdrop-blur-md border-r border-lab-accent/30 dark:border-slate-700 flex-shrink-0 flex flex-col z-20 hidden lg:flex relative shadow-[4px_0_24px_rgba(178,152,211,0.08)]">
+        <!-- Logo Area -->
+        <div class="h-[80px] flex items-center px-6 border-b border-lab-accent/20 dark:border-slate-700 flex items-center px-6 relative overflow-hidden group">
+            <!-- Glare Effect on Hover -->
+            <div class="absolute inset-0 bg-lab-cyan/5 w-1/2 -skew-x-12 -translate-x-full group-hover:translate-x-full transition-transform duration-700 ease-out"></div>
+            <div class="flex items-center gap-3 relative z-10">
+                <div class="w-10 h-10 rounded-lg bg-lab-cyan text-white flex items-center justify-center shadow-lg shadow-purple-400/50 dark:shadow-cyan-400/50 transition-colors">
+                    <i data-lucide="atom" class="w-6 h-6 animate-pulse-slow"></i>
+                </div>
+                <div>
+                    <!-- Điều chỉnh màu chữ cho logo -->
+                    <h1 class="font-tech font-bold text-2xl text-slate-800 dark:text-lab-dark_text tracking-wider">PHYSICS<span class="text-lab-cyan">.LAB</span></h1>
+                    <div class="text-[10px] text-lab-muted dark:text-lab-dark_muted font-mono tracking-widest">V.2.0.25</div>
+                </div>
+            </div>
+        </div>
+
+        <!-- Navigation -->
+        <nav class="flex-1 overflow-y-auto py-6 px-4 space-y-1">
+            <div class="px-2 mb-3 text-[11px] font-mono text-lab-muted dark:text-lab-dark_muted uppercase tracking-widest flex items-center gap-2 font-semibold">
+                <span class="w-1 h-1 rounded-full bg-lab-cyan"></span> Main Modules
+            </div>
+            
+            <a href="index.html" class="flex items-center px-4 py-3 rounded-lg bg-lab-cyan/10 text-lab-cyan border border-lab-cyan/20 transition-all group relative overflow-hidden shadow-sm nav-link">
+                <div class="absolute inset-0 w-1 bg-lab-cyan left-0"></div>
+                <i data-lucide="layout-dashboard" class="w-5 h-5 mr-3"></i>
+                <span class="font-medium font-tech tracking-wide text-lg">Dashboard</span>
+                <div class="ml-auto w-2 h-2 rounded-full bg-lab-cyan"></div>
+            </a>
+
+            <div class="px-2 mt-8 mb-3 text-[11px] font-mono text-lab-muted dark:text-lab-dark_muted uppercase tracking-widest flex items-center gap-2 font-semibold">
+                <span class="w-1 h-1 rounded-full bg-slate-300 dark:bg-slate-600"></span> Experiments
+            </div>
+            
+            <a href="simulations.html" class="flex items-center px-4 py-3 rounded-lg text-slate-600 dark:text-slate-300 hover:text-lab-cyan border border-transparent hover:border-lab-cyan/20 nav-link group">
+                <i data-lucide="flask-conical" class="w-5 h-5 mr-3 group-hover:text-lab-cyan transition-colors"></i>
+                <span class="font-medium font-tech tracking-wide text-lg">Simulations</span>
+            </a>
+            
+            <a href="statistics.html" class="flex items-center px-4 py-3 rounded-lg text-slate-600 dark:text-slate-300 hover:text-lab-cyan border border-transparent hover:border-lab-cyan/20 nav-link group">
+                <i data-lucide="bar-chart-2" class="w-5 h-5 mr-3 group-hover:text-lab-cyan transition-colors"></i>
+                <span class="font-medium font-tech tracking-wide text-lg">Statistics</span>
+            </a>
+
+            <div class="px-2 mt-8 mb-3 text-[11px] font-mono text-lab-muted dark:text-lab-dark_muted uppercase tracking-widest flex items-center gap-2 font-semibold">
+                <span class="w-1 h-1 rounded-full bg-slate-300 dark:bg-slate-600"></span> System
+            </div>
+            <a href="configuration.html" class="flex items-center px-4 py-3 rounded-lg text-slate-600 dark:text-slate-300 hover:text-lab-cyan border border-transparent hover:border-lab-cyan/20 nav-link group">
+                <i data-lucide="settings" class="w-5 h-5 mr-3 group-hover:text-lab-cyan transition-colors"></i>
+                <span class="font-medium font-tech tracking-wide text-lg">Configuration</span>
+            </a>
+            
+            <!-- NÚT CHUYỂN ĐỔI DARK MODE -->
+            <button onclick="toggleDarkMode()" class="w-full flex items-center px-4 py-3 rounded-lg text-slate-600 dark:text-slate-300 hover:text-lab-cyan border border-transparent hover:border-lab-cyan/20 nav-link group">
+                <!-- Icon sẽ được cập nhật bằng JS để hiển thị Mặt Trời (sun) hoặc Mặt Trăng (moon) -->
+                <i id="theme-icon" data-lucide="moon" class="w-5 h-5 mr-3 group-hover:text-lab-cyan transition-colors"></i>
+                <span class="font-medium font-tech tracking-wide text-lg">Chế Độ Giao Diện</span>
+                <!-- Trạng thái hiện tại: Light hoặc Dark -->
+                <span class="ml-auto text-xs font-mono font-semibold text-slate-400 dark:text-slate-500 group-hover:text-lab-cyan" id="theme-status">Light</span>
+            </button>
+        </nav>
+
+        <!-- Sidebar Footer Status -->
+        <div class="p-4 border-t border-lab-accent/20 dark:border-slate-700 bg-white/50 dark:bg-lab-dark_surface/50 backdrop-blur-sm">
+            <div class="flex items-center justify-between text-xs font-mono text-slate-500 dark:text-slate-400">
+                <div class="flex items-center gap-2">
+                    <span class="relative flex h-2 w-2">
+                      <span class="animate-ping absolute inline-flex h-full w-full rounded-full bg-lab-success opacity-75"></span>
+                      <span class="relative inline-flex rounded-full h-2 w-2 bg-lab-success"></span>
+                    </span>
+                    <span class="font-semibold">SYSTEM ONLINE</span>
+                </div>
+                <span>98% STABLE</span>
+            </div>
+        </div>
+    </aside>
+
+    <!-- MAIN CONTENT -->
+    <main class="flex-1 flex flex-col overflow-hidden relative z-10">
+        
+        <!-- Header -->
+        <header class="h-[80px] bg-white/80 dark:bg-lab-dark_panel/90 backdrop-blur-xl border-b border-lab-accent/20 dark:border-slate-700 flex items-center justify-between px-8 z-30 sticky top-0 shadow-sm">
+            <!-- Left Tabs -->
+            <div class="flex items-center gap-6">
+                <!-- Mobile Menu Button -->
+                <button class="lg:hidden p-2 rounded-full text-slate-500 dark:text-slate-400 hover:bg-slate-100 dark:hover:bg-slate-700 hover:text-lab-cyan transition">
+                    <i data-lucide="menu" class="w-6 h-6"></i>
+                </button>
+                
+                <div class="hidden md:flex gap-2">
+                    <!-- Tech Tabs -->
+                    <div class="flex bg-slate-100/50 dark:bg-slate-700 p-1 rounded-xl border border-lab-accent/20 dark:border-slate-600 shadow-inner">
+                        <a href="#" class="px-4 py-1.5 text-sm font-tech font-semibold text-white bg-slate-800 dark:bg-slate-900 rounded-lg shadow-md flex items-center gap-2 transition hover:bg-slate-700 dark:hover:bg-slate-900/80">
+                            <i data-lucide="activity" class="w-3 h-3 text-lab-cyan"></i> Monitor
+                        </a>
+                        <a href="#" class="px-4 py-1.5 text-sm font-tech font-medium text-slate-500 dark:text-slate-400 hover:text-slate-800 dark:hover:text-white transition rounded-lg flex items-center gap-2 hover:bg-white dark:hover:bg-slate-800">
+                            <i data-lucide="database" class="w-3 h-3"></i> Data
+                        </a>
+                    </div>
+                </div>
+            </div>
+
+            <!-- Right Actions -->
+            <div class="flex items-center gap-6">
+                <!-- Search Implementation -->
+                <div class="hidden md:flex items-center bg-white dark:bg-lab-dark_panel border border-lab-accent/30 dark:border-slate-700 rounded-full px-4 py-1.5 focus-within:border-lab-cyan focus-within:ring-2 focus-within:ring-lab-cyan/30 transition-all shadow-sm">
+                    <i data-lucide="search" class="w-4 h-4 text-slate-400"></i>
+                    <!-- Gán ID và sự kiện oninput -->
+                    <input type="text" id="module-search" oninput="filterModules()" placeholder="Tìm kiếm mô-đun..." class="bg-transparent border-none outline-none text-sm text-slate-700 dark:text-slate-200 ml-2 placeholder-slate-400 font-mono w-40">
+                </div>
+
+                <div class="h-6 w-px bg-slate-200 dark:bg-slate-700"></div>
+
+                <div class="flex items-center gap-4">
+                    <button class="p-2 rounded-full text-slate-500 dark:text-slate-400 hover:bg-slate-100 dark:hover:bg-slate-700 hover:text-lab-cyan relative transition">
+                        <i data-lucide="bell" class="w-5 h-5"></i>
+                        <span class="absolute top-0 right-0 w-2 h-2 bg-lab-danger rounded-full border-2 border-white dark:border-lab-dark_panel animate-ping"></span>
+                        <span class="absolute top-0 right-0 w-2 h-2 bg-lab-danger rounded-full border-2 border-white dark:border-lab-dark_panel"></span>
+                    </button>
+                    <div class="flex items-center gap-3 pl-2">
+                        <div class="text-right hidden sm:block">
+                            <div class="text-sm font-bold font-tech text-slate-800 dark:text-lab-dark_text leading-none">Nguyen Gia Phu</div>
+                            <div class="text-[10px] text-lab-cyan font-mono leading-none mt-1 font-semibold">ADMIN_ACCESS</div>
+                        </div>
+                        <div class="h-9 w-9 rounded-full bg-slate-800 flex items-center justify-center text-xs font-bold text-white relative overflow-hidden group cursor-pointer shadow-lg hover:shadow-purple-400/50 dark:hover:shadow-cyan-400/50 transition-shadow">
+                            <span class="relative z-10">GP</span>
+                            <div class="absolute inset-0 bg-lab-cyan translate-y-full group-hover:translate-y-0 transition-transform duration-300"></div>
+                        </div>
+                    </div>
+                </div>
+            </div>
+        </header>
+
+        <!-- Content Area -->
+        <div class="flex-1 overflow-y-auto p-4 md:p-8 relative">
+            
+            <!-- Breadcrumb / Status -->
+            <div class="flex flex-col md:flex-row md:items-end justify-between mb-8 gap-4 border-b border-lab-accent/20 dark:border-slate-700 pb-4">
+                <div>
+                    <h2 class="text-3xl font-bold text-slate-800 dark:text-lab-dark_text font-tech uppercase tracking-wide flex items-center gap-2 text-tech-shadow">
+                        <i data-lucide="cpu" class="w-6 h-6 text-lab-cyan"></i> 
+                        Control Dashboard
+                    </h2>
+                    <div class="text-xs text-slate-500 dark:text-slate-400 mt-1 font-mono flex items-center gap-2">
+                        <span class="text-lab-cyan font-semibold">ROOT</span> 
+                        <span class="text-slate-300 dark:text-slate-600">/</span> 
+                        <span>LIBRARY</span>
+                        <span class="text-slate-300 dark:text-slate-600">/</span>
+                        <span>SIMULATIONS</span>
+                    </div>
+                </div>
+                <div class="flex items-center gap-4 text-xs font-mono text-slate-600 dark:text-slate-300 bg-white dark:bg-lab-dark_panel px-3 py-1.5 rounded-xl border border-lab-accent/30 dark:border-slate-700 shadow-sm">
+                    <span class="flex items-center gap-2"><div class="w-1.5 h-1.5 bg-lab-success rounded-full"></div> SERVER: ONLINE</span>
+                    <span class="w-px h-3 bg-slate-200 dark:bg-slate-700"></span>
+                    <span class="flex items-center gap-2"><i data-lucide="clock" class="w-3 h-3"></i> <span id="clock">10:42:05 UTC</span></span>
+                </div>
+            </div>
+
+            <!-- Hero Banner (Clean Tech Style) -->
+            <div class="relative rounded-xl overflow-hidden mb-10 group border border-lab-cyan/30 bg-white dark:bg-lab-dark_panel shadow-xl shadow-purple-900/5 dark:shadow-none">
+                <!-- Background Effect -->
+                <div class="absolute inset-0 bg-gradient-to-br from-lab-cyan/10 via-white to-white opacity-80 dark:from-lab-cyan/20 dark:via-lab-dark_panel dark:to-lab-dark_panel dark:opacity-90"></div>
+                <div class="absolute inset-0 bg-[url('https://www.transparenttextures.com/patterns/graphy.png')] opacity-10 dark:opacity-5"></div>
+                
+                <div class="relative z-10 p-8 md:p-10 flex flex-col md:flex-row items-center justify-between gap-8">
+                    <div class="max-w-2xl">
+                        <div class="inline-flex items-center gap-2 px-4 py-1.5 rounded-full bg-lab-cyan/10 border border-lab-cyan/30 text-lab-cyan text-xs font-mono mb-4 font-semibold shadow-inner">
+                            <span class="relative flex h-2 w-2"><span class="animate-ping absolute inline-flex h-full w-full rounded-full bg-lab-cyan opacity-75"></span><span class="relative inline-flex rounded-full h-2 w-2 bg-lab-cyan"></span></span> LIVE SIMULATION ENVIRONMENT
+                        </div>
+                        <h1 class="text-4xl md:text-5xl font-bold mb-4 font-tech text-slate-900 dark:text-white tracking-tight">
+                            VẬT LÝ ẢO <span class="text-lab-cyan">V2.0</span>
+                        </h1>
+                        <p class="text-slate-600 dark:text-slate-300 text-lg mb-8 font-light max-w-lg">
+                            Truy cập vào cơ sở dữ liệu mô phỏng tương tác. Phân tích dữ liệu thời gian thực và trực quan hóa các hiện tượng vật lý phức tạp.
+                        </p>
+                        
+                        <div class="flex flex-wrap gap-4">
+                            <a href="simulations.html" class="bg-lab-cyan hover:bg-purple-500 dark:hover:bg-cyan-600 text-white px-6 py-3 rounded-xl text-base font-bold font-tech uppercase tracking-wider transition duration-300 shadow-lg shadow-purple-400/50 dark:shadow-cyan-400/50 flex items-center gap-2 transform hover:scale-[1.02]">
+                                <i data-lucide="play-circle" class="w-5 h-5"></i> BẮT ĐẦU MÔ PHỎNG
+                            </a>
+                            <a href="documentation.html" class="bg-white dark:bg-lab-dark_surface border border-slate-300 dark:border-slate-600 hover:border-lab-cyan text-slate-600 dark:text-slate-300 hover:text-lab-cyan px-6 py-3 rounded-xl text-base font-medium font-tech uppercase tracking-wider transition duration-300 flex items-center gap-2 shadow-md hover:shadow-lg hover:shadow-slate-200">
+                                <i data-lucide="file-text" class="w-5 h-5"></i> TÀI LIỆU
+                            </a>
+                        </div>
+                    </div>
+                    
+                    <!-- Decor element on the right -->
+                    <div class="hidden lg:block relative w-72 h-48">
+                         <div class="absolute inset-0 border-2 border-dashed border-lab-cyan/50 rounded-xl shadow-inner"></div>
+                         <div class="absolute inset-2 border border-lab-accent/50 dark:border-slate-600 rounded-lg flex items-center justify-center bg-white/50 dark:bg-lab-dark_surface/70 backdrop-blur-sm shadow-md">
+                             <i data-lucide="atom" class="w-20 h-20 text-lab-cyan animate-[spin_10s_linear_infinite] opacity-70"></i>
+                         </div>
+                         <!-- Scanner line -->
+                         <div class="absolute top-0 left-0 w-full h-1 bg-lab-cyan/50 shadow-[0_0_15px_#b298d3] dark:shadow-[0_0_15px_#06b6d4] animate-scan opacity-70"></div>
+                    </div>
+                </div>
+            </div>
+
+            <!-- Grid Header -->
+            <div class="flex items-center justify-between mb-6">
+                <h3 class="text-xl font-bold text-slate-800 dark:text-lab-dark_text font-tech uppercase tracking-wider border-l-4 border-lab-cyan pl-3">
+                    Modules Available
+                </h3>
+                <div class="flex gap-2">
+                    <button class="p-2 rounded-full bg-white dark:bg-lab-dark_panel border border-lab-accent/30 dark:border-slate-700 text-lab-cyan shadow-sm transition hover:bg-slate-100 dark:hover:bg-slate-700"><i data-lucide="grid" class="w-4 h-4"></i></button>
+                    <button class="p-2 rounded-full hover:bg-white dark:hover:bg-slate-700 border border-transparent text-slate-400 hover:text-slate-700 dark:hover:text-white transition"><i data-lucide="list" class="w-4 h-4"></i></button>
+                </div>
+            </div>
+
+            <!-- Grid Content -->
+            <div id="module-grid" class="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-3 xl:grid-cols-4 gap-6 mb-12">
+
+                <!-- Card 1: Dao Động Điều Hòa -->
+                <a href="dao-dong-dieu-hoa.html" class="module-card glass-panel rounded-xl p-6 relative group block overflow-hidden">
+                    <div class="corner-marker top-left"></div><div class="corner-marker top-right"></div>
+                    <div class="corner-marker bottom-left"></div><div class="corner-marker bottom-right"></div>
+                    
+                    <div class="flex items-start justify-between mb-5 relative z-10">
+                        <div class="h-12 w-12 rounded-full bg-blue-100/70 dark:bg-blue-900/40 border border-blue-200 dark:border-blue-700/50 flex items-center justify-center text-blue-600 group-hover:bg-blue-600 group-hover:text-white transition-all duration-300 shadow-md group-hover:shadow-blue-300/50">
+                            <i data-lucide="repeat" class="w-6 h-6"></i>
+                        </div>
+                        <span class="px-2.5 py-1 rounded-full bg-slate-100 dark:bg-slate-700 border border-slate-200 dark:border-slate-600 text-[10px] font-mono text-slate-500 dark:text-slate-400 uppercase tracking-wider font-semibold">Cơ học</span>
+                    </div>
+                    
+                    <h3 class="module-title text-xl font-bold text-slate-800 dark:text-lab-dark_text font-tech mb-2 group-hover:text-lab-cyan transition">Dao Động Điều Hòa</h3>
+                    <p class="module-description text-slate-500 dark:text-slate-400 text-sm leading-relaxed mb-6 font-light">Mối liên hệ giữa dao động điều hòa (SHM) và chuyển động tròn đều (UCM).</p>
+                    
+                    <div class="pt-4 border-t border-lab-accent/20 dark:border-slate-700 flex items-center justify-between group-hover:border-lab-cyan/30 transition-colors">
+                        <div class="flex items-center gap-1.5 text-xs font-mono text-lab-cyan font-semibold">
+                            <span class="w-1.5 h-1.5 rounded-full bg-lab-cyan animate-pulse"></span> v1.0 Ready
+                        </div>
+                        <span class="text-slate-400 group-hover:text-lab-cyan group-hover:translate-x-1 transition-transform duration-300">
+                            <i data-lucide="arrow-right" class="w-5 h-5"></i>
+                        </span>
+                    </div>
+                </a>
+
+                <!-- Card 2: Con Lắc Đơn / Lò Xo -->
+                <a href="con-lac-don-lo-xo.html" class="module-card glass-panel rounded-xl p-6 relative group block overflow-hidden">
+                    <div class="corner-marker top-left"></div><div class="corner-marker top-right"></div>
+                    <div class="corner-marker bottom-left"></div><div class="corner-marker bottom-right"></div>
+                    
+                    <div class="flex items-start justify-between mb-5 relative z-10">
+                        <div class="h-12 w-12 rounded-full bg-orange-100/70 dark:bg-orange-900/40 border border-orange-200 dark:border-orange-700/50 flex items-center justify-center text-orange-600 group-hover:bg-orange-600 group-hover:text-white transition-all duration-300 shadow-md group-hover:shadow-orange-300/50">
+                            <i data-lucide="scale" class="w-6 h-6"></i>
+                        </div>
+                        <span class="px-2.5 py-1 rounded-full bg-slate-100 dark:bg-slate-700 border border-slate-200 dark:border-slate-600 text-[10px] font-mono text-slate-500 dark:text-slate-400 uppercase tracking-wider font-semibold">Động lực học</span>
+                    </div>
+                    
+                    <h3 class="module-title text-xl font-bold text-slate-800 dark:text-lab-dark_text font-tech mb-2 group-hover:text-orange-500 transition">Con Lắc Đơn / Lò Xo</h3>
+                    <p class="module-description text-slate-500 dark:text-slate-400 text-sm leading-relaxed mb-6 font-light">Phân tích các tham số ảnh hưởng đến chu kỳ và biên độ dao động.</p>
+                    
+                    <div class="pt-4 border-t border-lab-accent/20 dark:border-slate-700 flex items-center justify-between group-hover:border-orange-500/30 transition-colors">
+                        <div class="flex items-center gap-1.5 text-xs font-mono text-orange-600 font-semibold">
+                            <i data-lucide="flask-conical" class="w-3 h-3"></i> 2 Experiments
+                        </div>
+                        <span class="text-slate-400 group-hover:text-orange-500 group-hover:translate-x-1 transition-transform duration-300">
+                            <i data-lucide="arrow-right" class="w-5 h-5"></i>
+                        </span>
+                    </div>
+                </a>
+
+                <!-- Card 3: Sóng Dọc & Ngang -->
+                <a href="song-doc-song-ngang.html" class="module-card glass-panel rounded-xl p-6 relative group block overflow-hidden">
+                    <div class="corner-marker top-left"></div><div class="corner-marker top-right"></div>
+                    <div class="corner-marker bottom-left"></div><div class="corner-marker bottom-right"></div>
+
+                    <div class="flex items-start justify-between mb-5 relative z-10">
+                        <div class="h-12 w-12 rounded-full bg-emerald-100/70 dark:bg-emerald-900/40 border border-emerald-200 dark:border-emerald-700/50 flex items-center justify-center text-emerald-600 group-hover:bg-emerald-600 group-hover:text-white transition-all duration-300 shadow-md group-hover:shadow-emerald-300/50">
+                            <i data-lucide="waves" class="w-6 h-6"></i>
+                        </div>
+                        <span class="px-2.5 py-1 rounded-full bg-slate-100 dark:bg-slate-700 border border-slate-200 dark:border-slate-600 text-[10px] font-mono text-slate-500 dark:text-slate-400 uppercase tracking-wider font-semibold">Sóng cơ</span>
+                    </div>
+                    
+                    <h3 class="module-title text-xl font-bold text-slate-800 dark:text-lab-dark_text font-tech mb-2 group-hover:text-emerald-500 transition">Sóng Dọc & Ngang</h3>
+                    <p class="module-description text-slate-500 dark:text-slate-400 text-sm leading-relaxed mb-6 font-light">Trực quan hóa sự khác biệt giữa hai loại sóng cơ học cơ bản.</p>
+                    
+                    <div class="pt-4 border-t border-lab-accent/20 dark:border-slate-700 flex items-center justify-between group-hover:border-emerald-500/30 transition-colors">
+                        <div class="flex items-center gap-1.5 text-xs font-mono text-emerald-600 font-semibold">
+                            <i data-lucide="monitor" class="w-3 h-3"></i> 2D Sim
+                        </div>
+                        <span class="text-slate-400 group-hover:text-emerald-500 group-hover:translate-x-1 transition-transform duration-300">
+                            <i data-lucide="arrow-right" class="w-5 h-5"></i>
+                        </span>
+                    </div>
+                </a>
+
+                <!-- Card 4: Giao Thoa Sóng Cơ -->
+                <a href="giao-thoa-song-co.html" class="module-card glass-panel rounded-xl p-6 relative group block overflow-hidden">
+                    <div class="corner-marker top-left"></div><div class="corner-marker top-right"></div>
+                    <div class="corner-marker bottom-left"></div><div class="corner-marker bottom-right"></div>
+
+                    <div class="flex items-start justify-between mb-5 relative z-10">
+                        <div class="h-12 w-12 rounded-full bg-indigo-100/70 dark:bg-indigo-900/40 border border-indigo-200 dark:border-indigo-700/50 flex items-center justify-center text-indigo-600 group-hover:bg-indigo-600 group-hover:text-white transition-all duration-300 shadow-md group-hover:shadow-indigo-300/50">
+                            <i data-lucide="activity" class="w-6 h-6"></i>
+                        </div>
+                        <span class="px-2.5 py-1 rounded-full bg-slate-100 dark:bg-slate-700 border border-slate-200 dark:border-slate-600 text-[10px] font-mono text-slate-500 dark:text-slate-400 uppercase tracking-wider font-semibold">Sóng cơ</span>
+                    </div>
+                    
+                    <h3 class="module-title text-xl font-bold text-slate-800 dark:text-lab-dark_text font-tech mb-2 group-hover:text-indigo-500 transition">Giao Thoa Sóng Cơ</h3>
+                    <p class="module-description text-slate-500 dark:text-slate-400 text-sm leading-relaxed mb-6 font-light">Quan sát hiện tượng giao thoa của hai nguồn sóng kết hợp.</p>
+                    
+                    <div class="pt-4 border-t border-lab-accent/20 dark:border-slate-700 flex items-center justify-between group-hover:border-indigo-500/30 transition-colors">
+                        <div class="flex items-center gap-1.5 text-xs font-mono text-indigo-600 font-semibold">
+                            <i data-lucide="mouse-pointer-2" class="w-3 h-3"></i> Interactive
+                        </div>
+                        <span class="text-slate-400 group-hover:text-indigo-500 group-hover:translate-x-1 transition-transform duration-300">
+                            <i data-lucide="arrow-right" class="w-5 h-5"></i>
+                        </span>
+                    </div>
+                </a>
+
+                <!-- Card 5: Dao Động Tắt Dần -->
+                <a href="dao-dong-tat-dan.html" class="module-card glass-panel rounded-xl p-6 relative group block overflow-hidden">
+                    <div class="corner-marker top-left"></div><div class="corner-marker top-right"></div>
+                    <div class="corner-marker bottom-left"></div><div class="corner-marker bottom-right"></div>
+
+                    <div class="flex items-start justify-between mb-5 relative z-10">
+                        <div class="h-12 w-12 rounded-full bg-red-100/70 dark:bg-red-900/40 border border-red-200 dark:border-red-700/50 flex items-center justify-center text-red-600 group-hover:bg-red-600 group-hover:text-white transition-all duration-300 shadow-md group-hover:shadow-red-300/50">
+                            <i data-lucide="trending-down" class="w-6 h-6"></i>
+                        </div>
+                        <span class="px-2.5 py-1 rounded-full bg-slate-100 dark:bg-slate-700 border border-slate-200 dark:border-slate-600 text-[10px] font-mono text-slate-500 dark:text-slate-400 uppercase tracking-wider font-semibold">Dao động</span>
+                    </div>
+                    
+                    <h3 class="module-title text-xl font-bold text-slate-800 dark:text-lab-dark_text font-tech mb-2 group-hover:text-red-500 transition">Dao Động Tắt Dần</h3>
+                    <p class="module-description text-slate-500 dark:text-slate-400 text-sm leading-relaxed mb-6 font-light">Khảo sát sự suy giảm biên độ dao động theo thời gian thực.</p>
+                    
+                    <div class="pt-4 border-t border-lab-accent/20 dark:border-slate-700 flex items-center justify-between group-hover:border-red-500/30 transition-colors">
+                        <div class="flex items-center gap-1.5 text-xs font-mono text-red-600 font-semibold">
+                            <i data-lucide="line-chart" class="w-3 h-3"></i> Graph View
+                        </div>
+                        <span class="text-slate-400 group-hover:text-red-500 group-hover:translate-x-1 transition-transform duration-300">
+                            <i data-lucide="arrow-right" class="w-5 h-5"></i>
+                        </span>
+                    </div>
+                </a>
+
+                <!-- Card 6: Giao Thoa Ánh Sáng -->
+                <a href="giao-thoa-anh-sang.html" class="module-card glass-panel rounded-xl p-6 relative group block overflow-hidden">
+                    <div class="corner-marker top-left"></div><div class="corner-marker top-right"></div>
+                    <div class="corner-marker bottom-left"></div><div class="corner-marker bottom-right"></div>
+
+                    <div class="flex items-start justify-between mb-5 relative z-10">
+                        <div class="h-12 w-12 rounded-full bg-yellow-100/70 dark:bg-yellow-900/40 border border-yellow-200 dark:border-yellow-700/50 flex items-center justify-center text-yellow-600 group-hover:bg-yellow-600 group-hover:text-white transition-all duration-300 shadow-md group-hover:shadow-yellow-300/50">
+                            <i data-lucide="sun" class="w-6 h-6"></i>
+                        </div>
+                        <span class="px-2.5 py-1 rounded-full bg-slate-100 dark:bg-slate-700 border border-slate-200 dark:border-slate-600 text-[10px] font-mono text-slate-500 dark:text-slate-400 uppercase tracking-wider font-semibold">Quang học</span>
+                    </div>
+                    
+                    <h3 class="module-title text-xl font-bold text-slate-800 dark:text-lab-dark_text font-tech mb-2 group-hover:text-yellow-500 transition">Giao Thoa Ánh Sáng</h3>
+                    <p class="module-description text-slate-500 dark:text-slate-400 text-sm leading-relaxed mb-6 font-light">Mô phỏng thí nghiệm khe Young với ánh sáng đơn sắc, đa sắc.</p>
+                    
+                    <div class="pt-4 border-t border-lab-accent/20 dark:border-slate-700 flex items-center justify-between group-hover:border-yellow-500/30 transition-colors">
+                        <div class="flex items-center gap-1.5 text-xs font-mono text-yellow-600 font-semibold">
+                            <i data-lucide="aperture" class="w-3 h-3"></i> Spectrum
+                        </div>
+                        <span class="text-slate-400 group-hover:text-yellow-500 group-hover:translate-x-1 transition-transform duration-300">
+                            <i data-lucide="arrow-right" class="w-5 h-5"></i>
+                        </span>
+                    </div>
+                </a>
+
+                <!-- Card 7: Đo Tần Số Sóng Âm -->
+                <a href="do-tan-so-song-am.html" class="module-card glass-panel rounded-xl p-6 relative group block overflow-hidden">
+                    <div class="corner-marker top-left"></div><div class="corner-marker top-right"></div>
+                    <div class="corner-marker bottom-left"></div><div class="corner-marker bottom-right"></div>
+
+                    <div class="flex items-start justify-between mb-5 relative z-10">
+                        <div class="h-12 w-12 rounded-full bg-purple-100/70 dark:bg-purple-900/40 border border-purple-200 dark:border-purple-700/50 flex items-center justify-center text-purple-600 group-hover:bg-purple-600 group-hover:text-white transition-all duration-300 shadow-md group-hover:shadow-purple-300/50">
+                            <i data-lucide="mic" class="w-6 h-6"></i>
+                        </div>
+                        <span class="px-2.5 py-1 rounded-full bg-slate-100 dark:bg-slate-700 border border-slate-200 dark:border-slate-600 text-[10px] font-mono text-slate-500 dark:text-slate-400 uppercase tracking-wider font-semibold">Âm học</span>
+                    </div>
+                    
+                    <h3 class="module-title text-xl font-bold text-slate-800 dark:text-lab-dark_text font-tech mb-2 group-hover:text-purple-500 transition">Đo Tần Số Sóng Âm</h3>
+                    <p class="module-description text-slate-500 dark:text-slate-400 text-sm leading-relaxed mb-6 font-light">Thực hành đo tần số và chu kỳ sóng âm bằng máy hiện sóng ảo.</p>
+                    
+                    <div class="pt-4 border-t border-lab-accent/20 dark:border-slate-700 flex items-center justify-between group-hover:border-purple-500/30 transition-colors">
+                        <div class="flex items-center gap-1.5 text-xs font-mono text-purple-600 font-semibold">
+                            <i data-lucide="radio" class="w-3 h-3"></i> Oscilloscope
+                        </div>
+                        <span class="text-slate-400 group-hover:text-purple-500 group-hover:translate-x-1 transition-transform duration-300">
+                            <i data-lucide="arrow-right" class="w-5 h-5"></i>
+                        </span>
+                    </div>
+                </a>
+
+                <!-- Card 8: Sóng Dừng (2 Cố Định) -->
+                <a href="song-dung-2-co-dinh.html" class="module-card glass-panel rounded-xl p-6 relative group block overflow-hidden">
+                    <div class="corner-marker top-left"></div><div class="corner-marker top-right"></div>
+                    <div class="corner-marker bottom-left"></div><div class="corner-marker bottom-right"></div>
+
+                    <div class="flex items-start justify-between mb-5 relative z-10">
+                        <div class="h-12 w-12 rounded-full bg-pink-100/70 dark:bg-pink-900/40 border border-pink-200 dark:border-pink-700/50 flex items-center justify-center text-pink-600 group-hover:bg-pink-600 group-hover:text-white transition-all duration-300 shadow-md group-hover:shadow-pink-300/50">
+                            <i data-lucide="music" class="w-6 h-6"></i>
+                        </div>
+                        <span class="px-2.5 py-1 rounded-full bg-slate-100 dark:bg-slate-700 border border-slate-200 dark:border-slate-600 text-[10px] font-mono text-slate-500 dark:text-slate-400 uppercase tracking-wider font-semibold">Sóng dừng</span>
+                    </div>
+                    
+                    <h3 class="module-title text-xl font-bold text-slate-800 dark:text-lab-dark_text font-tech mb-2 group-hover:text-pink-500 transition">Sóng Dừng (2 Cố Định)</h3>
+                    <p class="module-description text-slate-500 dark:text-slate-400 text-sm leading-relaxed mb-6 font-light">Quan sát các chế độ sóng dừng trên dây hai đầu cố định.</p>
+                    
+                    <div class="pt-4 border-t border-lab-accent/20 dark:border-slate-700 flex items-center justify-between group-hover:border-pink-500/30 transition-colors">
+                        <div class="flex items-center gap-1.5 text-xs font-mono text-pink-600 font-semibold">
+                            <i data-lucide="sliders" class="w-3 h-3"></i> Nodes & Antinodes
+                        </div>
+                        <span class="text-slate-400 group-hover:text-pink-500 group-hover:translate-x-1 transition-transform duration-300">
+                            <i data-lucide="arrow-right" class="w-5 h-5"></i>
+                        </span>
+                    </div>
+                </a>
+
+                <!-- Card 9: Sóng Dừng (1 Tự Do) -->
+                <a href="song-dung-1-tu-do.html" class="module-card glass-panel rounded-xl p-6 relative group block overflow-hidden">
+                    <div class="corner-marker top-left"></div><div class="corner-marker top-right"></div>
+                    <div class="corner-marker bottom-left"></div><div class="corner-marker bottom-right"></div>
+
+                    <div class="flex items-start justify-between mb-5 relative z-10">
+                        <div class="h-12 w-12 rounded-full bg-teal-100/70 dark:bg-teal-900/40 border border-teal-200 dark:border-teal-700/50 flex items-center justify-center text-teal-600 group-hover:bg-teal-600 group-hover:text-white transition-all duration-300 shadow-md group-hover:shadow-teal-300/50">
+                            <i data-lucide="link" class="w-6 h-6"></i>
+                        </div>
+                        <span class="px-2.5 py-1 rounded-full bg-slate-100 dark:bg-slate-700 border border-slate-200 dark:border-slate-600 text-[10px] font-mono text-slate-500 dark:text-slate-400 uppercase tracking-wider font-semibold">Sóng dừng</span>
+                    </div>
+                    
+                    <h3 class="module-title text-xl font-bold text-slate-800 dark:text-lab-dark_text font-tech mb-2 group-hover:text-teal-500 transition">Sóng Dừng (1 Tự Do)</h3>
+                    <p class="module-description text-slate-500 dark:text-slate-400 text-sm leading-relaxed mb-6 font-light">Sự hình thành sóng dừng trên dây với một đầu tự do.</p>
+                    
+                    <div class="pt-4 border-t border-lab-accent/20 dark:border-slate-700 flex items-center justify-between group-hover:border-teal-500/30 transition-colors">
+                        <div class="flex items-center gap-1.5 text-xs font-mono text-teal-600 font-semibold">
+                            <i data-lucide="maximize" class="w-3 h-3"></i> Free Boundary
+                        </div>
+                        <span class="text-slate-400 group-hover:text-teal-500 group-hover:translate-x-1 transition-transform duration-300">
+                            <i data-lucide="arrow-right" class="w-5 h-5"></i>
+                        </span>
+                    </div>
+                </a>
+                
+                <!-- Card 10: Placeholder/New Module -->
+                <a href="module-moi.html" class="module-card glass-panel rounded-xl p-6 relative group block overflow-hidden opacity-70 hover:opacity-100 border-dashed border-lab-accent/50 dark:border-slate-600">
+                    <div class="corner-marker top-left border-dashed"></div><div class="corner-marker top-right border-dashed"></div>
+                    <div class="corner-marker bottom-left border-dashed"></div><div class="corner-marker bottom-right border-dashed"></div>
+
+                    <div class="flex items-start justify-between mb-5 relative z-10">
+                        <div class="h-12 w-12 rounded-full bg-slate-100/70 dark:bg-slate-700/70 border border-slate-200 dark:border-slate-600 flex items-center justify-center text-slate-400 transition-all duration-300 shadow-md">
+                            <i data-lucide="plus-circle" class="w-6 h-6"></i>
+                        </div>
+                        <span class="px-2.5 py-1 rounded-full bg-slate-100 dark:bg-slate-700 border border-slate-200 dark:border-slate-600 text-[10px] font-mono text-slate-500 dark:text-slate-400 uppercase tracking-wider font-semibold">Dự kiến</span>
+                    </div>
+                    
+                    <h3 class="module-title text-xl font-bold text-slate-800 dark:text-lab-dark_text font-tech mb-2 transition">Module Mới</h3>
+                    <p class="module-description text-slate-500 dark:text-slate-400 text-sm leading-relaxed mb-6 font-light">Thêm mô phỏng vật lý tiếp theo vào thư viện của bạn.</p>
+                    
+                    <div class="pt-4 border-t border-lab-accent/20 dark:border-slate-700 flex items-center justify-between transition-colors">
+                        <div class="flex items-center gap-1.5 text-xs font-mono text-slate-500 dark:text-slate-400 font-semibold">
+                            <i data-lucide="infinity" class="w-3 h-3"></i> Tương lai
+                        </div>
+                        <span class="text-slate-400 group-hover:translate-x-1 transition-transform duration-300">
+                            <i data-lucide="arrow-right" class="w-5 h-5"></i>
+                        </span>
+                    </div>
+                </a>
+
+            </div>
+
+            <!-- Footer -->
+            <footer class="mt-auto py-6 border-t border-lab-accent/20 dark:border-slate-700 flex flex-col md:flex-row items-center justify-between text-xs font-mono text-slate-500 dark:text-slate-400">
+                <div class="order-2 md:order-1 mt-2 md:mt-0 flex items-center gap-2">
+                    <span class="font-bold text-lab-cyan">© 2025</span> 
+                    <span>PHYSICS LABORATORY INTERFACE</span>
+                    <span class="px-1 py-0.5 bg-slate-200 dark:bg-slate-700 rounded text-[10px]">v2.1</span>
+                </div>
+                <div class="order-1 md:order-2 flex gap-6">
+                    <span>DESIGNER & DEV: <span class="text-slate-700 dark:text-white font-semibold">NGUYEN GIA PHU</span></span>
+                    <span>CLASS: <span class="text-slate-700 dark:text-white font-semibold">A1 - K50</span></span>
+                    <span class="flex items-center gap-1"><div class="w-2 h-2 bg-green-500 rounded-full animate-pulse"></div> SECURE</span>
+                </div>
+            </footer>
+
+        </div>
+    </main>
+
+    <script>
+        // Real-time Clock
+        function updateClock() {
+            const now = new Date();
+            const timeString = now.toLocaleTimeString('en-GB', { hour12: false });
+            const clockElement = document.getElementById('clock');
+            if (clockElement) {
+                clockElement.textContent = timeString + " UTC";
+            }
+        }
+        setInterval(updateClock, 1000);
+
+        // === SEARCH FUNCTIONALITY ===
+        function filterModules() {
+            const input = document.getElementById('module-search');
+            const filter = input.value.toLowerCase();
+            const modules = document.querySelectorAll('.module-card');
+
+            modules.forEach(card => {
+                const titleElement = card.querySelector('.module-title');
+                const descriptionElement = card.querySelector('.module-description');
+
+                let title = '';
+                let description = '';
+
+                if (titleElement) {
+                    title = titleElement.textContent || titleElement.innerText;
+                }
+                if (descriptionElement) {
+                    description = descriptionElement.textContent || descriptionElement.innerText;
+                }
+
+                const content = (title + ' ' + description).toLowerCase();
+
+                if (content.indexOf(filter) > -1) {
+                    card.style.display = 'block'; 
+                } else {
+                    card.style.display = 'none';
+                }
+            });
+        }
+        
+        // === DARK/LIGHT MODE TOGGLE ===
+
+        /**
+         * Thiết lập chủ đề giao diện (light/dark)
+         * @param {string} theme - 'light' hoặc 'dark'
+         */
+        function setTheme(theme) {
+            const html = document.documentElement;
+            const icon = document.getElementById('theme-icon');
+            const status = document.getElementById('theme-status');
+
+            if (theme === 'dark') {
+                html.classList.add('dark');
+                if (icon) icon.setAttribute('data-lucide', 'sun');
+                if (status) status.textContent = 'Dark';
+                localStorage.setItem('theme', 'dark');
+            } else {
+                html.classList.remove('dark');
+                if (icon) icon.setAttribute('data-lucide', 'moon');
+                if (status) status.textContent = 'Light';
+                localStorage.setItem('theme', 'light');
+            }
+            // Gọi lại để cập nhật icon sau khi thay đổi data-lucide
+            lucide.createIcons(); 
+        }
+
+        /**
+         * Chuyển đổi giữa hai chế độ light và dark
+         */
+        function toggleDarkMode() {
+            const currentTheme = localStorage.getItem('theme');
+            setTheme(currentTheme === 'dark' ? 'light' : 'dark');
+        }
+
+        /**
+         * Áp dụng chủ đề ban đầu dựa trên Local Storage, ưu tiên Light Mode
+         */
+        function applyInitialTheme() {
+            const storedTheme = localStorage.getItem('theme');
+
+            // Mặc định luôn là 'light' khi không có cài đặt nào được lưu.
+            let initialTheme = 'light';
+            
+            // Nếu có theme đã lưu trong Local Storage, sử dụng nó.
+            if (storedTheme) {
+                initialTheme = storedTheme;
+            } 
+            // Nếu không, nó sẽ giữ nguyên 'light', bỏ qua tùy chọn hệ thống (prefers-color-scheme).
+            
+            setTheme(initialTheme);
+        }
+
+        // Chạy các hàm khởi tạo khi cửa sổ tải xong
+        window.onload = function() {
+            applyInitialTheme(); // Áp dụng chế độ sáng/tối
+            updateClock();
+        }
+
+        // Khởi tạo Lucide Icons lần đầu
+        lucide.createIcons();
+    </script>
+</body>
+</html>

@@ -1,0 +1,304 @@
+<!DOCTYPE html>
+<html lang="vi">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Mô Phỏng Sóng Dừng (Hai Đầu Cố Định)</title>
+    <script src="https://cdn.tailwindcss.com"></script>
+    <style>
+        @import url('https://fonts.googleapis.com/css2?family=Inter:wght@400;600;700&display=swap');
+        body {
+            font-family: 'Inter', sans-serif;
+            background-color: #f7f9fb;
+        }
+        .container-card {
+            background-color: white;
+            padding: 1.5rem;
+            border-radius: 1rem;
+            box-shadow: 0 10px 15px -3px rgba(0, 0, 0, 0.1), 0 4px 6px -2px rgba(0, 0, 0, 0.05);
+            transition: all 0.3s ease;
+        }
+        input[type="range"] {
+            -webkit-appearance: none;
+            width: 100%;
+            height: 8px;
+            background: #d1d5db;
+            border-radius: 4px;
+            outline: none;
+            opacity: 0.7;
+            -webkit-transition: .2s;
+            transition: opacity .2s;
+        }
+        input[type="range"]:hover {
+            opacity: 1;
+        }
+        input[type="range"]::-webkit-slider-thumb {
+            -webkit-appearance: none;
+            appearance: none;
+            width: 18px;
+            height: 18px;
+            border-radius: 50%;
+            background: #4f46e5;
+            cursor: pointer;
+            box-shadow: 0 0 5px rgba(0, 0, 0, 0.2);
+        }
+        #simulationCanvas {
+            background-color: #262626; /* Dark background for better wave contrast */
+            border-radius: 0.75rem;
+            border: 2px solid #4f46e5;
+        }
+    </style>
+</head>
+<body class="p-4 sm:p-8">
+            <a href="index.html" class="fixed top-4 left-4 z-50 p-3 bg-blue-600 text-white rounded-lg shadow-xl hover:bg-blue-700 transition duration-300 flex items-center space-x-2">
+    <svg xmlns="http://www.w3.org/2000/svg" class="h-5 w-5" viewBox="0 0 20 20" fill="currentColor">
+        <path d="M10.707 2.293a1 1 0 00-1.414 0l-7 7a1 1 0 001.414 1.414L4 10.414V17a1 1 0 001 1h2a1 1 0 001-1v-2a1 1 0 011-1h2a1 1 0 011 1v2a1 1 0 001 1h2a1 1 0 001-1v-6.586l.293.293a1 1 0 001.414-1.414l-7-7z" />
+    </svg>
+    <span class="font-semibold hidden sm:inline">Quay về Trang Chủ</span>
+        </a>
+
+    <div class="max-w-4xl mx-auto space-y-8">
+        <header class="text-center">
+            <h1 class="text-3xl sm:text-4xl font-extrabold text-gray-900">
+                Mô Phỏng Sóng Dừng (Hai Đầu Cố Định)
+            </h1>
+            <p class="text-gray-500 mt-2">Điều chỉnh thông số để quan sát hình ảnh sóng dừng</p>
+        </header>
+
+        <!-- Đã điều chỉnh bố cục grid: Cột 1 là điều khiển, Cột 2 là Canvas -->
+        <div class="grid grid-cols-1 lg:grid-cols-3 gap-6">
+
+            <!-- Cột 1: Điều khiển -->
+            <div class="lg:col-span-1 container-card h-full">
+                <h2 class="text-xl font-bold text-indigo-700 mb-4">Điều Khiển Tham Số</h2>
+                <div class="space-y-4 text-sm">
+
+                    <!-- Biên độ -->
+                    <div>
+                        <label for="amplitude" class="block font-medium text-gray-700 mb-1">Biên độ Sóng (A): <span id="amplitudeValue" class="font-semibold text-indigo-600">1.0</span> cm</label>
+                        <input type="range" id="amplitude" min="0.1" max="2.0" step="0.1" value="1.0" class="w-full">
+                    </div>
+
+                    <!-- Chế độ Sóng Dừng (Mode k) -->
+                    <div>
+                        <label for="mode" class="block font-medium text-gray-700 mb-1">Chế độ Sóng Dừng (k): <span id="modeValue" class="font-semibold text-indigo-600">1</span></label>
+                        <input type="range" id="mode" min="1" max="8" step="1" value="1" class="w-full">
+                    </div>
+
+                    <!-- Sức căng dây -->
+                    <div>
+                        <label for="tension" class="block font-medium text-gray-700 mb-1">Sức Căng Dây (T): <span id="tensionValue" class="font-semibold text-indigo-600">10.0</span> N</label>
+                        <input type="range" id="tension" min="1" max="50" step="1.0" value="10.0" class="w-full">
+                    </div>
+
+                    <button id="resetButton" class="w-full mt-6 py-2 bg-indigo-600 text-white font-semibold rounded-lg hover:bg-indigo-700 transition duration-150 shadow-md">
+                        Đặt Lại Mô Phỏng
+                    </button>
+                </div>
+            </div>
+
+            <!-- Cột 2: Mô phỏng (Đã chiếm 2/3 không gian còn lại) -->
+            <div class="lg:col-span-2 space-y-6">
+
+                <!-- Canvas Mô Phỏng -->
+                <div class="container-card h-full flex flex-col">
+                    <h2 class="text-xl font-bold text-indigo-700 mb-4">Mô Phỏng Sóng Dừng</h2>
+                    <canvas id="simulationCanvas" width="800" height="200" class="w-full flex-grow"></canvas>
+                    <!-- Thêm thông báo trạng thái nhỏ thay thế cho Result Box -->
+                    <p class="mt-4 text-sm text-center text-green-700 font-semibold bg-green-100 p-2 rounded-lg">
+                        Trạng thái: Sóng dừng ổn định (mode <span id="statusModeDisplay">1</span> bụng sóng).
+                    </p>
+                </div>
+            </div>
+        </div>
+
+    </div>
+
+    <script type="module">
+        // --- CÁC HẰNG SỐ VẬT LÝ VÀ THIẾT LẬP BAN ĐẦU ---
+        // Giữ lại các hằng số này trong code để đảm bảo tính toán vật lý chính xác, 
+        // nhưng không hiển thị ra giao diện người dùng theo yêu cầu.
+        const L = 4.0; // Chiều dài dây (m) - Cố định
+        const MU = 0.01; // Khối lượng riêng tuyến tính (kg/m) - Cố định
+        const CANVAS_WIDTH = 800; // Giá trị ban đầu
+        const CANVAS_HEIGHT = 200; // Giá trị cố định
+
+        // Lấy các phần tử DOM
+        const canvas = document.getElementById('simulationCanvas');
+        const ctx = canvas.getContext('2d');
+        const amplitudeInput = document.getElementById('amplitude');
+        const modeInput = document.getElementById('mode');
+        const tensionInput = document.getElementById('tension');
+        const amplitudeValueSpan = document.getElementById('amplitudeValue');
+        const modeValueSpan = document.getElementById('modeValue');
+        const tensionValueSpan = document.getElementById('tensionValue');
+        const resetButton = document.getElementById('resetButton');
+        const statusModeDisplay = document.getElementById('statusModeDisplay'); // Thêm display mode
+
+        // Biến trạng thái
+        let amplitude = parseFloat(amplitudeInput.value); // Biên độ (cm)
+        let mode = parseInt(modeInput.value);     // Chế độ sóng dừng (k)
+        let tension = parseFloat(tensionInput.value);     // Sức căng (N)
+        let resonantFrequency = 0; // Tần số cộng hưởng (f_k)
+        let time = 0; // Biến thời gian cho mô phỏng
+
+        // Hệ số tỷ lệ màn hình
+        const SCALE_Y = (CANVAS_HEIGHT / 2) / amplitudeInput.max; // Tỷ lệ cho biên độ
+        const Y_CENTER = CANVAS_HEIGHT / 2;
+        let X_SCALE = CANVAS_WIDTH / L; // Tỷ lệ cho chiều dài 
+
+        // --- HÀM TÍNH TOÁN VẬT LÝ ---
+
+        // 1. Tính tốc độ truyền sóng (v = sqrt(T/μ))
+        function calculateVelocity(T, mu) {
+            // Đảm bảo T không âm
+            if (T <= 0) return 0;
+            return Math.sqrt(T / mu);
+        }
+
+        // 3. Tính toán các giá trị cần thiết cho mô phỏng (không hiển thị ra UI)
+        function updateCalculations() {
+            // 1. Tốc độ sóng (v = sqrt(T/μ))
+            const v = calculateVelocity(tension, MU);
+            
+            // 2. Bước sóng cần thiết cho mode k: λk = 2 * L / k
+            const lambda_k = (2 * L) / mode; 
+            
+            // 3. Tần số cần thiết (tần số cộng hưởng): fk = v / λk
+            resonantFrequency = v / lambda_k;
+
+            // Cập nhật nhãn k
+            modeValueSpan.textContent = mode;
+            statusModeDisplay.textContent = mode; // Cập nhật trạng thái dưới canvas
+        }
+
+        // --- HÀM VẼ MÔ PHỎNG ---
+
+        // Hàm tính li độ tại vị trí x và thời điểm t
+        function getY(x, t) {
+            // Công thức sóng dừng: u = 2A * sin(2πx/λk) * cos(2πfkt)
+            const lambda_k = (2 * L) / mode;
+
+            const k_num = (2 * Math.PI) / lambda_k; // Số sóng
+            const omega = 2 * Math.PI * resonantFrequency; // Tần số góc, dùng f_k
+
+            const amplitudeX = 2 * amplitude * Math.sin(k_num * x); // Biên độ dao động tại x (cm)
+
+            // Chuyển biên độ từ cm sang pixel, li độ từ cm sang pixel
+            const displacement = amplitudeX * Math.cos(omega * t) * SCALE_Y / amplitude;
+
+            return Y_CENTER - displacement;
+        }
+
+        function drawSimulation() {
+            // Xóa canvas
+            ctx.clearRect(0, 0, canvas.width, canvas.height);
+
+            // Vẽ trục giữa (dây khi chưa dao động)
+            ctx.strokeStyle = '#525252'; // gray-700
+            ctx.lineWidth = 1;
+            ctx.beginPath();
+            ctx.moveTo(0, Y_CENTER);
+            ctx.lineTo(canvas.width, Y_CENTER);
+            ctx.stroke();
+
+            // Vẽ sóng dừng
+            ctx.strokeStyle = '#8b5cf6'; // violet-500
+            ctx.lineWidth = 3;
+            ctx.beginPath();
+
+            // Lấy 1000 điểm để vẽ sóng mượt
+            for (let i = 0; i <= canvas.width; i++) {
+                const x_pixel = i;
+                const x_meter = x_pixel / X_SCALE; // Tọa độ x trên dây (m)
+                const y_pixel = getY(x_meter, time);
+
+                if (i === 0) {
+                    ctx.moveTo(x_pixel, y_pixel);
+                } else {
+                    ctx.lineTo(x_pixel, y_pixel);
+                }
+            }
+            ctx.stroke();
+
+            // Đánh dấu 2 nút cố định (A, B)
+            function drawFixedPoint(x_pixel, label) {
+                ctx.fillStyle = '#ef4444'; // red-500
+                ctx.beginPath();
+                ctx.arc(x_pixel, Y_CENTER, 6, 0, 2 * Math.PI);
+                ctx.fill();
+                ctx.font = '14px Inter';
+                ctx.fillText(label, x_pixel - 5, Y_CENTER - 20);
+            }
+
+            drawFixedPoint(0, 'A');
+            drawFixedPoint(canvas.width, 'B');
+        }
+
+        // --- VÒNG LẶP HOẠT HÌNH ---
+        let lastTime = 0;
+        function animate(timestamp) {
+            const deltaTime = timestamp - lastTime;
+            lastTime = timestamp;
+
+            // Cập nhật thời gian
+            time += deltaTime / 1000; // Đổi từ ms sang s
+
+            // Vẽ mô phỏng
+            drawSimulation();
+
+            // Lặp lại vòng lặp
+            requestAnimationFrame(animate);
+        }
+
+        // --- XỬ LÝ SỰ KIỆN ---
+        function handleInputChange() {
+            // Cập nhật giá trị
+            amplitude = parseFloat(amplitudeInput.value);
+            mode = parseInt(modeInput.value); // Lấy giá trị mode mới
+            tension = parseFloat(tensionInput.value);
+
+            // Cập nhật nhãn
+            amplitudeValueSpan.textContent = amplitude.toFixed(1);
+            tensionValueSpan.textContent = tension.toFixed(1);
+
+            // Cập nhật tính toán (chỉ tính f_k)
+            updateCalculations();
+        }
+
+        amplitudeInput.addEventListener('input', handleInputChange);
+        modeInput.addEventListener('input', handleInputChange); // Xử lý sự kiện cho Mode
+        tensionInput.addEventListener('input', handleInputChange);
+
+        resetButton.addEventListener('click', () => {
+            // Đặt lại các giá trị về mặc định
+            amplitudeInput.value = 1.0;
+            modeInput.value = 1;
+            tensionInput.value = 10.0;
+            handleInputChange(); // Cập nhật các biến và tính toán
+            time = 0; // Đặt lại thời gian
+        });
+
+
+        // --- KHỞI TẠO ---
+        // Đặt kích thước canvas thực tế để mô phỏng hiển thị đúng
+        function resizeCanvas() {
+            const parent = canvas.parentElement;
+            canvas.width = parent.offsetWidth;
+            canvas.height = 200;
+            // Cập nhật tỷ lệ X_SCALE
+            X_SCALE = canvas.width / L;
+        }
+
+        window.addEventListener('resize', resizeCanvas);
+        resizeCanvas();
+
+        // Cập nhật tính toán ban đầu
+        handleInputChange();
+
+        // Bắt đầu vòng lặp hoạt hình
+        animate(0);
+
+    </script>
+</body>
+</html>

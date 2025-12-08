@@ -1,0 +1,926 @@
+<!DOCTYPE html>
+<html lang="vi">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Mô phỏng UCM, SHM (Trục Ngang) và Đồ thị</title>
+    <script src="https://cdn.tailwindcss.com"></script>
+    <style>
+        @import url('https://fonts.googleapis.com/css2?family=Inter:wght@400;600;700&display=swap');
+        body {
+            font-family: 'Inter', sans-serif;
+            background-color: #f3f4f6;
+        }
+        canvas {
+            border: 1px solid #e5e7eb;
+            background-color: #ffffff;
+            box-shadow: 0 10px 15px -3px rgba(0, 0, 0, 0.1), 0 4px 6px -2px rgba(0, 0, 0, 0.05);
+            border-radius: 1rem;
+        }
+        input[type=range]::-webkit-slider-thumb {
+            -webkit-appearance: none;
+            appearance: none;
+            width: 16px;
+            height: 16px;
+            background: #10b981;
+            cursor: pointer;
+            border-radius: 50%;
+            box-shadow: 0 0 5px rgba(0,0,0,0.2);
+        }
+        .disabled-button {
+            opacity: 0.5;
+            cursor: not-allowed;
+        }
+    </style>
+</head>
+<body class="p-4 sm:p-8 flex justify-center items-center min-h-screen">
+    <a href="index.html" class="fixed top-4 left-4 z-50 p-3 bg-blue-600 text-white rounded-lg shadow-xl hover:bg-blue-700 transition duration-300 flex items-center space-x-2">
+    <svg xmlns="http://www.w3.org/2000/svg" class="h-5 w-5" viewBox="0 0 20 20" fill="currentColor">
+        <path d="M10.707 2.293a1 1 0 00-1.414 0l-7 7a1 1 0 001.414 1.414L4 10.414V17a1 1 0 001 1h2a1 1 0 001-1v-2a1 1 0 011-1h2a1 1 0 011 1v2a1 1 0 001 1h2a1 1 0 001-1v-6.586l.293.293a1 1 0 001.414-1.414l-7-7z" />
+    </svg>
+    <span class="font-semibold hidden sm:inline">Quay về Trang Chủ</span>
+    </a>
+    <div class="w-full max-w-5xl bg-white rounded-2xl shadow-xl p-6 md:p-10">
+        <h1 class="text-3xl font-bold text-gray-800 mb-6 text-center">
+            Mô phỏng Chuyển động Tròn đều (UCM) và Dao động Điều hòa (SHM - Trục Ngang)
+        </h1>
+        
+        <!-- Controls Section -->
+        <div class="grid grid-cols-1 md:grid-cols-4 gap-6 mb-8 p-4 bg-gray-50 rounded-lg">
+            <!-- Period (Chu kỳ T) -->
+            <div class="flex flex-col">
+                <label for="period" class="text-sm font-medium text-gray-700 mb-1">Chu kỳ T (giây):</label>
+                <input type="number" id="period" value="4" min="0.5" max="10" step="0.1"
+                       class="p-2 border border-gray-300 rounded-lg focus:ring-indigo-500 focus:border-indigo-500 text-lg text-center"
+                       oninput="updateAngularFrequency()">
+            </div>
+            
+            <!-- Angular Frequency (Tần số góc omega) -->
+            <div class="flex flex-col justify-end">
+                <label class="text-sm font-medium text-gray-700 mb-1">Tần số góc ω (rad/s):</label>
+                <div id="omegaDisplay" class="p-2 bg-indigo-100 border border-indigo-300 rounded-lg text-lg font-semibold text-center text-indigo-800">
+                    1.57 rad/s
+                </div>
+            </div>
+            
+            <!-- Initial Phase (Pha ban đầu phi) -->
+            <div class="flex flex-col">
+                <label for="initialPhase" class="text-sm font-medium text-gray-700 mb-1">Pha ban đầu φ (độ):</label>
+                <input type="number" id="initialPhase" value="0" min="-360" max="360" step="5"
+                       class="p-2 border border-gray-300 rounded-lg focus:ring-indigo-500 focus:border-indigo-500 text-lg text-center"
+                       oninput="updateInitialPhase()">
+                <!-- Display Radian Value -->
+                <div id="initialPhaseRadDisplay" class="mt-1 text-xs font-medium text-gray-600 text-center">
+                    0.00 rad
+                </div>
+            </div>
+
+            <!-- Amplitude (Biên độ A - Centimeters) -->
+            <div class="flex flex-col">
+                <label for="amplitudeRange" class="text-sm font-medium text-gray-700 mb-1">
+                    Biên độ A (2 cm - 10 cm):
+                </label>
+                <input type="range" id="amplitudeRange" min="90" max="120" value="120" step="1"
+                       class="w-full h-8 cursor-pointer appearance-none bg-gray-200 rounded-lg"
+                       oninput="updateAmplitude()">
+                <div id="amplitudeDisplay" class="p-2 mt-2 bg-green-100 border border-green-300 rounded-lg text-lg font-semibold text-center text-green-800">
+                    A = 10.00 cm
+                </div>
+            </div>
+        </div>
+
+        <!-- Simulation Buttons -->
+        <div class="flex flex-wrap justify-center gap-4 mb-8">
+            <button id="toggleButton"
+                    class="px-6 py-3 bg-indigo-600 text-white font-semibold rounded-xl shadow-lg hover:bg-indigo-700 transition duration-300 ease-in-out transform hover:scale-105"
+                    onclick="toggleSimulation()">
+                Bắt đầu Mô phỏng (Liên tục)
+            </button>
+            <button id="stepBackButton"
+                    class="px-6 py-3 bg-red-500 text-white font-semibold rounded-xl shadow-lg hover:bg-red-600 transition duration-300 ease-in-out transform hover:scale-105 disabled:opacity-50"
+                    onclick="stepBackwardSimulation()">
+                Lùi
+            </button>
+            <button id="stepButton"
+                    class="px-6 py-3 bg-yellow-500 text-gray-800 font-semibold rounded-xl shadow-lg hover:bg-yellow-600 transition duration-300 ease-in-out transform hover:scale-105 disabled:opacity-50"
+                    onclick="stepSimulation()">
+                Tiến
+            </button>
+            <button id="resetButton"
+                    class="px-6 py-3 bg-gray-400 text-white font-semibold rounded-xl shadow-lg hover:bg-gray-500 transition duration-300 ease-in-out transform hover:scale-105"
+                    onclick="resetSimulation()">
+                Đặt lại (Reset)
+            </button>
+        </div>
+
+        <!-- Canvas for Visualization and Graphs -->
+        <div class="flex justify-center">
+            <!-- Canvas chính (UCM/SHM + 3 Đồ thị) -->
+            <canvas id="physicsCanvas" width="800" height="700"></canvas>
+        </div>
+
+        <!-- Footer Note -->
+        <div class="mt-8 text-sm text-gray-500 text-center border-t pt-4">
+            <p>
+                Lùi: Lùi lại một bước cố định (T/80). | 
+                Tiến: Tiến lên một bước cố định (T/80) HOẶC nhảy đến vị trí đặc biệt gần nhất.
+            </p>
+        </div>
+    </div>
+
+    <script>
+        // --- GLOBAL CONSTANTS AND VARIABLES ---
+        const canvas = document.getElementById('physicsCanvas');
+        const ctx = canvas.getContext('2d');
+        const omegaDisplay = document.getElementById('omegaDisplay');
+        const amplitudeDisplay = document.getElementById('amplitudeDisplay');
+        const initialPhaseRadDisplay = document.getElementById('initialPhaseRadDisplay'); 
+        const periodInput = document.getElementById('period');
+        const initialPhaseInput = document.getElementById('initialPhase'); 
+        const amplitudeRange = document.getElementById('amplitudeRange');
+        const toggleButton = document.getElementById('toggleButton');
+        const stepButton = document.getElementById('stepButton');
+        const stepBackButton = document.getElementById('stepBackButton'); 
+        const resetButton = document.getElementById('resetButton');
+
+        let animationFrameId = null; 
+        let startTime = null; 
+        let isRunning = false;
+        let current_elapsed_time = 0; // Elapsed time for both continuous and step mode
+        const ANGLE_TOLERANCE = 0.001; // Angle tolerance for special points (rad)
+
+        let initial_phase_rad = 0; // Initial phase in radians, calculated from input
+
+        // Canvas dimensions
+        const width = canvas.width;
+        const height = canvas.height;
+
+        // UCM/SHM simulation area position and size (Upper part)
+        const UCM_HEIGHT = 300;
+        const center_x_ucm = width / 2; // UCM center at the horizontal middle of the canvas
+        const center_y_ucm = UCM_HEIGHT / 2 - 20; // UCM center Y, shifted up slightly
+        let radius = parseFloat(amplitudeRange.value); // Amplitude R (A) - Value from input (in pixels)
+        const shm_y_pos = center_y_ucm + radius + 40; // Fixed Y position for horizontal SHM axis
+        
+        // Graph section constants (Lower part of canvas)
+        const GRAPH_Y_START = UCM_HEIGHT + 20; // Start Y position for the first graph
+        const GRAPH_X_END = width - 20; // End X position for the graphs
+        const Y_PADDING_GRAPH = 10; // Padding between the graphs
+        const GRAPH_TOTAL_SPACE = height - GRAPH_Y_START; // Total vertical space available (700 - 320 = 380)
+
+        // Calculate the height of a single graph: 3 graphs, 2 paddings (10px each)
+        // Single height = (Total Space - Total Padding) / 3
+        const GRAPH_SINGLE_HEIGHT = (GRAPH_TOTAL_SPACE - (2 * Y_PADDING_GRAPH)) / 3; 
+        
+        // History data for plotting graphs (reusing 'y' for displacement, which is now 'x' component)
+        const MAX_TIME_HISTORY = 10; // Save history for 10 seconds
+        const history = { y: [], v: [], a: [] }; // y: displacement (x), v: velocity (vx), a: acceleration (ax)
+        
+        // Special angles in radians (for priority stepping)
+        const special_angles_rad = [
+             0,                         // x = +A
+             Math.PI / 6,               // x = A*sqrt(3)/2, đi theo chiều âm
+             Math.PI / 4,               // x = A*sqrt(2)/2, đi theo chiều âm
+             Math.PI / 3,               // x = A/2, đi theo chiều âm
+             Math.PI / 2,               // x = 0 (VTCB, đi theo chiều âm)
+             2 * Math.PI / 3,           // x = -A/2, đi theo chiều âm
+             3 * Math.PI / 4,           // x = -A*sqrt(2)/2, đi theo chiều âm
+             5 * Math.PI / 6,           // x = -A*sqrt(3)/2, đi theo chiều âm
+             Math.PI,                   // x = -A
+             7 * Math.PI / 6,           // x = -A*sqrt(3)/2, đi theo chiều dương
+             5 * Math.PI / 4,           // x = -A*sqrt(2)/2, đi theo chiều dương
+             4 * Math.PI / 3,           // x = -A/2, đi theo chiều dương
+             3 * Math.PI / 2,           // x = 0 (VTCB, đi theo chiều dương)
+             5 * Math.PI / 3,           // x = A/2, đi theo chiều dương
+             7 * Math.PI / 4,           // x = A*sqrt(2)/2, đi theo chiều dương
+             11 * Math.PI / 6           // x = A*sqrt(3)/2, đi theo chiều dương
+        ]; 
+        
+        // --- HELPER AND CALCULATION FUNCTIONS ---
+
+        /**
+         * Calculates the dynamic fixed step size T/80.
+         * @returns {number} Time step in seconds.
+         */
+        function getFixedStepIncrement() {
+            const T = parseFloat(periodInput.value);
+            // Safety check for T
+            if (isNaN(T) || T < 0.5) return 0.5 / 80;
+            return T / 80;
+        }
+
+        /**
+         * Converts the current pixel amplitude to the displayed centimeter value.
+         * @param {number} pixel_value - Amplitude value in pixels (90-120)
+         * @returns {number} Amplitude value in cm (2.0 - 10.0)
+         */
+        function getAmplitudeInCm(pixel_value) {
+            const PIXEL_MIN = 90;
+            const PIXEL_RANGE = 120 - 90; // 30
+            const CM_MIN = 2;
+            const CM_RANGE = 10 - 2; // 8
+            
+            // Linear scaling A_cm = CM_MIN + (pixel_value - PIXEL_MIN) * (CM_RANGE / PIXEL_RANGE)
+            const A_cm = CM_MIN + (pixel_value - PIXEL_MIN) * (CM_RANGE / PIXEL_RANGE);
+            return A_cm;
+        }
+
+        /**
+         * Updates Amplitude (A) when the slider changes.
+         */
+        function updateAmplitude() {
+            radius = parseFloat(amplitudeRange.value); // radius remains the pixel value
+            
+            const A_cm = getAmplitudeInCm(radius);
+            amplitudeDisplay.textContent = `A = ${A_cm.toFixed(2)} cm`;
+
+            // Redraw immediately if paused
+            if (!isRunning) {
+                 updatePhysicsAndDraw(current_elapsed_time); 
+                 updateStepButtonText();
+            }
+        }
+        
+        /**
+         * Updates Angular Frequency when Period changes.
+         */
+        function updateAngularFrequency() {
+            let T = parseFloat(periodInput.value);
+            // Limit T value
+            if (isNaN(T) || T < 0.5) {
+                T = 0.5;
+                periodInput.value = T;
+            }
+            
+            const omega = (2 * Math.PI) / T; // ω = 2π/T
+            omegaDisplay.textContent = `${omega.toFixed(3)} rad/s`;
+
+            if (!isRunning) {
+                 // Update static graph state if parameters changed
+                 updatePhysicsAndDraw(current_elapsed_time); 
+                 // Update Step button text
+                 updateStepButtonText();
+            } 
+        }
+
+        /**
+         * Cập nhật Pha ban đầu (φ). Nếu simulation đang dừng, 
+         * thay đổi pha ban đầu sẽ tự động Reset thời gian về t=0
+         * để đảm bảo đồ thị x(t) được vẽ lại chính xác.
+         */
+        function updateInitialPhase() {
+            let phi_deg = parseFloat(initialPhaseInput.value);
+            if (isNaN(phi_deg)) {
+                phi_deg = 0;
+                initialPhaseInput.value = 0;
+            }
+            
+            // Convert degrees to radians
+            const new_initial_phase_rad = phi_deg * (Math.PI / 180);
+            const old_initial_phase_rad = initial_phase_rad;
+            
+            // 1. Update internal variable
+            initial_phase_rad = new_initial_phase_rad;
+
+            // 2. Update display
+            initialPhaseRadDisplay.textContent = `${initial_phase_rad.toFixed(2)} rad`;
+
+            // 3. Control behavior: If phase changed and simulation is paused, reset to t=0 for graph consistency.
+            if (!isRunning) {
+                 if (Math.abs(new_initial_phase_rad - old_initial_phase_rad) > 0.0001) {
+                     // Nếu pha thay đổi, Reset simulation (clear history, t=0)
+                    resetSimulation(); 
+                 } else {
+                     // Nếu pha không đổi (chỉ nhập lại cùng giá trị), chỉ cần vẽ lại trạng thái hiện tại
+                    updatePhysicsAndDraw(current_elapsed_time);
+                    updateStepButtonText();
+                 }
+            }
+        }
+
+
+        /**
+         * Finds the next special angle (within 2pi) and the time needed to reach it.
+         * @param {number} current_total_phase - Current total phase (ωt + φ) in radians.
+         * @returns {{angle: number, time_to_reach: number}}
+         */
+        function findNextSpecialPoint(current_total_phase) {
+            const T = parseFloat(periodInput.value);
+            const omega = (2 * Math.PI) / T;
+            
+            // Current angle in the cycle [0, 2pi)
+            let current_angle_in_cycle = current_total_phase % (2 * Math.PI);
+            if (current_angle_in_cycle < 0) {
+                current_angle_in_cycle += 2 * Math.PI;
+            }
+
+            let min_dt = T + 1; // Start with a time greater than one period
+            let next_angle = -1;
+
+            // Iterate through all 16 special angles (0 to 2pi - epsilon)
+            for (const target_angle of special_angles_rad) {
+                
+                // Calculate the phase change needed: ΔPhase = target_angle - current_angle_in_cycle
+                let delta_phase = target_angle - current_angle_in_cycle;
+                
+                // If the delta_phase is negative or very close to zero (already passed the point),
+                // it means the next time we hit this angle will be in the next cycle (+2pi).
+                if (delta_phase < ANGLE_TOLERANCE) {
+                    delta_phase += 2 * Math.PI; 
+                }
+                
+                // Time needed to reach: t = ΔPhase / ω
+                const time_to_reach = delta_phase / omega;
+
+                // Find the minimum positive time step
+                if (time_to_reach > ANGLE_TOLERANCE / omega && time_to_reach < min_dt) {
+                    min_dt = time_to_reach;
+                    next_angle = target_angle;
+                }
+            }
+            
+            return { angle: next_angle, time_to_reach: min_dt };
+        }
+
+        /**
+         * Updates the text on the Step button to show the next action.
+         */
+        function updateStepButtonText() {
+            if (isRunning) return;
+
+            const T = parseFloat(periodInput.value);
+            const omega = (2 * Math.PI) / T;
+            const FIXED_STEP_INCREMENT = getFixedStepIncrement(); // T/80
+
+            // Current total phase: ωt + φ
+            const current_total_phase = omega * current_elapsed_time + initial_phase_rad;
+
+            const { time_to_reach, angle: next_angle } = findNextSpecialPoint(current_total_phase);
+            
+            // Calculate displacement of the next special point (SHM is projection onto X, modeled by cos)
+            const next_displacement = radius * Math.cos(next_angle);
+            
+            // Convert amplitude to cm for display
+            const A_cm = getAmplitudeInCm(radius);
+            let next_pos_text = "";
+            
+            // NOTE: Using a tolerance for classification
+            const TOL_DISP = A_cm * 0.01; // 1% of A in cm
+
+            // Display special position in cm and symbol
+            if (Math.abs(next_displacement - A_cm) < TOL_DISP) {
+                 next_pos_text = `+A (+${A_cm.toFixed(2)} cm)`;
+            } else if (Math.abs(next_displacement + A_cm) < TOL_DISP) {
+                next_pos_text = `-A (-${A_cm.toFixed(2)} cm)`;
+            } else if (Math.abs(next_displacement) < TOL_DISP) {
+                next_pos_text = '0 (VTCB)';
+            } else {
+                 // Calculate actual displacement for non-A/0 points
+                 const displacement_cm = getAmplitudeInCm(next_displacement);
+                 
+                 // Display in terms of A/2, A*sqrt(2)/2, A*sqrt(3)/2
+                 const sqrt2_over_2_A = A_cm * Math.sqrt(2) / 2; // ~ 0.707 A
+                 const sqrt3_over_2_A = A_cm * Math.sqrt(3) / 2; // ~ 0.866 A
+
+                 if (Math.abs(Math.abs(displacement_cm) - A_cm/2) < TOL_DISP) {
+                     next_pos_text = displacement_cm > 0 ? `+A/2 (+${displacement_cm.toFixed(2)} cm)` : `-A/2 (${displacement_cm.toFixed(2)} cm)`;
+                 } else if (Math.abs(Math.abs(displacement_cm) - sqrt2_over_2_A) < TOL_DISP) {
+                     next_pos_text = displacement_cm > 0 ? `+A√2/2 (+${displacement_cm.toFixed(2)} cm)` : `-A√2/2 (${displacement_cm.toFixed(2)} cm)`;
+                 } else if (Math.abs(Math.abs(displacement_cm) - sqrt3_over_2_A) < TOL_DISP) {
+                     next_pos_text = displacement_cm > 0 ? `+A√3/2 (+${displacement_cm.toFixed(2)} cm)` : `-A√3/2 (${displacement_cm.toFixed(2)} cm)`;
+                 } else {
+                     next_pos_text = `${displacement_cm.toFixed(2)} cm`;
+                 }
+            }
+
+            // If time to special point is closer or equal to the fixed step T/80
+            if (time_to_reach <= FIXED_STEP_INCREMENT + (ANGLE_TOLERANCE / omega) ) { 
+                // Prioritize jumping to the special position
+                stepButton.title = `Tiến tới ${next_pos_text} (+${time_to_reach.toFixed(3)}s)`;
+                stepButton.classList.add('bg-orange-500', 'hover:bg-orange-600');
+                stepButton.classList.remove('bg-yellow-500', 'hover:bg-yellow-600');
+            } else {
+                // Jump fixed step T/80
+                stepButton.title = `Tiến cố định (+${FIXED_STEP_INCREMENT.toFixed(3)}s)`;
+                stepButton.classList.add('bg-yellow-500', 'hover:bg-yellow-600');
+                stepButton.classList.remove('bg-orange-500', 'hover:bg-orange-600');
+            }
+            
+            // Update step back button title for clarity
+            stepBackButton.title = `Lùi cố định (-${FIXED_STEP_INCREMENT.toFixed(3)}s)`;
+        }
+
+        // --- AXIS AND GRAPH DRAWING FUNCTIONS ---
+
+        /**
+         * Draws axes for UCM and SHM (Horizontal axis).
+         */
+        function drawAxes() {
+            // UCM/SHM Section
+            ctx.fillStyle = '#4b5563';
+            ctx.font = '14px Inter';
+            
+            // 1. UCM Axes (Vertical and Horizontal)
+            ctx.beginPath();
+            ctx.strokeStyle = '#9ca3af'; 
+            ctx.lineWidth = 1;
+            // Vertical axis (Y-axis of UCM coordinate system)
+            ctx.moveTo(center_x_ucm, center_y_ucm - radius - 20); 
+            ctx.lineTo(center_x_ucm, center_y_ucm + radius + 20);
+            // Horizontal axis (X-axis of UCM coordinate system)
+            ctx.moveTo(center_x_ucm - radius - 20, center_y_ucm);
+            ctx.lineTo(center_x_ucm + radius + 20, center_y_ucm);
+            ctx.stroke();
+
+            ctx.fillText('UCM (Chuyển động tròn đều)', center_x_ucm - radius, center_y_ucm - radius - 10);
+
+            // 2. SHM Axis (Horizontal, below UCM)
+            ctx.beginPath();
+            ctx.strokeStyle = '#10b981'; // Green color
+            ctx.lineWidth = 2;
+            // Draw horizontal line for SHM
+            ctx.moveTo(center_x_ucm - radius - 20, shm_y_pos); // Negative amplitude position
+            ctx.lineTo(center_x_ucm + radius + 20, shm_y_pos); // Positive amplitude position
+            ctx.stroke();
+            
+            // Mark equilibrium position (0)
+            ctx.beginPath();
+            ctx.strokeStyle = '#10b981';
+            ctx.moveTo(center_x_ucm, shm_y_pos - 5);
+            ctx.lineTo(center_x_ucm, shm_y_pos + 5);
+            ctx.stroke();
+            ctx.fillText('SHM (Li độ x)', center_x_ucm + radius + 30, shm_y_pos + 5);
+            
+            // Separator line between simulation and graphs
+            ctx.beginPath();
+            ctx.strokeStyle = '#e5e7eb';
+            ctx.lineWidth = 1;
+            ctx.moveTo(0, UCM_HEIGHT);
+            ctx.lineTo(width, UCM_HEIGHT);
+            ctx.stroke();
+        }
+
+        /**
+         * Draws the three graphs: Displacement, Velocity, Acceleration vs. Time.
+         */
+        function drawGraphs(elapsed) {
+            const currentHistory = history.y;
+            if (currentHistory.length < 1) return; 
+
+            // Calculate Y-axis limits
+            const T = parseFloat(periodInput.value);
+            const omega = (2 * Math.PI) / T;
+            const A = radius;
+            
+            // Convert A to cm for graph Y-axis display
+            const A_cm = getAmplitudeInCm(A);
+
+            const Y_MAX_LIM = A_cm; // Max Displacement = A (cm)
+            const V_MAX_LIM = A_cm * omega; // Max Velocity = A * omega (cm/s)
+            const A_MAX_LIM = A_cm * omega * omega; // Max Acceleration = A * omega^2 (cm/s^2)
+            
+            // history.y now stores displacement_x_cm
+            const graphTypes = [
+                { data: history.y, max_val: Y_MAX_LIM, title: "Li độ x (cm)", color: "#ef4444" }, // Red
+                { data: history.v, max_val: V_MAX_LIM, title: "Vận tốc v (cm/s)", color: "#22c55e" }, // Green
+                { data: history.a, max_val: A_MAX_LIM, title: "Gia tốc a (cm/s²)", color: "#3b82f6" }  // Blue
+            ];
+
+            const X_OFFSET = 50; // Distance from left edge
+            // Y_PADDING is now globally defined as Y_PADDING_GRAPH
+            const X_RANGE = GRAPH_X_END - X_OFFSET;
+
+            // Current time for graph scaling
+            const t_max = elapsed > MAX_TIME_HISTORY ? elapsed : MAX_TIME_HISTORY;
+            const t_min = t_max - MAX_TIME_HISTORY;
+            
+            // Loop to draw 3 graphs
+            graphTypes.forEach((graph, index) => {
+                const graph_y_center = GRAPH_Y_START + (index + 0.5) * GRAPH_SINGLE_HEIGHT + index * Y_PADDING_GRAPH;
+                const graph_y_start = graph_y_center - GRAPH_SINGLE_HEIGHT / 2;
+                const graph_y_end = graph_y_center + GRAPH_SINGLE_HEIGHT / 2;
+                
+                // 1. Draw Axes (Main axis - y=0)
+                ctx.beginPath();
+                ctx.strokeStyle = '#9ca3af';
+                ctx.lineWidth = 1;
+                // X Axis (Time t)
+                ctx.moveTo(X_OFFSET, graph_y_center);
+                ctx.lineTo(GRAPH_X_END, graph_y_center);
+                // Y Axis (Displacement, Velocity, Acceleration)
+                ctx.moveTo(X_OFFSET, graph_y_start);
+                ctx.lineTo(X_OFFSET, graph_y_end);
+                ctx.stroke();
+
+                // 2. Title Label
+                ctx.fillStyle = graph.color;
+                ctx.font = '16px Inter bold';
+                ctx.fillText(graph.title, X_OFFSET + 10, graph_y_start + 20);
+
+                // 3. Y Axis Labels (Max/Min)
+                ctx.fillStyle = '#4b5563';
+                ctx.font = '12px Inter';
+                ctx.fillText(`+${graph.max_val.toFixed(2)}`, X_OFFSET + 5, graph_y_center - (GRAPH_SINGLE_HEIGHT / 2) + 15);
+                ctx.fillText(`-${graph.max_val.toFixed(2)}`, X_OFFSET + 5, graph_y_center + (GRAPH_SINGLE_HEIGHT / 2) - 5);
+                
+                // 4. X Axis Labels (Time) - Add T/4 markers and dashed lines
+                ctx.fillStyle = '#9ca3af';
+                ctx.font = '12px Inter';
+
+                const T_QUARTER = T / 4;
+                
+                // Determine the starting multiple of T/4 that is greater than or equal to t_min
+                let start_multiple = Math.ceil(t_min / T_QUARTER);
+                
+                for (let i = start_multiple; i * T_QUARTER <= t_max; i++) {
+                    const time_marker = i * T_QUARTER;
+                    
+                    // Calculate X position
+                    const t_ratio = (time_marker - t_min) / MAX_TIME_HISTORY;
+                    const x = X_OFFSET + t_ratio * X_RANGE;
+
+                    if (x > X_OFFSET && x < GRAPH_X_END) {
+                        // VẼ VẠCH NÉT ĐỨT (GRID LINE) - Cập nhật màu và kiểu nét đứt cho rõ ràng hơn
+                        ctx.beginPath();
+                        ctx.strokeStyle = '#d1d5db'; // Gray 300 - Hơi đậm hơn để dễ nhìn
+                        ctx.lineWidth = 1;
+                        ctx.setLineDash([3, 3]); // Nét đứt 3px, khoảng cách 3px
+                        ctx.moveTo(x, graph_y_start);
+                        ctx.lineTo(x, graph_y_end);
+                        ctx.stroke();
+                        ctx.setLineDash([]); // Reset line style
+
+                        // Draw time label (e.g., T/4, T/2, T, 5T/4, etc.)
+                        ctx.fillStyle = '#4b5563';
+                        const fraction_text = i === 1 ? 'T/4' : 
+                                              i === 2 ? 'T/2' :
+                                              i === 3 ? '3T/4' :
+                                              i === 4 ? 'T' :
+                                              i % 4 === 0 ? `${i/4}T` : 
+                                              `${i}T/4`;
+                        
+                        ctx.fillText(fraction_text, x - 10, graph_y_center + 15);
+                    }
+                }
+                
+                // Draw current time line *after* the grid lines
+                const current_x = X_OFFSET + (elapsed - t_min) / MAX_TIME_HISTORY * X_RANGE;
+                ctx.beginPath();
+                ctx.strokeStyle = '#4b5563'; // Dark gray
+                ctx.lineWidth = 1;
+                ctx.setLineDash([2, 4]);
+                ctx.moveTo(current_x, graph_y_start);
+                ctx.lineTo(current_x, graph_y_end);
+                ctx.stroke();
+                ctx.setLineDash([]);
+
+                // 5. Draw Graph
+                ctx.beginPath();
+                ctx.strokeStyle = graph.color;
+                ctx.lineWidth = 2;
+                let firstPoint = true;
+
+                // Half graph height
+                const halfHeight = GRAPH_SINGLE_HEIGHT / 2;
+
+                // Y data scaling (data_val / max_val * halfHeight)
+                const yScale = halfHeight / graph.max_val;
+                
+                graph.data.forEach(point => {
+                    // Calculate X position on the graph
+                    const t_ratio = (point.t - t_min) / MAX_TIME_HISTORY;
+                    const x = X_OFFSET + t_ratio * X_RANGE;
+
+                    // point.val is in cm unit
+                    // Calculate Y position (canvas Y axis is inverted)
+                    const y = graph_y_center - point.val * yScale;
+
+                    if (x > X_OFFSET && x < GRAPH_X_END) {
+                         if (firstPoint) {
+                            ctx.moveTo(x, y);
+                            firstPoint = false;
+                        } else {
+                            ctx.lineTo(x, y);
+                        }
+                    }
+                });
+                
+                ctx.stroke();
+
+            });
+        }
+
+
+        /**
+         * Core logic function: Updates physics, saves history, and redraws the entire canvas.
+         * @param {number} elapsed - Elapsed time (seconds).
+         */
+        function updatePhysicsAndDraw(elapsed) {
+             // Get latest parameters
+            const T = parseFloat(periodInput.value);
+            const omega = (2 * Math.PI) / T;
+            const A_pixel = radius; // Amplitude in pixels (for UCM/SHM simulation)
+            const A_cm = getAmplitudeInCm(A_pixel); // Amplitude in cm (for graph and display)
+            
+            // Clear canvas
+            ctx.clearRect(0, 0, width, height);
+            
+            // Draw axes and frame
+            drawAxes();
+
+            // --- CALCULATE POSITION, VELOCITY, ACCELERATION ---
+            // UCM angle (same as before)
+            const angle = omega * elapsed + initial_phase_rad; 
+
+            // UCM (x = A*cos(angle), y = -A*sin(angle))
+            const x_ucm = center_x_ucm + A_pixel * Math.cos(angle);
+            const y_ucm = center_y_ucm - A_pixel * Math.sin(angle); // Canvas Y-axis is inverted
+
+            // SHM (Horizontal Projection - Trục Ngang)
+            const x_shm_particle = x_ucm; // X-coordinate của hạt SHM là hình chiếu X của UCM
+            const y_shm_particle = shm_y_pos; // Y-coordinate cố định trên trục ngang
+            
+            // 1. Displacement x (Li độ theo phương ngang: x = A*cos(ωt + φ))
+            const displacement_x_cm = A_cm * Math.cos(angle); // Displacement data in cm
+            
+            // 2. Velocity (Vận tốc: v = -ωA*sin(ωt + φ))
+            const velocity_x_cm = -A_cm * omega * Math.sin(angle); // Velocity data in cm/s
+            
+            // 3. Acceleration (Gia tốc: a = -ω²A*cos(ωt + φ))
+            const acceleration_x_cm = -A_cm * omega * omega * Math.cos(angle); // Acceleration data in cm/s^2
+            
+            // --- SAVE HISTORY DATA ---
+            const lastTime = history.y.length > 0 ? history.y[history.y.length - 1].t : -1;
+
+            // Only save to history if time has changed (or if t=0 and history is empty)
+            if (Math.abs(elapsed - lastTime) >= 0.001 || (elapsed === 0 && history.y.length === 0)) {
+                 // Ghi lại dữ liệu theo trục X
+                 history.y.push({ t: elapsed, val: displacement_x_cm });
+                 history.v.push({ t: elapsed, val: velocity_x_cm });
+                 history.a.push({ t: elapsed, val: acceleration_x_cm });
+            }
+
+            // Trim old data if exceeding MAX_TIME_HISTORY
+            let t_min_limit = elapsed - MAX_TIME_HISTORY;
+            while (history.y.length > 0 && history.y[0].t < t_min_limit) {
+                history.y.shift();
+                history.v.shift();
+                history.a.shift();
+            }
+
+            // --- DRAW MOTION COMPONENTS (UCM/SHM) ---
+
+            // Draw UCM circle
+            ctx.beginPath();
+            ctx.strokeStyle = '#f59e0b'; // Amber color
+            ctx.lineWidth = 2;
+            ctx.arc(center_x_ucm, center_y_ucm, A_pixel, 0, 2 * Math.PI);
+            ctx.stroke();
+
+            // 1. Projection line (dashed, now vertical)
+            ctx.beginPath();
+            ctx.strokeStyle = '#9ca3af';
+            ctx.setLineDash([5, 5]);
+            ctx.lineWidth = 1;
+            ctx.moveTo(x_ucm, y_ucm); // UCM point
+            ctx.lineTo(x_shm_particle, y_shm_particle); // SHM point
+            ctx.stroke();
+            ctx.setLineDash([]);
+
+            // 2. UCM Point (Blue)
+            ctx.beginPath();
+            ctx.fillStyle = '#3b82f6';
+            ctx.arc(x_ucm, y_ucm, 8, 0, 2 * Math.PI);
+            ctx.fill();
+
+            // 3. SHM Point (Projection, Red)
+            ctx.beginPath();
+            ctx.fillStyle = '#ef4444';
+            ctx.arc(x_shm_particle, y_shm_particle, 8, 0, 2 * Math.PI);
+            ctx.fill();
+            
+            // 4. SHM Path (Horizontal line - Displacement)
+            ctx.beginPath();
+            ctx.strokeStyle = '#ef4444';
+            ctx.lineWidth = 3;
+            ctx.moveTo(center_x_ucm, shm_y_pos); // Center (VTCB)
+            ctx.lineTo(x_shm_particle, shm_y_pos); // Đến vị trí hiện tại của hạt
+            ctx.stroke();
+
+            // 5. Displacement Label
+            ctx.fillStyle = '#ef4444';
+            ctx.font = '14px Inter';
+            
+            let disp_cm_text;
+            const TOL_DISP_DISPLAY = A_cm * 0.01;
+            
+            // Dùng displacement_x_cm (li độ ngang)
+            if (Math.abs(displacement_x_cm - A_cm) < TOL_DISP_DISPLAY) disp_cm_text = `+A (+${A_cm.toFixed(2)} cm)`;
+            else if (Math.abs(displacement_x_cm + A_cm) < TOL_DISP_DISPLAY) disp_cm_text = `-A (-${A_cm.toFixed(2)} cm)`;
+            else if (Math.abs(displacement_x_cm) < TOL_DISP_DISPLAY) disp_cm_text = '0 (VTCB)';
+            else disp_cm_text = displacement_x_cm.toFixed(2) + ' cm';
+            
+            // Vị trí nhãn Li độ (ở trên hạt)
+            ctx.fillText(`x = ${disp_cm_text}`, x_shm_particle - 50, shm_y_pos - 15);
+            
+            // NEW: Velocity Label
+            ctx.fillStyle = '#22c55e'; // Green for Velocity
+            // Vị trí nhãn Vận tốc (ở dưới hạt)
+            ctx.fillText(`v = ${velocity_x_cm.toFixed(2)} cm/s`, x_shm_particle - 50, shm_y_pos + 25);
+
+            // NEW: Acceleration Label
+            ctx.fillStyle = '#3b82f6'; // Blue for Acceleration
+            // Vị trí nhãn Gia tốc (ở dưới xa hơn)
+            ctx.fillText(`a = ${acceleration_x_cm.toFixed(2)} cm/s²`, x_shm_particle - 50, shm_y_pos + 45);
+
+
+            // Time Label
+            ctx.fillStyle = '#3b82f6';
+            ctx.fillText(`t = ${elapsed.toFixed(2)}s`, center_x_ucm - 30, UCM_HEIGHT - 10);
+
+            // --- DRAW GRAPHS ---
+            drawGraphs(elapsed);
+
+            // Control state of step back button
+            if (!isRunning) {
+                stepBackButton.disabled = elapsed <= 0.001;
+            }
+        }
+
+
+        /**
+         * Main simulation loop (Animation Loop).
+         * @param {number} timestamp - Current time from requestAnimationFrame.
+         */
+        function animate(timestamp) {
+            if (!startTime) {
+                startTime = timestamp;
+            }
+
+            // Update elapsed time based on real time
+            const delta_time_ms = timestamp - (startTime + current_elapsed_time * 1000);
+            current_elapsed_time += delta_time_ms / 1000;
+            
+            updatePhysicsAndDraw(current_elapsed_time);
+
+            // Repeat animation
+            animationFrameId = requestAnimationFrame(animate);
+        }
+
+        // --- CONTROL FUNCTIONS ---
+
+        /**
+         * Starts continuous simulation.
+         */
+        function startSimulation() {
+            if (!isRunning) {
+                const T = parseFloat(periodInput.value);
+                if (isNaN(T) || T < 0.5) {
+                    periodInput.value = 0.5;
+                }
+                
+                isRunning = true;
+                startTime = performance.now() - current_elapsed_time * 1000; 
+                
+                periodInput.disabled = true; 
+                amplitudeRange.disabled = true;
+                initialPhaseInput.disabled = true; // Disable phase input while running
+                toggleButton.textContent = "Dừng Mô phỏng (Liên tục)";
+                toggleButton.classList.remove('bg-indigo-600', 'hover:bg-indigo-700');
+                toggleButton.classList.add('bg-red-600', 'hover:bg-red-700');
+                stepButton.disabled = true;
+                stepBackButton.disabled = true; // Disable back button while running
+
+                animationFrameId = requestAnimationFrame(animate);
+            }
+        }
+
+        /**
+         * Stops simulation.
+         */
+        function stopSimulation() {
+            if (isRunning) {
+                cancelAnimationFrame(animationFrameId);
+                isRunning = false;
+                
+                periodInput.disabled = false; 
+                amplitudeRange.disabled = false;
+                initialPhaseInput.disabled = false; // Enable phase input when stopped
+                toggleButton.textContent = "Tiếp tục Mô phỏng (Liên tục)";
+                toggleButton.classList.remove('bg-red-600', 'hover:bg-red-700');
+                toggleButton.classList.add('bg-indigo-600', 'hover:bg-indigo-700');
+                stepButton.disabled = false;
+                
+                // Re-enable/disable back button based on current time
+                stepBackButton.disabled = current_elapsed_time <= 0.001; 
+
+                // Update Step button text after stopping
+                updateStepButtonText();
+            }
+        }
+
+        /**
+         * Toggles simulation state.
+         */
+        function toggleSimulation() {
+            if (isRunning) {
+                stopSimulation();
+            } else {
+                startSimulation();
+            }
+        }
+
+        /**
+         * Advances by one time step, prioritizing special positions if near.
+         */
+        function stepSimulation() {
+            if (!isRunning) {
+                const T = parseFloat(periodInput.value);
+                const omega = (2 * Math.PI) / T;
+                const FIXED_STEP_INCREMENT = getFixedStepIncrement(); // T/80
+                
+                // Current total phase: ωt + φ
+                const current_total_phase = omega * current_elapsed_time + initial_phase_rad;
+
+                // Find time needed to reach the closest special point
+                const { time_to_reach } = findNextSpecialPoint(current_total_phase);
+                
+                let time_step;
+
+                // Time tolerance check: if time to reach special point is within the fixed step, jump to it.
+                if (time_to_reach <= FIXED_STEP_INCREMENT + (ANGLE_TOLERANCE / omega) ) {
+                    // Prioritize jumping to the special position
+                    time_step = time_to_reach;
+                } else {
+                    // If far, jump fixed step T/80
+                    time_step = FIXED_STEP_INCREMENT;
+                }
+
+                current_elapsed_time += time_step;
+                updatePhysicsAndDraw(current_elapsed_time); 
+                
+                // Update Step button text (show the next action)
+                updateStepButtonText();
+            }
+        }
+
+        /**
+         * Moves backward by one fixed time step (T/80).
+         */
+        function stepBackwardSimulation() {
+            if (!isRunning) {
+                // Always step back by the fixed increment T/80
+                const time_step = getFixedStepIncrement();
+                
+                // Ensure time does not go negative
+                current_elapsed_time = Math.max(0, current_elapsed_time - time_step);
+                
+                updatePhysicsAndDraw(current_elapsed_time); 
+                
+                // Update Step button text (show the next action)
+                updateStepButtonText();
+            }
+        }
+
+        /**
+         * Resets simulation to initial state (t=0).
+         */
+        function resetSimulation() {
+            stopSimulation();
+            current_elapsed_time = 0;
+            history.y = []; 
+            history.v = [];
+            history.a = [];
+            
+            // Redraw initial static state
+            ctx.clearRect(0, 0, width, height);
+            drawAxes();
+            
+            ctx.beginPath();
+            ctx.strokeStyle = '#f59e0b';
+            ctx.lineWidth = 2;
+            ctx.arc(center_x_ucm, center_y_ucm, radius, 0, 2 * Math.PI);
+            ctx.stroke();
+
+            // Update initial point (t=0)
+            updatePhysicsAndDraw(0); 
+            updateStepButtonText(); // Initialize Step button text
+        }
+
+        // --- INITIALIZATION ---
+        // Draw initial frame when loading the page
+        ctx.fillStyle = '#ffffff';
+        ctx.fillRect(0, 0, width, height);
+        
+        // Update initial phase, amplitude and angular frequency
+        updateInitialPhase(); // Ensure initial_phase_rad and display are set
+        updateAmplitude();
+        updateAngularFrequency();
+
+        // Draw initial static UCM circle and set state to t=0
+        updatePhysicsAndDraw(0); 
+        updateStepButtonText(); 
+
+    </script>
+</body>
+</html>

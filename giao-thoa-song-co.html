@@ -1,0 +1,540 @@
+<!DOCTYPE html>
+<html lang="vi">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Mô Phỏng Giao Thoa Sóng Cơ</title> <!-- Đã sửa tiêu đề HTML -->
+    <!-- Tải Tailwind CSS để tạo giao diện đẹp và responsive -->
+    <script src="https://cdn.tailwindcss.com"></script>
+    <style>
+        /* Thiết lập font Inter và màu nền tối toàn bộ (Dark Mode) */
+        body { font-family: 'Inter', sans-serif; background-color: #0d1117; color: #c9d1d9; }
+        
+        /* Thiết lập Canvas cho mô phỏng */
+        #waveCanvas {
+            border-radius: 12px;
+            box-shadow: 0 4px 12px rgba(0, 0, 0, 0.5);
+            background-color: #0e1526; /* Deep Navy Background (theo hình ảnh) */
+            touch-action: none; 
+            display: block;
+        }
+
+        /* Custom styles cho các thanh range slider */
+        input[type="range"] {
+            -webkit-appearance: none;
+            width: 100%;
+            height: 8px;
+            background: #21262d; /* Dark gray track */
+            border-radius: 4px;
+            outline: none;
+            transition: opacity .2s;
+        }
+        input[type="range"]::-webkit-slider-thumb {
+            -webkit-appearance: none;
+            appearance: none;
+            width: 16px;
+            height: 16px;
+            background: #58a6ff; /* Primary blue for contrast */
+            cursor: pointer;
+            border-radius: 50%;
+            border: 2px solid #0d1117;
+        }
+        input[type="range"]::-moz-range-thumb {
+            width: 16px;
+            height: 16px;
+            background: #58a6ff;
+            cursor: pointer;
+            border-radius: 50%;
+            border: 2px solid #0d1117;
+        }
+
+        /* Style cho các hộp Stats/Legend trên Canvas */
+        .info-box {
+            background-color: rgba(14, 21, 38, 0.85); /* Dark background with transparency */
+            border: 1px solid #00aaff;
+            color: #ffffff;
+            font-family: monospace;
+            box-shadow: 0 2px 8px rgba(0, 0, 0, 0.3);
+        }
+
+        /* Style cho nút Tạm Dừng */
+        #togglePause {
+            transition: background-color 0.2s, transform 0.1s;
+        }
+        #togglePause:hover {
+            opacity: 0.9;
+            transform: translateY(-1px);
+        }
+    </style>
+</head>
+<body class="p-4 md:p-8 min-h-screen flex items-center justify-center">
+    
+        <a href="index.html" class="fixed top-4 left-4 z-50 p-3 bg-blue-600 text-white rounded-lg shadow-xl hover:bg-blue-700 transition duration-300 flex items-center space-x-2">
+    <svg xmlns="http://www.w3.org/2000/svg" class="h-5 w-5" viewBox="0 0 20 20" fill="currentColor">
+        <path d="M10.707 2.293a1 1 0 00-1.414 0l-7 7a1 1 0 001.414 1.414L4 10.414V17a1 1 0 001 1h2a1 1 0 001-1v-2a1 1 0 011-1h2a1 1 0 011 1v2a1 1 0 001 1h2a1 1 0 001-1v-6.586l.293.293a1 1 0 001.414-1.414l-7-7z" />
+    </svg>
+    <span class="font-semibold hidden sm:inline">Quay về Trang Chủ</span>
+        </a>
+
+    <div class="w-full max-w-7xl">
+        <h1 class="text-3xl font-bold mb-6 text-center text-blue-400">🌊 Mô Phỏng Giao Thoa Sóng Cơ</h1> <!-- Đã sửa tiêu đề hiển thị -->
+
+        <div class="flex flex-col lg:flex-row gap-6">
+
+            <!-- CONTROL PANEL -->
+            <div class="lg:w-1/3 bg-[#161b22] p-6 rounded-xl shadow-lg border border-gray-700 h-fit">
+                <h2 class="text-xl font-semibold mb-4 text-white">Điều Khiển Thông Số Sóng</h2>
+
+                <!-- Nút Tạm Dừng / Tiếp Tục -->
+                <button id="togglePause" class="w-full py-2 px-4 rounded-lg font-bold text-lg mb-6 text-white bg-red-600 hover:bg-red-700 shadow-xl">
+                    ⏸️ Tạm Dừng
+                </button>
+
+                <!-- Khoảng cách giữa hai nguồn -->
+                <div class="mb-4">
+                    <label for="sourceDistance" class="block text-sm font-medium mb-1">Khoảng cách giữa hai nguồn (d): <span id="distValue" class="font-mono text-green-400">200.0</span> px</label>
+                    <input type="range" id="sourceDistance" min="50" max="400" step="10" value="200" class="w-full">
+                </div>
+
+                <!-- Tần số -->
+                <div class="mb-4">
+                    <label for="frequency" class="block text-sm font-medium mb-1">Tần số (f): <span id="freqValue" class="font-mono text-green-400">1.0</span> Hz</label>
+                    <input type="range" id="frequency" min="0.5" max="5.0" step="0.1" value="1.0" class="w-full">
+                </div>
+
+                <!-- Pha ban đầu -->
+                <div class="mb-4">
+                    <label for="phaseDiff" class="block text-sm font-medium mb-1">Độ lệch pha ban đầu (&Delta;&phi;): <span id="phaseValue" class="font-mono text-green-400">0</span> &pi; rad</label>
+                    <input type="range" id="phaseDiff" min="0" max="2" step="0.1" value="0" class="w-full">
+                </div>
+
+                <!-- Biên độ Sóng 1 -->
+                <div class="mb-4">
+                    <label for="amp1" class="block text-sm font-medium mb-1">Biên độ Sóng 1 (A₁): <span id="amp1Value" class="font-mono text-green-400">1.0</span></label>
+                    <input type="range" id="amp1" min="0.1" max="2.0" step="0.1" value="1.0" class="w-full">
+                </div>
+
+                <!-- Biên độ Sóng 2 -->
+                <div class="mb-6">
+                    <label for="amp2" class="block text-sm font-medium mb-1">Biên độ Sóng 2 (A₂): <span id="amp2Value" class="font-mono text-green-400">1.0</span></label>
+                    <input type="range" id="amp2" min="0.1" max="2.0" step="0.1" value="1.0" class="w-full">
+                </div>
+
+                <div class="mb-4 pt-4 border-t border-gray-700">
+                    <h3 class="text-lg font-semibold mb-2 text-white">Hiển Thị Vân Giao Thoa Tĩnh</h3>
+                    
+                    <div class="flex items-center space-x-4">
+                        <label class="flex items-center">
+                            <input type="checkbox" id="toggleMaxima" class="form-checkbox text-blue-500 h-4 w-4 rounded" checked>
+                            <!-- Cập nhật màu sắc cho checkbox -->
+                            <span class="ml-2 text-sm text-white">Vân Cực Đại</span> 
+                        </label>
+                        <label class="flex items-center">
+                            <input type="checkbox" id="toggleMinima" class="form-checkbox text-blue-500 h-4 w-4 rounded" checked>
+                            <!-- Cập nhật màu sắc cho checkbox -->
+                            <span class="ml-2 text-sm text-[#FF00FF]">Vân Cực Tiểu</span> 
+                        </label>
+                    </div>
+                </div>
+
+                <p class="text-xs text-gray-500 mt-4 italic">
+                    Lưu ý: Tốc độ sóng (v) được cố định là 50 pixels/s. Bước sóng &lambda; = v/f.
+                </p>
+            </div>
+
+            <!-- CANVAS SIMULATION CONTAINER (Relative position to hold absolute info boxes) -->
+            <div class="lg:w-2/3 flex justify-center items-center relative">
+                <canvas id="waveCanvas" class="w-full aspect-square max-w-full"></canvas>
+
+                <!-- Stats Box (Top Left, Absolute Position) -->
+                <div id="statsBox" class="info-box absolute top-4 left-4 p-3 rounded-md text-xs sm:text-sm shadow-xl">
+                    <p>t = <span id="statTime">0.00</span> s</p>
+                    <p>f = <span id="statFreq">1.0</span> Hz</p>
+                    <p>&lambda; = <span id="statLambda">50.0</span> px</p>
+                    <p>d = <span id="statDist">200.0</span> px</p>
+                </div>
+                
+                <!-- Legend Box (Top Right, Absolute Position) -->
+                <div class="info-box absolute top-4 right-4 p-3 rounded-md text-xs sm:text-sm shadow-xl">
+                    <div class="flex items-center mb-1">
+                        <!-- Cập nhật màu sắc cho Legend: Trắng -->
+                        <div class="w-4 h-4 rounded-sm" style="background-color: #FFFFFF;"></div>
+                        <span class="ml-2">Cực đại giao thoa với biên độ cực tiểu</span>
+                    </div>
+                    <div class="flex items-center">
+                        <!-- Cập nhật màu sắc cho Legend: Hồng Cánh Sen -->
+                        <div class="w-4 h-4 rounded-sm" style="background-color: #FF00FF;"></div>
+                        <span class="ml-2">Cực đại giao thoa với biên độ cực đại</span>
+                    </div>
+                </div>
+
+            </div>
+        </div>
+    </div>
+
+    <script type="module">
+        const canvas = document.getElementById('waveCanvas');
+        const ctx = canvas.getContext('2d');
+        const controls = {
+            togglePause: document.getElementById('togglePause'), // Nút mới
+            sourceDistance: document.getElementById('sourceDistance'), 
+            frequency: document.getElementById('frequency'),
+            phaseDiff: document.getElementById('phaseDiff'),
+            amp1: document.getElementById('amp1'),
+            amp2: document.getElementById('amp2'),
+            toggleMaxima: document.getElementById('toggleMaxima'),
+            toggleMinima: document.getElementById('toggleMinima'),
+            // Value displays
+            distValue: document.getElementById('distValue'), 
+            freqValue: document.getElementById('freqValue'),
+            phaseValue: document.getElementById('phaseValue'),
+            amp1Value: document.getElementById('amp1Value'),
+            amp2Value: document.getElementById('amp2Value'),
+            // Stat elements
+            statTime: document.getElementById('statTime'),
+            statFreq: document.getElementById('statFreq'),
+            statLambda: document.getElementById('statLambda'),
+            statDist: document.getElementById('statDist'),
+        };
+
+        // --- HẰNG SỐ VẬT LÝ VÀ THIẾT LẬP BAN ĐẦU ---
+        const V_WAVE = 50; // Tốc độ sóng (pixels/s)
+        const PI2 = 2 * Math.PI;
+        let animationFrameId = null; // ID của requestAnimationFrame
+        let isPaused = false; // Trạng thái tạm dừng
+        let lastTime = 0;
+        let elapsedTime = 0; // Thời gian trôi qua để tạo hiệu ứng sóng động
+
+        // Vị trí các nguồn sóng (S1 và S2)
+        let S1 = { x: 0, y: 0 };
+        let S2 = { x: 0, y: 0 };
+        let SOURCE_DISTANCE = parseFloat(controls.sourceDistance.value); 
+
+        // --- THAM SỐ NGƯỜI DÙNG ĐIỀU KHIỂN ---
+        let f = parseFloat(controls.frequency.value); 
+        let deltaPhi_pi = parseFloat(controls.phaseDiff.value); 
+        let A1 = parseFloat(controls.amp1.value);   
+        let A2 = parseFloat(controls.amp2.value);   
+        let showMaxima = controls.toggleMaxima.checked;
+        let showMinima = controls.toggleMinima.checked;
+        
+        // Màu sắc cố định cho sóng động (không thay đổi)
+        const BG_R = 14, BG_G = 21, BG_B = 38; // Deep Navy Background (#0e1526)
+        const MAXIMA_COLOR = [170, 255, 0];    // Yellow-Green (#aaff00)
+        const MINIMA_COLOR = [0, 170, 255];    // Blue-Cyan (#00aaff)
+
+        // Màu sắc mới cho các đường tĩnh (đã thay đổi)
+        const STATIC_MAXIMA_COLOR = '#FFFFFF'; // Trắng
+        const STATIC_MINIMA_COLOR = '#FF00FF'; // Hồng Cánh Sen (Magenta)
+
+        // --- CÁC HÀM TÍNH TOÁN VẬT LÝ ---
+
+        function calculateWaveParameters() {
+            const omega = PI2 * f; 
+            const lambda = V_WAVE / f;
+            const k = PI2 / lambda;
+            return { omega, lambda, k };
+        }
+
+        /**
+         * Tính độ dịch chuyển tổng hợp tại điểm (x, y) và thời điểm t.
+         */
+        function calculateDisplacement(x, y, t) {
+            const { omega, k } = calculateWaveParameters();
+            const deltaPhi_0 = deltaPhi_pi * Math.PI; 
+
+            const d1 = Math.sqrt((x - S1.x)**2 + (y - S1.y)**2);
+            const d2 = Math.sqrt((x - S2.x)**2 + (y - S2.y)**2);
+
+            const u1 = A1 * Math.cos(omega * t - k * d1);
+            const u2 = A2 * Math.cos(omega * t - k * d2 + deltaPhi_0);
+
+            return u1 + u2;
+        }
+
+        // --- HÀM VẼ VÀ RENDER ---
+
+        /**
+         * Hàm vẽ mô phỏng động
+         */
+        function drawSimulation() {
+            if (canvas.width <= 0 || canvas.height <= 0) return;
+
+            const maxDisplacement = A1 + A2;
+            const imageData = ctx.createImageData(canvas.width, canvas.height);
+            const data = imageData.data;
+
+            for (let y = 0; y < canvas.height; y++) {
+                for (let x = 0; x < canvas.width; x++) {
+                    const index = (y * canvas.width + x) * 4;
+                    
+                    // Tính toán độ dịch chuyển tại thời điểm hiện tại
+                    const u = calculateDisplacement(x, y, elapsedTime); 
+                    const normalizedU = u / maxDisplacement;
+                    let intensity = Math.abs(normalizedU);
+
+                    // Chọn màu sóng dựa trên chiều dịch chuyển (cực đại dương, cực tiểu âm)
+                    let waveR = normalizedU > 0 ? MAXIMA_COLOR[0] : MINIMA_COLOR[0];
+                    let waveG = normalizedU > 0 ? MAXIMA_COLOR[1] : MINIMA_COLOR[1];
+                    let waveB = normalizedU > 0 ? MAXIMA_COLOR[2] : MINIMA_COLOR[2];
+
+                    // Sử dụng hàm mũ để làm sắc nét các đường sóng (hiệu ứng glow)
+                    const waveFactor = Math.pow(intensity, 1.5); 
+
+                    // Pha trộn màu sóng với màu nền sâu
+                    data[index] = Math.floor(BG_R * (1 - waveFactor) + waveR * waveFactor);
+                    data[index + 1] = Math.floor(BG_G * (1 - waveFactor) + waveG * waveFactor);
+                    data[index + 2] = Math.floor(BG_B * (1 - waveFactor) + waveB * waveFactor);
+                    data[index + 3] = 255;
+                }
+            }
+            ctx.putImageData(imageData, 0, 0);
+        }
+
+        /**
+         * Hàm vẽ các đường cực đại và cực tiểu tĩnh
+         */
+        function drawStaticLines() {
+            const { lambda } = calculateWaveParameters();
+            const deltaPhi_0 = deltaPhi_pi * Math.PI;
+
+            const phaseShiftDistance = (lambda * deltaPhi_0) / PI2;
+            const maxK = Math.ceil(SOURCE_DISTANCE / lambda) + 2; 
+
+            ctx.strokeStyle = '#fff';
+            ctx.lineWidth = 1;
+            
+            for (let y = 0; y < canvas.height; y++) {
+                for (let x = 0; x < canvas.width; x++) {
+                    const d1 = Math.sqrt((x - S1.x)**2 + (y - S1.y)**2);
+                    const d2 = Math.sqrt((x - S2.x)**2 + (y - S2.y)**2);
+                    const deltaD = d1 - d2;
+
+                    for (let k = -maxK; k <= maxK; k++) {
+                        
+                        const maximaCondition = k * lambda - phaseShiftDistance;
+                        const minimaCondition = (k + 0.5) * lambda - phaseShiftDistance;
+
+                        const tolerance = 0.5; // Dung sai để vẽ đường (pixels)
+                        
+                        if (showMaxima && Math.abs(deltaD - maximaCondition) < tolerance) {
+                            // SỬ DỤNG MÀU TRẮNG CHO CỰC ĐẠI TĨNH
+                            ctx.fillStyle = STATIC_MAXIMA_COLOR; 
+                            ctx.fillRect(x, y, 1, 1);
+                        } else if (showMinima && Math.abs(deltaD - minimaCondition) < tolerance) {
+                            // SỬ DỤNG MÀU HỒNG CÁNH SEN CHO CỰC TIỂU TĨNH
+                            ctx.fillStyle = STATIC_MINIMA_COLOR; 
+                            ctx.fillRect(x, y, 1, 1);
+                        }
+                    }
+                }
+            }
+        }
+
+        /**
+         * Hàm vẽ các nguồn sóng S1 và S2
+         */
+        function drawSources() {
+            ctx.fillStyle = '#ff0000'; // Màu đỏ tươi cho nguồn sóng
+            
+            // S1
+            ctx.beginPath();
+            ctx.arc(S1.x, S1.y, 8, 0, PI2);
+            ctx.fill();
+            ctx.fillStyle = '#ffffff'; // Màu chữ trắng cho nền tối
+            ctx.font = '16px Inter';
+            ctx.fillText('S₁', S1.x - 5, S1.y - 18);
+            
+            // S2
+            ctx.beginPath();
+            ctx.arc(S2.x, S2.y, 8, 0, PI2);
+            ctx.fill();
+            ctx.fillStyle = '#ffffff';
+            ctx.fillText('S₂', S2.x - 5, S2.y + 25);
+        }
+
+        /**
+         * Cập nhật số liệu thống kê (Stats) trên giao diện HTML
+         */
+        function updateStats() {
+            const { lambda } = calculateWaveParameters();
+            controls.statTime.textContent = elapsedTime.toFixed(2);
+            controls.statFreq.textContent = f.toFixed(1);
+            controls.statLambda.textContent = lambda.toFixed(1);
+            controls.statDist.textContent = SOURCE_DISTANCE.toFixed(1);
+        }
+        
+        // --- CHU TRÌNH ANIMATION (Vòng lặp chính) ---
+
+        function animate(timestamp) {
+            if (isPaused) {
+                lastTime = 0; // Đặt lại lastTime để khi tiếp tục, deltaTime không quá lớn
+                animationFrameId = null; // Đảm bảo ID được đặt lại khi tạm dừng
+                return;
+            }
+
+            if (canvas.width <= 0 || canvas.height <= 0) {
+                 animationFrameId = requestAnimationFrame(animate);
+                 return;
+            }
+
+            if (!lastTime) lastTime = timestamp;
+            const deltaTime = (timestamp - lastTime) / 1000;
+            lastTime = timestamp;
+            elapsedTime += deltaTime;
+
+            // 1. Vẽ mô phỏng động
+            drawSimulation();
+            
+            // 2. Vẽ các đường tĩnh (Max/Min)
+            if (showMaxima || showMinima) {
+                drawStaticLines();
+            }
+
+            // 3. Vẽ nguồn sóng
+            drawSources();
+
+            // 4. Cập nhật số liệu thống kê
+            updateStats();
+
+            animationFrameId = requestAnimationFrame(animate);
+        }
+        
+        // --- HÀM TẠM DỪNG/TIẾP TỤC ---
+        function togglePause() {
+            isPaused = !isPaused;
+            const button = controls.togglePause;
+            
+            if (isPaused) {
+                // Tạm dừng
+                button.textContent = "▶️ Tiếp Tục";
+                button.classList.remove('bg-red-600', 'hover:bg-red-700');
+                button.classList.add('bg-green-600', 'hover:bg-green-700');
+                // Chức năng tạm dừng được thực hiện trong hàm animate
+            } else {
+                // Tiếp tục
+                button.textContent = "⏸️ Tạm Dừng";
+                button.classList.remove('bg-green-600', 'hover:bg-green-700');
+                button.classList.add('bg-red-600', 'hover:bg-red-700');
+                if (!animationFrameId) {
+                    lastTime = 0; // Reset lastTime để tránh nhảy thời gian
+                    animationFrameId = requestAnimationFrame(animate);
+                }
+            }
+        }
+
+        // --- XỬ LÝ SỰ KIỆN VÀ RESIZE ---
+
+        /**
+         * Thiết lập vị trí nguồn sóng (đặt chúng trên cùng một trục X, cách đều tâm Y)
+         */
+        function setupSources(canvasWidth, canvasHeight) {
+            const centerY = canvasHeight / 2;
+            
+            // SOURCE_DISTANCE (d) được lấy từ giá trị điều khiển.
+            
+            // ĐƯA NGUỒN SÓNG VỀ GẦN SÁT BÊN TRÁI (10% chiều rộng)
+            const sourceX = canvasWidth * 0.1; 
+
+            // Đặt S1 và S2 thẳng hàng dọc, cách đều tâm Y, với khoảng cách là SOURCE_DISTANCE
+            S1.x = sourceX;
+            S1.y = centerY - SOURCE_DISTANCE / 2; 
+            S2.x = sourceX;
+            S2.y = centerY + SOURCE_DISTANCE / 2;
+            
+            // Cập nhật khoảng cách nguồn trong Stats Box
+            controls.statDist.textContent = SOURCE_DISTANCE.toFixed(1); 
+        }
+        
+        /**
+         * Xử lý resize: cập nhật kích thước canvas và vị trí nguồn
+         */
+        function handleResize() {
+            const container = canvas.parentElement;
+            // Đảm bảo canvas là hình vuông và chiếm đủ chiều rộng
+            const size = Math.min(container.clientWidth, window.innerHeight * 0.7); 
+            canvas.width = size;
+            canvas.height = size;
+            // Gọi setupSources để định vị lại S1, S2 dựa trên SOURCE_DISTANCE hiện tại và kích thước canvas mới
+            setupSources(canvas.width, canvas.height);
+            
+            if (!isPaused && !animationFrameId) {
+                lastTime = 0; 
+                animationFrameId = requestAnimationFrame(animate);
+            }
+            
+            // Nếu tạm dừng, vẫn cần vẽ lại một lần sau khi resize để các đường tĩnh và nguồn được căn chỉnh lại
+            if (isPaused) {
+                 drawSimulation();
+                 if (showMaxima || showMinima) {
+                    drawStaticLines();
+                }
+                drawSources();
+            }
+        }
+
+        /**
+         * Cập nhật các biến khi người dùng thay đổi controls
+         */
+        function updateParameters() {
+            // Cập nhật khoảng cách nguồn (SOURCE_DISTANCE) từ thanh trượt
+            SOURCE_DISTANCE = parseFloat(controls.sourceDistance.value);
+            controls.distValue.textContent = SOURCE_DISTANCE.toFixed(1);
+            
+            // Cập nhật vị trí nguồn sau khi thay đổi khoảng cách
+            setupSources(canvas.width, canvas.height); 
+            
+            // Cập nhật các thông số khác
+            f = parseFloat(controls.frequency.value);
+            deltaPhi_pi = parseFloat(controls.phaseDiff.value);
+            A1 = parseFloat(controls.amp1.value);
+            A2 = parseFloat(controls.amp2.value);
+
+            controls.freqValue.textContent = f.toFixed(1);
+            controls.phaseValue.textContent = deltaPhi_pi.toFixed(1);
+            controls.amp1Value.textContent = A1.toFixed(1);
+            controls.amp2Value.textContent = A2.toFixed(1);
+            
+            showMaxima = controls.toggleMaxima.checked;
+            showMinima = controls.toggleMinima.checked;
+
+            // Nếu tạm dừng, cần vẽ lại để hiển thị các đường tĩnh/nguồn với tham số mới
+            if (isPaused) {
+                drawSimulation();
+                if (showMaxima || showMinima) {
+                    drawStaticLines();
+                }
+                drawSources();
+                updateStats();
+            }
+        }
+
+        // --- KHỞI TẠO ---
+
+        function initialize() {
+            // Thêm listener cho nút Tạm Dừng
+            controls.togglePause.addEventListener('click', togglePause); 
+
+            Object.values(controls).forEach(control => {
+                // Bỏ qua nút togglePause vì nó có listener riêng
+                if (control.id !== 'togglePause' && (control.type === 'range' || control.type === 'checkbox')) { 
+                    control.addEventListener('input', updateParameters);
+                }
+            });
+
+            window.addEventListener('resize', handleResize);
+            
+            // Đảm bảo kích thước Canvas được thiết lập và SOURCE_DISTANCE được cập nhật ban đầu
+            updateParameters();
+            handleResize(); 
+            
+            if (!animationFrameId) {
+                animationFrameId = requestAnimationFrame(animate);
+            }
+        }
+        
+        window.onload = initialize;
+
+    </script>
+</body>
+</html>

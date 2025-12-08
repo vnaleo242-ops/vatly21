@@ -1,0 +1,188 @@
+<!DOCTYPE html>
+<html lang="vi">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Mô Phỏng Sóng Dừng</title>
+    <!-- Tải Tailwind CSS -->
+    <script src="https://cdn.tailwindcss.com"></script>
+    <style>
+        /* Đảm bảo canvas có kích thước linh hoạt và có viền đẹp */
+        #waveCanvas {
+            border: 2px solid #3b82f6; /* Màu xanh dương */
+            background-color: #f8fafc; /* Màu nền nhẹ */
+            border-radius: 0.5rem;
+            box-shadow: 0 10px 15px -3px rgba(0, 0, 0, 0.1), 0 4px 6px -2px rgba(0, 0, 0, 0.05);
+        }
+    </style>
+    <!-- Cài đặt font Inter -->
+    <link href="https://fonts.googleapis.com/css2?family=Inter:wght@400;600;700&display=swap" rel="stylesheet">
+    <script>
+        tailwind.config = {
+            theme: {
+                extend: {
+                    fontFamily: {
+                        sans: ['Inter', 'sans-serif'],
+                    }
+                }
+            }
+        }
+    </script>
+</head>
+<body class="bg-gray-100 min-h-screen flex items-center justify-center p-4 font-sans">
+            <a href="index.html" class="fixed top-4 left-4 z-50 p-3 bg-blue-600 text-white rounded-lg shadow-xl hover:bg-blue-700 transition duration-300 flex items-center space-x-2">
+    <svg xmlns="http://www.w3.org/2000/svg" class="h-5 w-5" viewBox="0 0 20 20" fill="currentColor">
+        <path d="M10.707 2.293a1 1 0 00-1.414 0l-7 7a1 1 0 001.414 1.414L4 10.414V17a1 1 0 001 1h2a1 1 0 001-1v-2a1 1 0 011-1h2a1 1 0 011 1v2a1 1 0 001 1h2a1 1 0 001-1v-6.586l.293.293a1 1 0 001.414-1.414l-7-7z" />
+    </svg>
+    <span class="font-semibold hidden sm:inline">Quay về Trang Chủ</span>
+        </a>
+
+    <div class="w-full max-w-4xl bg-white p-6 rounded-xl shadow-2xl">
+        <h1 class="text-3xl font-bold text-center text-blue-700 mb-6 border-b pb-2">
+            Sóng Dừng - Một Đầu Cố Định, Một Đầu Tự Do
+        </h1>
+
+        <div class="flex flex-col lg:flex-row gap-6">
+            
+            <!-- Khu vực điều khiển -->
+            <div class="lg:w-1/3 space-y-4 p-4 bg-blue-50 rounded-lg shadow-inner">
+                <h2 class="text-xl font-semibold text-blue-600 mb-4">Tham số Sóng</h2>
+
+                <!-- Tần số (Frequency) -->
+                <div>
+                    <label for="frequency" class="block text-sm font-medium text-gray-700">Tần số (Hz): <span id="freqValue" class="font-bold text-blue-600">1.0</span></label>
+                    <input type="range" id="frequency" min="0.5" max="5.0" step="0.05" value="1.0"
+                           class="w-full h-2 bg-blue-200 rounded-lg appearance-none cursor-pointer range-lg"
+                           oninput="document.getElementById('freqValue').textContent = this.value; drawWave();">
+                </div>
+
+                <!-- Biên độ (Amplitude) -->
+                <div>
+                    <label for="amplitude" class="block text-sm font-medium text-gray-700">Biên độ Sóng (Đơn vị tương đối): <span id="ampValue" class="font-bold text-blue-600">40</span></label>
+                    <input type="range" id="amplitude" min="10" max="100" step="1" value="40"
+                           class="w-full h-2 bg-blue-200 rounded-lg appearance-none cursor-pointer range-lg"
+                           oninput="document.getElementById('ampValue').textContent = this.value; drawWave();">
+                </div>
+            </div>
+
+            <!-- Khu vực Canvas -->
+            <div class="lg:w-2/3 flex flex-col items-center">
+                <canvas id="waveCanvas" width="600" height="300" class="w-full h-auto"></canvas>
+                <div class="mt-2 text-sm text-gray-600 flex justify-between w-full">
+                    <span class="font-medium text-red-600">Đầu Cố Định (Nút)</span>
+                    <span class="font-medium text-green-600">Đầu Tự Do (Bụng)</span>
+                </div>
+            </div>
+
+        </div>
+    </div>
+
+    <script type="text/javascript">
+        // Thiết lập biến toàn cục (Sử dụng 'var' để tránh lỗi khai báo lại)
+        var canvas = document.getElementById('waveCanvas');
+        var ctx = canvas.getContext('2d');
+        var L = canvas.width; // Chiều dài dây (bằng chiều rộng canvas)
+        var v = 100; // Vận tốc truyền sóng (hằng số)
+        var animationFrameId;
+        var startTime = Date.now();
+
+        /**
+         * Hàm tính toán và vẽ sóng dừng lên canvas.
+         */
+        function drawWave() {
+            // Lấy giá trị tham số từ UI
+            const A = parseFloat(document.getElementById('amplitude').value);
+            const f = parseFloat(document.getElementById('frequency').value);
+            const omega = 2 * Math.PI * f; // Tần số góc
+            const k = omega / v; // Số sóng (wave number)
+            const t = (Date.now() - startTime) / 1000; // Thời gian hiện tại (giây)
+
+            // Xóa canvas
+            ctx.clearRect(0, 0, canvas.width, canvas.height);
+
+            // Tọa độ trung tâm (đường cân bằng)
+            const centerY = canvas.height / 2;
+
+            // --- Vẽ đường dây cân bằng (Trục Ox) ---
+            ctx.beginPath();
+            ctx.strokeStyle = '#9ca3af'; // Màu xám
+            ctx.lineWidth = 1;
+            ctx.moveTo(0, centerY);
+            ctx.lineTo(L, centerY);
+            ctx.stroke();
+
+            // --- Bắt đầu vẽ sóng ---
+            ctx.beginPath();
+            ctx.strokeStyle = '#1d4ed8'; // Màu xanh đậm cho sóng
+            ctx.lineWidth = 3;
+
+            // Điểm bắt đầu
+            ctx.moveTo(0, centerY);
+
+            // Duyệt qua các điểm x trên chiều dài dây
+            for (let x = 0; x <= L; x += 1) {
+                // Phương trình sóng dừng (thoả mãn y(0)=0)
+                // y(x, t) = A_max * sin(k*x) * cos(omega*t)
+                const y_offset = A * Math.sin(k * x) * Math.cos(omega * t);
+
+                // Vẽ điểm
+                ctx.lineTo(x, centerY + y_offset);
+            }
+
+            ctx.stroke();
+
+            // --- Vẽ biên độ tối đa (Envelope) ---
+            ctx.beginPath();
+            ctx.strokeStyle = 'rgba(29, 78, 216, 0.4)'; // Màu xanh nhạt hơn cho Envelope
+            ctx.lineWidth = 1;
+            
+            // Biên độ dương
+            ctx.moveTo(0, centerY);
+            for (let x = 0; x <= L; x += 1) {
+                const envelope_y = A * Math.sin(k * x);
+                ctx.lineTo(x, centerY - envelope_y);
+            }
+            ctx.stroke();
+
+            // Biên độ âm
+            ctx.beginPath();
+            ctx.moveTo(0, centerY);
+            for (let x = 0; x <= L; x += 1) {
+                const envelope_y = A * Math.sin(k * x);
+                ctx.lineTo(x, centerY + envelope_y);
+            }
+            ctx.stroke();
+
+            // --- Đánh dấu điểm cố định (Nút) tại x=0 ---
+            ctx.fillStyle = '#b91c1c'; // Màu đỏ
+            ctx.beginPath();
+            ctx.arc(0, centerY, 5, 0, 2 * Math.PI);
+            ctx.fill();
+
+            // --- Đánh dấu điểm tự do (Bụng) tại x=L ---
+            // Điểm này không nhất thiết là bụng, nhưng là điểm tự do (có độ dốc = 0)
+            ctx.fillStyle = '#059669'; // Màu xanh lá
+            ctx.beginPath();
+            const y_L = A * Math.sin(k * L) * Math.cos(omega * t);
+            ctx.arc(L, centerY + y_L, 5, 0, 2 * Math.PI);
+            ctx.fill();
+
+            // Lặp lại vòng lặp animation
+            animationFrameId = requestAnimationFrame(drawWave);
+        }
+
+        /**
+         * Bắt đầu vòng lặp animation khi trang web tải xong.
+         */
+        window.onload = function () {
+            
+            // Bắt đầu vẽ sóng
+            drawWave(); 
+            
+            // Thiết lập sự kiện thay đổi để cập nhật ngay lập tức
+            document.getElementById('frequency').addEventListener('input', drawWave);
+            document.getElementById('amplitude').addEventListener('input', drawWave);
+        }
+    </script>
+</body>
+</html>
