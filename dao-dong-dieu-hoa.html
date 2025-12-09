@@ -257,8 +257,11 @@
 
             // Redraw immediately if paused
             if (!isRunning) {
-                updatePhysicsAndDraw(current_elapsed_time);
-                updateStepButtonText();
+                resetSimulation();
+            } else {
+                resetSimulation();
+                // Optionally restart if desired, but 'reset' usually implies stop.
+                // Given "run immediately reset" probably means "reset everything".
             }
         }
 
@@ -277,10 +280,9 @@
             omegaDisplay.textContent = `${omega.toFixed(3)} rad/s`;
 
             if (!isRunning) {
-                // Update static graph state if parameters changed
-                updatePhysicsAndDraw(current_elapsed_time);
-                // Update Step button text
-                updateStepButtonText();
+                resetSimulation();
+            } else {
+                resetSimulation();
             }
         }
 
@@ -306,17 +308,10 @@
             // 2. Update display
             initialPhaseRadDisplay.textContent = `${initial_phase_rad.toFixed(2)} rad`;
 
-            // 3. Control behavior: If phase changed and simulation is paused, reset to t=0 for graph consistency.
-            if (!isRunning) {
-                if (Math.abs(new_initial_phase_rad - old_initial_phase_rad) > 0.0001) {
-                    // Nếu pha thay đổi, Reset simulation (clear history, t=0)
-                    resetSimulation();
-                } else {
-                    // Nếu pha không đổi (chỉ nhập lại cùng giá trị), chỉ cần vẽ lại trạng thái hiện tại
-                    updatePhysicsAndDraw(current_elapsed_time);
-                    updateStepButtonText();
-                }
-            }
+            // 3. Control behavior: If phase changed, just update the view, DO NOT reset to t=0
+            // This allows user to tweak phase without losing current state/history
+            // 3. Control behavior: Force Reset
+            resetSimulation();
         }
 
 
@@ -803,9 +798,9 @@
                 isRunning = true;
                 startTime = performance.now() - current_elapsed_time * 1000;
 
-                periodInput.disabled = true;
-                amplitudeRange.disabled = true;
-                initialPhaseInput.disabled = true; // Disable phase input while running
+                // periodInput.disabled = true; // Enabled for live update
+                // amplitudeRange.disabled = true; // Enabled for live update
+                // initialPhaseInput.disabled = true; // Enabled for live update
                 toggleButton.textContent = "Dừng Mô phỏng (Liên tục)";
                 toggleButton.classList.remove('bg-indigo-600', 'hover:bg-indigo-700');
                 toggleButton.classList.add('bg-red-600', 'hover:bg-red-700');
@@ -824,9 +819,9 @@
                 cancelAnimationFrame(animationFrameId);
                 isRunning = false;
 
-                periodInput.disabled = false;
-                amplitudeRange.disabled = false;
-                initialPhaseInput.disabled = false; // Enable phase input when stopped
+                // periodInput.disabled = false;
+                // amplitudeRange.disabled = false;
+                // initialPhaseInput.disabled = false;
                 toggleButton.textContent = "Tiếp tục Mô phỏng (Liên tục)";
                 toggleButton.classList.remove('bg-red-600', 'hover:bg-red-700');
                 toggleButton.classList.add('bg-indigo-600', 'hover:bg-indigo-700');
@@ -939,9 +934,28 @@
         updateAngularFrequency();
 
         // Draw initial static UCM circle and set state to t=0
+        // Draw initial static UCM circle and set state to t=0
         updatePhysicsAndDraw(0);
         updateStepButtonText();
 
+        // --- AUTO-PAUSE LOGIC ---
+        window.addEventListener('app-paused', () => {
+            if (isRunning) {
+                cancelAnimationFrame(animationFrameId);
+                console.log('Simulation paused via tab switch');
+            }
+        });
+
+        window.addEventListener('app-resumed', () => {
+            if (isRunning) {
+                // Adjust startTime to ignore the duration we were paused
+                // current_elapsed_time should remain what it was before pause
+                // New startTime = Now - (elapsed * 1000)
+                startTime = performance.now() - (current_elapsed_time * 1000);
+                animationFrameId = requestAnimationFrame(animate);
+                console.log('Simulation resumed via tab switch');
+            }
+        });
     </script>
 </body>
 

@@ -858,6 +858,23 @@
         document.getElementById('angleAmplitude').oninput = e => setParam('A0', +e.target.value, 'angleAmplitudeValue', PI / 180);
         document.getElementById('gravityPendulum').oninput = e => setParam('g_pendulum', +e.target.value, 'gravityPendulumValue');
 
+        // --- AUTO-PAUSE LOGIC ---
+        window.addEventListener('app-paused', () => {
+            if (isPlaying) {
+                cancelAnimationFrame(animationFrameId);
+                console.log('Simulation paused via tab switch');
+                // Note: We keep isPlaying = true so we know to resume
+            }
+        });
+
+        window.addEventListener('app-resumed', () => {
+            if (isPlaying) {
+                lastTime = performance.now(); // Reset lastTime to avoid huge dt jump
+                animationFrameId = requestAnimationFrame(updateSimulation);
+                console.log('Simulation resumed via tab switch');
+            }
+        });
+
     </script>
 </body>
 
