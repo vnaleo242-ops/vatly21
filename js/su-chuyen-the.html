@@ -1,0 +1,398 @@
+<!DOCTYPE html>
+<html lang="vi">
+
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Mô Phỏng Sự Chuyển Thể - Vật Lý ảo 3D</title>
+    <script src="https://cdn.tailwindcss.com"></script>
+    <script src="./tailwind-config.js"></script>
+    <script src="https://unpkg.com/lucide@latest"></script>
+    <link rel="stylesheet" href="../css/global.css">
+    <!-- Three.js -->
+    <script src="https://cdnjs.cloudflare.com/ajax/libs/three.js/r128/three.min.js"></script>
+    <script src="https://cdn.jsdelivr.net/npm/three@0.128.0/examples/js/controls/OrbitControls.js"></script>
+    <style>
+        #simulationCanvas {
+            width: 100%;
+            height: 100vh;
+            display: block;
+            outline: none;
+        }
+
+        .ui-panel {
+            position: absolute;
+            bottom: 30px;
+            left: 50%;
+            transform: translateX(-50%);
+            background: rgba(255, 255, 255, 0.9);
+            backdrop-filter: blur(10px);
+            padding: 20px;
+            border-radius: 16px;
+            box-shadow: 0 10px 30px rgba(0, 0, 0, 0.1);
+            width: 90%;
+            max-width: 600px;
+            transition: all 0.3s ease;
+            max-height: 80vh;
+            overflow-y: auto;
+        }
+
+        .dark .ui-panel {
+            background: rgba(15, 23, 42, 0.85);
+            border: 1px solid #334155;
+            color: white;
+            box-shadow: 0 10px 30px rgba(0, 0, 0, 0.5);
+        }
+    </style>
+</head>
+
+<body class="overflow-hidden m-0 p-0 bg-gray-900">
+
+
+
+    <!-- Theme Toggle -->
+    <div class="absolute top-6 right-6 z-10 flex gap-4">
+        <button onclick="toggleDarkMode()"
+            class="p-3 bg-white/20 hover:bg-white/40 backdrop-blur-md rounded-full text-white transition-all shadow-lg border border-white/20">
+            <i id="theme-icon" data-lucide="moon" class="w-6 h-6"></i>
+        </button>
+    </div>
+
+    <!-- 3D Canvas -->
+    <div id="simulationCanvas"></div>
+
+    <!-- Interactive Controls -->
+    <div class="ui-panel">
+        <div class="flex justify-between items-center mb-4 border-b border-gray-200 dark:border-gray-700 pb-2">
+            <h1
+                class="text-xl font-bold font-tech uppercase tracking-wider text-slate-800 dark:text-white flex items-center gap-2">
+                <i data-lucide="flask-conical" class="text-lab-cyan"></i> Phân Tích Chuyển Thể
+            </h1>
+            <div class="text-xs font-mono px-2 py-1 bg-slate-100 dark:bg-slate-700 rounded text-slate-500 dark:text-slate-300 font-bold"
+                id="state-label">
+                SOLID
+            </div>
+        </div>
+
+        <!-- Material Selection -->
+        <div class="grid grid-cols-2 gap-4 mb-4">
+            <div>
+                <label class="block text-xs font-semibold mb-1 text-slate-500 dark:text-slate-400">Chọn Chất</label>
+                <select id="materialSelect"
+                    class="w-full p-2 rounded-lg bg-slate-100 dark:bg-slate-700 border-none text-slate-700 dark:text-slate-200 text-sm outline-none focus:ring-2 focus:ring-lab-cyan">
+                    <option value="water">Nước cất</option>
+                    <option value="oil">Dầu thực vật</option>
+                    <option value="iron">Sắt</option>
+                    <option value="copper">Đồng</option>
+                    <option value="custom">Tự chọn...</option>
+                </select>
+            </div>
+
+            <!-- Empty div to maintain grid if needed, or just let it flow -->
+            <div></div>
+        </div>
+
+        <!-- Custom Properties (Dynamic) -->
+        <div id="customInputs"
+            class="mb-4 grid grid-cols-2 gap-4 p-3 bg-slate-50 dark:bg-slate-800/50 rounded-lg hidden">
+            <div>
+                <label class="text-xs text-slate-500 mb-1 block">Nhiệt độ Nóng chảy (°C)</label>
+                <input type="number" id="inputTm"
+                    class="w-full p-1.5 bg-white dark:bg-slate-700 rounded text-sm border border-slate-200 dark:border-slate-600 focus:border-lab-cyan outline-none">
+            </div>
+            <div>
+                <label class="text-xs text-slate-500 mb-1 block">Nhiệt độ Sôi (°C)</label>
+                <input type="number" id="inputTb"
+                    class="w-full p-1.5 bg-white dark:bg-slate-700 rounded text-sm border border-slate-200 dark:border-slate-600 focus:border-lab-cyan outline-none">
+            </div>
+        </div>
+
+        <!-- Temperature Control -->
+        <div class="mb-6">
+            <label class="flex justify-between text-sm font-semibold mb-2 text-slate-600 dark:text-slate-300">
+                <span>Nhiệt Độ (T)</span>
+                <span id="tempDisplay" class="font-mono text-lab-cyan text-lg">0°C</span>
+            </label>
+            <input type="range" id="tempSlider" min="-273" max="3000" value="0" step="1"
+                class="w-full h-3 bg-gradient-to-r from-blue-500 via-purple-500 to-red-500 rounded-lg appearance-none cursor-pointer">
+            <div class="flex justify-between mt-2 text-[10px] font-mono text-slate-400">
+                <span id="minTempLabel">-273°C</span>
+                <span id="tmLabel" class="text-blue-400">Tm</span>
+                <span id="tbLabel" class="text-red-400">Tb</span>
+                <span id="maxTempLabel">3000°C</span>
+            </div>
+        </div>
+
+        <!-- Info Box -->
+        <div id="phaseInfo" class="text-xs text-slate-500 dark:text-slate-400 italic">
+            Trạng thái rắn: Các hạt dao động quanh vị trí cân bằng.
+        </div>
+    </div>
+
+    <!-- JS Logic -->
+    <script src="./theme.js"></script>
+    <script>
+        // --- 3D Scene Setup ---
+        const container = document.getElementById('simulationCanvas');
+        const scene = new THREE.Scene();
+        scene.background = new THREE.Color(0x0f172a);
+        scene.fog = new THREE.Fog(0x0f172a, 10, 50);
+
+        const camera = new THREE.PerspectiveCamera(45, window.innerWidth / window.innerHeight, 0.1, 100);
+        camera.position.set(0, 5, 12);
+
+        const renderer = new THREE.WebGLRenderer({ antialias: true, alpha: true });
+        renderer.setSize(window.innerWidth, window.innerHeight);
+        renderer.setPixelRatio(window.devicePixelRatio);
+        container.appendChild(renderer.domElement);
+
+        const controls = new THREE.OrbitControls(camera, renderer.domElement);
+        controls.enableDamping = true;
+        controls.maxDistance = 30;
+
+        // Lights
+        scene.add(new THREE.AmbientLight(0xffffff, 0.4));
+        const dirLight = new THREE.DirectionalLight(0xffffff, 0.8);
+        dirLight.position.set(5, 10, 5);
+        scene.add(dirLight);
+
+        // Env
+        const gridHelper = new THREE.GridHelper(20, 20, 0x1e293b, 0x1e293b);
+        scene.add(gridHelper);
+        const plane = new THREE.Mesh(
+            new THREE.PlaneGeometry(20, 20),
+            new THREE.MeshBasicMaterial({ color: 0x0f172a, transparent: true, opacity: 0.5, side: THREE.DoubleSide })
+        );
+        plane.rotation.x = -Math.PI / 2;
+        scene.add(plane);
+
+        // --- Particles System ---
+        const particleCount = 512; // 8x8x8
+        const geometry = new THREE.SphereGeometry(0.15, 16, 16);
+        let material = new THREE.MeshStandardMaterial({ color: 0x06b6d4, roughness: 0.1, metalness: 0.5 });
+
+        const particleGroup = new THREE.Group();
+        scene.add(particleGroup);
+        let particles = [];
+
+        function initParticles() {
+            // Clear existing
+            particleGroup.clear();
+            particles = [];
+
+            const gridSize = 8;
+            const spacing = 0.6;
+            const offset = (gridSize * spacing) / 2;
+
+            for (let i = 0; i < particleCount; i++) {
+                const mesh = new THREE.Mesh(geometry, material);
+
+                let bx, by, bz;
+
+                // Crystalline Grid
+                const x = i % gridSize;
+                const y = Math.floor((i / gridSize) % gridSize);
+                const z = Math.floor(i / (gridSize * gridSize));
+
+                bx = (x * spacing) - offset;
+                by = (y * spacing) + 0.5;
+                bz = (z * spacing) - offset;
+
+                mesh.position.set(bx, by, bz);
+
+                mesh.userData = {
+                    basePos: new THREE.Vector3(bx, by, bz),
+                    velocity: new THREE.Vector3(0, 0, 0),
+                    randomOffset: Math.random() * 100
+                };
+
+                particleGroup.add(mesh);
+                particles.push(mesh);
+            }
+        }
+
+        // --- Material Data ---
+        const materials = {
+            water: { name: "Nước", Tm: 0, Tb: 100, color: 0x06b6d4, range: [-20, 150] },
+            oil: { name: "Dầu", Tm: -20, Tb: 200, color: 0xeab308, range: [-50, 300] }, // Yellow
+            iron: { name: "Sắt", Tm: 1538, Tb: 2862, color: 0x94a3b8, range: [0, 3000] }, // Gray
+            copper: { name: "Đồng", Tm: 1085, Tb: 2562, color: 0xf97316, range: [0, 2800] }, // Orange
+            custom: { name: "Tự chọn", Tm: 0, Tb: 100, color: 0xa855f7, range: [-100, 200] } // Purple
+        };
+
+        let currentMat = materials.water;
+
+        // UI References
+        const els = {
+            matSelect: document.getElementById('materialSelect'),
+            customInputs: document.getElementById('customInputs'),
+            inputTm: document.getElementById('inputTm'),
+            inputTb: document.getElementById('inputTb'),
+            tempSlider: document.getElementById('tempSlider'),
+            tempDisplay: document.getElementById('tempDisplay'),
+            stateLabel: document.getElementById('state-label'),
+            phaseInfo: document.getElementById('phaseInfo'),
+            tmLabel: document.getElementById('tmLabel'),
+            tbLabel: document.getElementById('tbLabel'),
+            minTempLabel: document.getElementById('minTempLabel'),
+            maxTempLabel: document.getElementById('maxTempLabel')
+        };
+
+        // --- Logic ---
+        function updateMaterialUI() {
+            const key = els.matSelect.value;
+            currentMat = materials[key];
+
+            // Custom mode handling
+            if (key === 'custom') {
+                els.customInputs.classList.remove('hidden');
+                els.inputTm.value = currentMat.Tm;
+                els.inputTb.value = currentMat.Tb;
+            } else {
+                els.customInputs.classList.add('hidden');
+            }
+
+            // Update Slider Range
+            els.tempSlider.min = currentMat.range[0];
+            els.tempSlider.max = currentMat.range[1];
+            els.minTempLabel.innerText = currentMat.range[0] + "°C";
+            els.maxTempLabel.innerText = currentMat.range[1] + "°C";
+
+            // Labels for Tm/Tb on slider bar could be positioned dynamically, 
+            // but for simple UI we just show values
+            els.tmLabel.innerText = `Tm: ${currentMat.Tm}°C`;
+            els.tbLabel.innerText = `Tb: ${currentMat.Tb}°C`;
+
+            // Reset Temp to something reasonable (Solid)
+            // els.tempSlider.value = currentMat.Tm - 20; 
+            updateSimulationState();
+
+            // Update Particle Color
+            material.color.setHex(currentMat.color);
+        }
+
+        function updateSimulationState() {
+            let temp = parseInt(els.tempSlider.value);
+            // Sync custom inputs if valid
+            if (els.matSelect.value === 'custom') {
+                currentMat.Tm = parseInt(els.inputTm.value) || 0;
+                currentMat.Tb = parseInt(els.inputTb.value) || 100;
+                // Re-update text
+                els.tmLabel.innerText = `Tm: ${currentMat.Tm}°C`;
+                els.tbLabel.innerText = `Tb: ${currentMat.Tb}°C`;
+            }
+
+            els.tempDisplay.innerText = temp + "°C";
+            const { Tm, Tb } = currentMat;
+
+            // Determine Phase & UI Text
+            if (temp < Tm) {
+                els.stateLabel.innerText = "SOLID";
+                els.phaseInfo.innerText = "Rắn (Tinh thể): Hạt sắp xếp trật tự, dao động tại chỗ.";
+                els.stateLabel.className = "text-xs font-mono px-2 py-1 rounded font-bold bg-blue-100 text-blue-600";
+            } else if (temp >= Tm && temp < Tb) {
+                els.stateLabel.innerText = "LIQUID";
+                els.phaseInfo.innerText = "Lỏng: Hạt trượt lên nhau, hình dạng thay đổi theo bình chứa.";
+                els.stateLabel.className = "text-xs font-mono px-2 py-1 rounded font-bold bg-cyan-100 text-cyan-600";
+            } else {
+                els.stateLabel.innerText = "GAS";
+                els.phaseInfo.innerText = "Khí: Hạt chuyển động hỗn loạn, chiếm toàn bộ thể tích.";
+                els.stateLabel.className = "text-xs font-mono px-2 py-1 rounded font-bold bg-red-100 text-red-600";
+            }
+        }
+
+        // --- Loops & Animation ---
+        function animateParticlesLoop(time) {
+            let temp = parseInt(els.tempSlider.value);
+            const { Tm, Tb } = currentMat;
+
+            // Energy Calculation
+            // Base vibration
+            let kinetic = (temp + 273) / 1000;
+            if (kinetic < 0) kinetic = 0.01;
+
+            particles.forEach(p => {
+                const ud = p.userData;
+                const timeScale = time * 0.002;
+
+                // CRYSTALLINE BEHAVIOR (Standard)
+                if (temp < Tm) {
+                    // SOLID
+                    const vib = kinetic * 0.2;
+                    p.position.x = ud.basePos.x + Math.sin(timeScale + ud.randomOffset) * vib;
+                    p.position.y = ud.basePos.y + Math.cos(timeScale + ud.randomOffset * 2) * vib;
+                    p.position.z = ud.basePos.z + Math.sin(timeScale * 1.5 + ud.randomOffset) * vib;
+                } else if (temp < Tb) {
+                    // LIQUID
+                    ud.velocity.x += (Math.random() - 0.5) * kinetic * 0.5;
+                    ud.velocity.z += (Math.random() - 0.5) * kinetic * 0.5;
+                    ud.velocity.y += (Math.random() - 0.5) * kinetic * 0.1;
+                    ud.velocity.multiplyScalar(0.95);
+                    p.position.add(ud.velocity);
+
+                    if (p.position.y < 0.15) { p.position.y = 0.15; ud.velocity.y *= -0.5; }
+                    const d = Math.sqrt(p.position.x ** 2 + p.position.z ** 2);
+                    if (d > 3) {
+                        const a = Math.atan2(p.position.z, p.position.x);
+                        p.position.x = Math.cos(a) * 3; p.position.z = Math.sin(a) * 3;
+                        ud.velocity.x *= -1; ud.velocity.z *= -1;
+                    }
+                } else {
+                    // GAS
+                    const gasE = kinetic * 2;
+                    ud.velocity.add(new THREE.Vector3(Math.random() - 0.5, Math.random() - 0.5, Math.random() - 0.5).multiplyScalar(gasE));
+                    ud.velocity.multiplyScalar(0.99);
+                    p.position.add(ud.velocity);
+                    // Box bounds
+                    const box = 5;
+                    if (Math.abs(p.position.x) > box) ud.velocity.x *= -1;
+                    if (Math.abs(p.position.z) > box) ud.velocity.z *= -1;
+                    if (p.position.y > 8) { p.position.y = 8; ud.velocity.y *= -1; }
+                    if (p.position.y < 0.15) { p.position.y = 0.15; ud.velocity.y *= -1; }
+                }
+            });
+        }
+
+        function animate(time) {
+            requestAnimationFrame(animate);
+            animateParticlesLoop(time);
+            controls.update();
+            renderer.render(scene, camera);
+        }
+
+        // --- Event Listeners ---
+        els.matSelect.addEventListener('change', updateMaterialUI);
+
+        els.tempSlider.addEventListener('input', updateSimulationState);
+        els.inputTm.addEventListener('input', updateSimulationState);
+        els.inputTb.addEventListener('input', updateSimulationState);
+
+        // Resize
+        window.addEventListener('resize', () => {
+            camera.aspect = window.innerWidth / window.innerHeight;
+            camera.updateProjectionMatrix();
+            renderer.setSize(window.innerWidth, window.innerHeight);
+        });
+
+        // Theme Support
+        window.addEventListener('theme-changed', (e) => {
+            const isDark = e.detail.theme === 'dark';
+            if (isDark) {
+                scene.background.setHex(0x0f172a);
+                scene.fog.color.setHex(0x0f172a);
+                gridHelper.material.color.setHex(0x1e293b);
+            } else {
+                scene.background.setHex(0xf8fafc);
+                scene.fog.color.setHex(0xf8fafc);
+                gridHelper.material.color.setHex(0xe2e8f0);
+            }
+        });
+
+        // Init
+        initParticles();
+        updateMaterialUI();
+        animate();
+    </script>
+</body>
+
+</html>
