@@ -206,7 +206,7 @@ function createGlobalSidebar() {
             left: 20px;
             z-index: 10000;
             background: white; /* Solid background */
-            color: #475569;
+            color: #b298d3; /* Pink/Purple Icon */
             padding: 10px; /* Larger padding */
             border-radius: 50%;
             cursor: pointer;
@@ -226,8 +226,8 @@ function createGlobalSidebar() {
         }
         .dark #sidebar-toggle-btn {
             background: #1e293b;
-            color: white;
-            border: 1px solid rgba(255,255,255,0.1);
+            color: #38bdf8; /* Blue/Sky Icon */
+            border: 1px solid rgba(56, 189, 248, 0.3);
             box-shadow: 0 4px 15px rgba(0,0,0,0.5);
         }
         .dark #sidebar-toggle-btn:hover {
@@ -273,8 +273,11 @@ function createGlobalSidebar() {
             color: white;
         }
         .sidebar-link.active {
-            background: #06b6d4; /* lab-cyan */
+            background: #b298d3; /* lab-cyan (Purple) */
             color: white;
+        }
+        .dark .sidebar-link.active {
+            background: #06b6d4; /* lab-dark_cyan (Blue) */
         }
         .sidebar-tag {
             font-size: 10px;
@@ -287,6 +290,9 @@ function createGlobalSidebar() {
         .dark .sidebar-tag {
             background: #334155;
             color: #94a3b8;
+        }
+        .dark .sidebar-divider {
+            background: rgba(255, 255, 255, 0.1) !important;
         }
     `;
     document.head.appendChild(style);
@@ -311,7 +317,7 @@ function createGlobalSidebar() {
     sidebar.innerHTML = `
         <div class="sidebar-header">
             <div class="flex items-center gap-3">
-                <div class="w-8 h-8 rounded-lg bg-gradient-to-br from-lab-cyan to-purple-600 flex items-center justify-center text-white font-bold">P</div>
+                <div class="w-8 h-8 rounded-lg bg-gradient-to-br from-lab-cyan to-purple-600 dark:from-lab-dark_cyan dark:to-sky-600 flex items-center justify-center text-white font-bold">P</div>
                 <span class="font-bold text-lg dark:text-white">Physics Lab</span>
             </div>
             <button id="sidebar-close" class="p-2 rounded-full hover:bg-slate-100 dark:hover:bg-slate-800 transition-colors">
@@ -362,6 +368,18 @@ function createGlobalSidebar() {
             ${link.isSpecial && !link.note ? '<span class="sidebar-tag">New</span>' : ''}
         `;
         content.appendChild(a);
+
+        // Add divider after "Trang Chủ" (first item)
+        if (link.name === "Trang Chủ") {
+            const divider = document.createElement('div');
+            divider.style.cssText = `
+                height: 1px;
+                background: rgba(0, 0, 0, 0.1);
+                margin: 12px 8px;
+            `;
+            divider.className = 'sidebar-divider';
+            content.appendChild(divider);
+        }
     });
 
     document.body.appendChild(sidebar);
@@ -461,10 +479,10 @@ function updateHomepageGrid() {
         newCard.className = "bg-white dark:bg-slate-800 p-6 rounded-2xl shadow-lg border border-gray-100 dark:border-slate-700 hover:shadow-xl transition-all duration-300 group hover:-translate-y-1 block module-card";
 
         newCard.innerHTML = `
-            <div class="w-12 h-12 rounded-xl bg-purple-100 dark:bg-purple-900/30 flex items-center justify-center text-purple-600 dark:text-purple-400 mb-4 group-hover:scale-110 transition-transform duration-300">
+            <div class="w-12 h-12 rounded-xl bg-purple-100 dark:bg-sky-900/30 flex items-center justify-center text-purple-600 dark:text-sky-400 mb-4 group-hover:scale-110 transition-transform duration-300">
                  <i data-lucide="align-center" class="w-6 h-6"></i>
             </div>
-            <h3 class="text-lg font-bold text-gray-800 dark:text-white mb-2 group-hover:text-purple-600 dark:group-hover:text-purple-400 transition-colors">Sóng Dừng</h3>
+            <h3 class="text-lg font-bold text-gray-800 dark:text-white mb-2 group-hover:text-purple-600 dark:group-hover:text-sky-400 transition-colors">Sóng Dừng</h3>
             <p class="text-sm text-gray-500 dark:text-slate-400">Mô phỏng 2 đầu cố định và 1 đầu tự do trong cùng một module.</p>
         `;
 

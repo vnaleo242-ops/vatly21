@@ -288,6 +288,9 @@ function createGlobalSidebar() {
             background: #334155;
             color: #94a3b8;
         }
+        .dark .sidebar-divider {
+            background: rgba(255, 255, 255, 0.1) !important;
+        }
     `;
     document.head.appendChild(style);
 
@@ -362,6 +365,18 @@ function createGlobalSidebar() {
             ${link.isSpecial && !link.note ? '<span class="sidebar-tag">New</span>' : ''}
         `;
         content.appendChild(a);
+
+        // Add divider after "Trang Chủ" (first item)
+        if (link.name === "Trang Chủ") {
+            const divider = document.createElement('div');
+            divider.style.cssText = `
+                height: 1px;
+                background: rgba(0, 0, 0, 0.1);
+                margin: 12px 8px;
+            `;
+            divider.className = 'sidebar-divider';
+            content.appendChild(divider);
+        }
     });
 
     document.body.appendChild(sidebar);

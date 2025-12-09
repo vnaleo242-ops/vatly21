@@ -9,17 +9,21 @@ tailwind.config = {
             },
             colors: {
                 lab: {
-                    // Light Mode (Updated with Purple Theme)
-                    bg: '#f5e1fd',      // Main Background (Updated)
+                    // Light Mode (Default: Pink/Purple)
+                    bg: '#f5e1fd',      // Main Background (Pinkish)
                     panel: '#ffffff',   // White panels
                     surface: '#fae8ff', // Lighter purple for surface areas
-                    cyan: '#b298d3',    // Primary Brand Color (Updated - Purple)
-                    accent: '#ce9cd9',  // Secondary Accent (Updated - Light Purple)
+                    cyan: '#b298d3',    // Primary Brand Color (Purple)
+                    accent: '#ce9cd9',  // Secondary Accent (Light Purple)
+
+                    // Dark Mode Overrides (Blue/Cyan)
+                    dark_cyan: '#06b6d4',   // Cyan 500
+                    dark_accent: '#38bdf8', // Sky 400
 
                     success: '#059669', // Emerald 600
                     warning: '#d97706', // Amber 600
                     danger: '#dc2626',  // Red 600
-                    text: '#0f172a',    // Slate 900 - Dark text
+                    text: '#0f172a',    // Slate 900
                     muted: '#64748b',   // Slate 500
 
                     // Dark Mode specific colors (Kept Original)
