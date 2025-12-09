@@ -135,37 +135,25 @@ window.addEventListener('load', function () {
     createGlobalSidebar();
 
     // --- Hide Legacy "Back to Home" Buttons ---
-    // Strategy 1: Look for links to index.html with specific icons (Arrow Left)
+    // Strategy 1: Look for arrow-left icon
     const backBtnIcon = Array.from(document.querySelectorAll('a')).find(el => {
-        const hasArrow = el.querySelector('[data-lucide="arrow-left"]') || el.querySelector('i.fa-arrow-left') || el.querySelector('i.fa-home');
+        const hasArrow = el.querySelector('[data-lucide="arrow-left"]');
         const href = el.getAttribute('href');
-        const goesHome = href && (href.includes('index.html') || href === './' || href === '../');
+        const goesHome = href && (href.includes('index.html') || href === '../');
         return hasArrow && goesHome;
     });
     if (backBtnIcon) backBtnIcon.style.display = 'none';
 
-    // Strategy 2: Look for text keywords commonly used in back buttons
+    // Strategy 2: Look for text "Quay về Trang Chủ" or "Trang Chủ" in top-left
     const backBtnText = Array.from(document.querySelectorAll('a, button')).find(el => {
         const text = el.textContent.trim().toLowerCase();
-        const href = el.getAttribute('href');
-        const goesHome = href && (href.includes('index.html') || href === './' || href === '../');
+        // Check for specific text content
+        const hasText = text.includes('quay về trang chủ') || (text.includes('trang chủ') && el.classList.contains('absolute'));
+        // Check position (if possible to infer from classes)
+        const isTopLeft = (el.classList.contains('top-4') || el.classList.contains('top-6')) &&
+            (el.classList.contains('left-4') || el.classList.contains('left-6'));
 
-        // Keywords
-        const keywords = ['quay về trang chủ', 'về trang chủ', 'trang chủ', 'quay lại', 'home', 'back'];
-        const hasKeyword = keywords.some(k => text === k || text.includes(k));
-
-        // If it looks like a button (has padding/bg classes) or is positioned absolutely
-        const isButtonLike = el.classList.contains('btn') || el.classList.contains('button') ||
-            el.classList.contains('absolute') || el.classList.contains('fixed') ||
-            (el.className.includes('bg-') && el.className.includes('p-')); // heuristic
-
-        // If it explicitly goes home and has reasonable text, hide it
-        if (goesHome && hasKeyword) return true;
-
-        // Fallback for "Trang Chủ" text buttons even without explicit href check (e.g. onclick)
-        if (hasKeyword && isButtonLike && (el.classList.contains('top-4') || el.classList.contains('top-6') || el.style.top)) return true;
-
-        return false;
+        return hasText || (text === 'trang chủ' && isTopLeft);
     });
     if (backBtnText) backBtnText.style.display = 'none';
 
