@@ -18,12 +18,13 @@
     /* lab-dark_panel equivalent */
     border: 1px solid rgba(51, 65, 85, 0.8);
     /* Slate 700 equivalent */
-    box-shadow: 0 4px 10px rgba(0, 0, 0, 0.3);
+    box-shadow: 0 4px 10px rgba(6, 182, 212, 0.1);
+    /* Cyan tint shadow */
 }
 
 .glass-panel:hover {
-    border-color: rgba(178, 152, 211, 0.8);
-    /* #b298d3 */
+    border-color: rgba(152, 192, 211, 0.8);
+    /* hsla(194, 40%, 71%, 1.00) */
     box-shadow: 0 15px 30px rgba(178, 152, 211, 0.2), 0 4px 8px rgba(0, 0, 0, 0.05);
     transform: translateY(-4px);
 }
@@ -130,6 +131,8 @@
 .dark .nav-link:hover {
     background-color: #334155;
     /* Dark hover */
+    box-shadow: 0 2px 4px rgba(6, 182, 212, 0.2);
+    /* Cyan shadow */
 }
 
 /* --- List View Styles --- */
