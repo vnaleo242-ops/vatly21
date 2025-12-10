@@ -29,13 +29,13 @@
 
     <!-- SIDEBAR -->
     <aside
-        class="w-[280px] bg-white/80 dark:bg-lab-dark_panel backdrop-blur-md border-r border-lab-accent/30 dark:border-slate-700 flex-shrink-0 flex flex-col z-20 hidden lg:flex relative shadow-[4px_0_24px_rgba(178,152,211,0.08)]">
+        class="w-[280px] bg-white/80 dark:bg-lab-dark_panel backdrop-blur-md border-r border-lab-accent/30 dark:border-slate-700 flex-shrink-0 flex flex-col z-20 hidden lg:flex relative shadow-[4px_0_24px_rgba(178,152,211,0.08)] dark:shadow-none">
         <!-- Logo Area -->
         <div
             class="h-[80px] flex items-center px-6 border-b border-lab-accent/20 dark:border-slate-700 flex items-center px-6 relative overflow-hidden group">
             <!-- Glare Effect on Hover -->
             <div
-                class="absolute inset-0 bg-lab-cyan/5 w-1/2 -skew-x-12 -translate-x-full group-hover:translate-x-full transition-transform duration-700 ease-out">
+                class="absolute inset-0 bg-lab-cyan/5 dark:bg-lab-dark_cyan/5 w-1/2 -skew-x-12 -translate-x-full group-hover:translate-x-full transition-transform duration-700 ease-out">
             </div>
             <div class="flex items-center gap-3 relative z-10">
                 <div
@@ -56,7 +56,7 @@
         <nav class="flex-1 overflow-y-auto py-6 px-4 space-y-1">
             <div
                 class="px-2 mb-3 text-[11px] font-mono text-lab-muted dark:text-lab-dark_muted uppercase tracking-widest flex items-center gap-2 font-semibold">
-                <span class="w-1 h-1 rounded-full bg-lab-cyan"></span> Main Modules
+                <span class="w-1 h-1 rounded-full bg-lab-cyan dark:bg-lab-dark_cyan"></span> Main Modules
             </div>
 
             <a href="index.html"
@@ -162,7 +162,7 @@
             <div class="flex items-center gap-6">
                 <!-- Search Implementation -->
                 <div
-                    class="hidden md:flex items-center bg-white dark:bg-lab-dark_panel border border-lab-accent/30 dark:border-slate-700 rounded-full px-4 py-1.5 focus-within:border-lab-cyan focus-within:ring-2 focus-within:ring-lab-cyan/30 transition-all shadow-sm">
+                    class="hidden md:flex items-center bg-white dark:bg-lab-dark_panel border border-lab-accent/30 dark:border-slate-700 rounded-full px-4 py-1.5 focus-within:border-lab-cyan dark:focus-within:border-lab-dark_cyan focus-within:ring-2 focus-within:ring-lab-cyan/30 dark:focus-within:ring-lab-dark_cyan/30 transition-all shadow-sm">
                     <i data-lucide="search" class="w-4 h-4 text-slate-400"></i>
                     <!-- Gán ID và sự kiện oninput -->
                     <input type="text" id="module-search" oninput="filterModules()" placeholder="Tìm kiếm mô-đun..."
@@ -194,14 +194,15 @@
                             <div
                                 class="text-sm font-bold font-tech text-slate-800 dark:text-lab-dark_text leading-none">
                                 Nguyen Gia Phu</div>
-                            <div class="text-[10px] text-lab-cyan font-mono leading-none mt-1 font-semibold">
+                            <div
+                                class="text-[10px] text-lab-cyan dark:text-lab-dark_cyan font-mono leading-none mt-1 font-semibold">
                                 ADMIN_ACCESS</div>
                         </div>
                         <div
                             class="h-9 w-9 rounded-full bg-slate-800 flex items-center justify-center text-xs font-bold text-white relative overflow-hidden group cursor-pointer shadow-lg hover:shadow-purple-400/50 dark:hover:shadow-cyan-400/50 transition-shadow">
                             <span class="relative z-10">GP</span>
                             <div
-                                class="absolute inset-0 bg-lab-cyan translate-y-full group-hover:translate-y-0 transition-transform duration-300">
+                                class="absolute inset-0 bg-lab-cyan dark:bg-lab-dark_cyan translate-y-full group-hover:translate-y-0 transition-transform duration-300">
                             </div>
                         </div>
                     </div>
@@ -218,11 +219,11 @@
                 <div>
                     <h2
                         class="text-3xl font-bold text-slate-800 dark:text-lab-dark_text font-tech uppercase tracking-wide flex items-center gap-2 text-tech-shadow">
-                        <i data-lucide="cpu" class="w-6 h-6 text-lab-cyan"></i>
+                        <i data-lucide="cpu" class="w-6 h-6 text-lab-cyan dark:text-lab-dark_cyan"></i>
                         Control Dashboard
                     </h2>
                     <div class="text-xs text-slate-500 dark:text-slate-400 mt-1 font-mono flex items-center gap-2">
-                        <span class="text-lab-cyan font-semibold">ROOT</span>
+                        <span class="text-lab-cyan dark:text-lab-dark_cyan font-semibold">ROOT</span>
                         <span class="text-slate-300 dark:text-slate-600">/</span>
                         <span>LIBRARY</span>
                         <span class="text-slate-300 dark:text-slate-600">/</span>
@@ -306,7 +307,7 @@
                 </h3>
                 <div class="flex gap-2">
                     <button id="btn-grid-view"
-                        class="p-2 rounded-full bg-white dark:bg-lab-dark_panel border border-lab-accent/30 dark:border-slate-700 text-lab-cyan shadow-sm transition hover:bg-slate-100 dark:hover:bg-slate-700"><i
+                        class="p-2 rounded-full bg-white dark:bg-lab-dark_panel border border-lab-accent/30 dark:border-slate-700 text-lab-cyan dark:text-lab-dark_cyan shadow-sm transition hover:bg-slate-100 dark:hover:bg-slate-700"><i
                             data-lucide="grid" class="w-4 h-4"></i></button>
                     <button id="btn-list-view"
                         class="p-2 rounded-full hover:bg-white dark:hover:bg-slate-700 border border-transparent text-slate-400 hover:text-slate-700 dark:hover:text-white transition"><i
