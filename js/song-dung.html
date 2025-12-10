@@ -283,7 +283,17 @@
             statLambda.textContent = lambdaCm.toFixed(1) + " cm";
         }
 
+        // PAUSE CONTROL
+        let isPaused = false;
+        window.addEventListener('app-paused', () => isPaused = true);
+        window.addEventListener('app-resumed', () => {
+            isPaused = false;
+            draw();
+        });
+
         function draw() {
+            if (isPaused) return;
+
             updatePhysicsLength();
 
             const centerStringX = width / 2;

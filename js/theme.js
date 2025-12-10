@@ -310,6 +310,24 @@ function createGlobalSidebar() {
         { name: "Chuyển Thể 3D - Beta", file: "js/su-chuyen-the.html", icon: "box", isSpecial: true }
     ];
 
+    // --- Dynamic Module Injection ---
+    try {
+        const storedModules = JSON.parse(localStorage.getItem('custom_modules') || '[]');
+        if (storedModules && Array.isArray(storedModules)) {
+            storedModules.forEach(mod => {
+                links.push({
+                    name: mod.name,
+                    file: `viewer.html?id=${mod.id}`,
+                    icon: mod.icon || 'box',
+                    isSpecial: false,
+                    isCustom: true // Tag for styling
+                });
+            });
+        }
+    } catch (e) {
+        console.warn('Failed to load custom modules:', e);
+    }
+
     const sidebar = document.createElement('div');
     sidebar.id = 'global-sidebar';
 
@@ -366,6 +384,7 @@ function createGlobalSidebar() {
                 ${link.note ? `<span class="text-[10px] text-orange-500 italic font-normal">${link.note}</span>` : ''}
             </div>
             ${link.isSpecial && !link.note ? '<span class="sidebar-tag">New</span>' : ''}
+            ${link.isCustom ? '<span class="sidebar-tag text-indigo-500 bg-indigo-50 dark:bg-indigo-900/30">User</span>' : ''}
         `;
         content.appendChild(a);
 
@@ -495,3 +514,14 @@ function updateHomepageGrid() {
         }
     }
 }
+
+// === GLOBAL AUTO-PAUSE ===
+document.addEventListener('visibilitychange', () => {
+    if (document.hidden) {
+        console.log('Tab hidden: Pausing activities...');
+        window.dispatchEvent(new CustomEvent('app-paused'));
+    } else {
+        console.log('Tab visible: Resuming activities...');
+        window.dispatchEvent(new CustomEvent('app-resumed'));
+    }
+});

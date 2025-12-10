@@ -157,22 +157,16 @@
     </style>
 </head>
 
-<body class="overflow-hidden m-0 p-0 bg-gray-200 dark:bg-gray-900 transition-colors duration-300">
+<body class="overflow-hidden m-0 p-0 bg-slate-900 text-white">
 
-    <!-- Theme Toggle -->
-    <div class="absolute top-6 right-6 z-10 flex gap-4">
-        <button onclick="toggleDarkMode()"
-            class="p-3 bg-white/20 hover:bg-white/40 backdrop-blur-md rounded-full text-white transition-all shadow-lg border border-white/20">
-            <i id="theme-icon" data-lucide="moon" class="w-6 h-6"></i>
-        </button>
-    </div>
+    <!-- Theme Toggle Removed: Forced Dark Mode -->
 
     <!-- 3D Canvas -->
     <div id="simulationCanvas"></div>
 
     <!-- Show Panel Button -->
     <button id="btnShowPanel" onclick="togglePanel(true)"
-        class="bg-lab-cyan hover:bg-cyan-600 text-white p-3 rounded-full shadow-lg transition-transform hover:scale-110">
+        class="bg-lab-cyan dark:bg-lab-dark_cyan hover:bg-cyan-600 text-white p-3 rounded-full shadow-lg transition-transform hover:scale-110">
         <i data-lucide="settings-2"></i>
     </button>
 
@@ -182,7 +176,7 @@
         <div class="panel-header" id="panelHeader">
             <h1
                 class="text-lg font-bold font-tech uppercase tracking-wider text-slate-800 dark:text-white flex items-center gap-2">
-                <i data-lucide="flask-conical" class="text-lab-cyan w-5 h-5"></i> Phân Tích
+                <i data-lucide="flask-conical" class="text-lab-cyan dark:text-lab-dark_cyan w-5 h-5"></i> Phân Tích
             </h1>
             <div class="flex items-center gap-2">
                 <div class="text-xs font-mono px-2 py-0.5 bg-slate-100 dark:bg-slate-700 rounded text-slate-500 dark:text-slate-300 font-bold"
@@ -200,7 +194,7 @@
                 <div>
                     <label class="block text-xs font-semibold mb-1 text-slate-500 dark:text-slate-400">Chọn Chất</label>
                     <select id="materialSelect"
-                        class="w-full p-2 rounded-lg bg-slate-100 dark:bg-slate-700 border-none text-slate-700 dark:text-slate-200 text-sm outline-none focus:ring-2 focus:ring-lab-cyan">
+                        class="w-full p-2 rounded-lg bg-slate-100 dark:bg-slate-700 border-none text-slate-700 dark:text-slate-200 text-sm outline-none focus:ring-2 focus:ring-lab-cyan dark:focus:ring-lab-dark_cyan">
                         <option value="water">Nước cất</option>
                         <option value="oil">Dầu thực vật</option>
                         <option value="iron">Sắt</option>
@@ -219,12 +213,12 @@
                 <div>
                     <label class="text-xs text-slate-500 mb-1 block">Nhiệt độ Nóng chảy (°C)</label>
                     <input type="number" id="inputTm"
-                        class="w-full p-1.5 bg-white dark:bg-slate-700 rounded text-sm border border-slate-200 dark:border-slate-600 focus:border-lab-cyan outline-none">
+                        class="w-full p-1.5 bg-white dark:bg-slate-700 rounded text-sm border border-slate-200 dark:border-slate-600 focus:border-lab-cyan dark:focus:border-lab-dark_cyan outline-none">
                 </div>
                 <div>
                     <label class="text-xs text-slate-500 mb-1 block">Nhiệt độ Sôi (°C)</label>
                     <input type="number" id="inputTb"
-                        class="w-full p-1.5 bg-white dark:bg-slate-700 rounded text-sm border border-slate-200 dark:border-slate-600 focus:border-lab-cyan outline-none">
+                        class="w-full p-1.5 bg-white dark:bg-slate-700 rounded text-sm border border-slate-200 dark:border-slate-600 focus:border-lab-cyan dark:focus:border-lab-dark_cyan outline-none">
                 </div>
             </div>
 
@@ -249,7 +243,7 @@
             <div class="mb-6">
                 <label class="flex justify-between text-sm font-semibold mb-2 text-slate-600 dark:text-slate-300">
                     <span>Nhiệt Độ (T)</span>
-                    <span id="tempDisplay" class="font-mono text-lab-cyan text-lg">0°C</span>
+                    <span id="tempDisplay" class="font-mono text-lab-cyan dark:text-lab-dark_cyan text-lg">0°C</span>
                 </label>
                 <input type="range" id="tempSlider" min="-273" max="3000" value="0" step="1"
                     class="w-full h-3 bg-gradient-to-r from-blue-500 via-purple-500 to-red-500 rounded-lg appearance-none cursor-pointer">
@@ -357,42 +351,28 @@
         glowLight.castShadow = true;
         scene.add(glowLight);
 
-        // --- Theme Management & Anti-Glare Logic ---
-        function updateSceneTheme(theme) {
-            if (theme === 'dark') {
-                // DARK MODE
-                scene.background = new THREE.Color(0x0f172a); // Slate-900
-                scene.fog = new THREE.Fog(0x0f172a, 10, 50);
+        // FORCE DARK MODE - Strict Enforcement
+        const forcedTheme = 'dark';
+        document.documentElement.classList.add(forcedTheme);
+        localStorage.setItem('theme', forcedTheme); // Optional: force local storage too or just ignore it
 
-                // Floor: Dark Slate
-                plane.material.color.setHex(0x0f172a);
-                plane.material.emissive.setHex(0x000000); // No glow
+        // Override theme.js setTheme to prevent external changes
+        window.setTheme = function () { console.log('Theme Locked to Dark'); };
 
-                // Lights: Standard Intensity
-                ambientLight.intensity = 0.6;
-                dirLight.intensity = 1.0;
-            } else {
-                // LIGHT MODE (Anti-Glare)
-                scene.background = new THREE.Color(0xe5e7eb); // Gray-200
-                scene.fog = new THREE.Fog(0xe5e7eb, 10, 50); // Match background
+        // 3D Scene Background (Slate-900 / Black)
+        scene.background = new THREE.Color(0x0f172a);
+        scene.fog = new THREE.Fog(0x0f172a, 10, 50);
 
-                // Floor: Match Background for Seamless Look
-                plane.material.color.setHex(0xe5e7eb);
-                plane.material.emissive.setHex(0x000000);
+        // Floor Setup (Dark)
+        plane.material.color.setHex(0x0f172a);
+        plane.material.emissive.setHex(0x000000); // No emission to keep it dark
 
-                // Lights: Softer to reduce glare
-                ambientLight.intensity = 0.5;
-                dirLight.intensity = 0.8;
-            }
-        }
+        // Lighting Setup (Standard Dark Mode)
+        ambientLight.intensity = 0.6;
+        dirLight.intensity = 1.0;
 
-        // Init Theme
-        updateSceneTheme(document.documentElement.classList.contains('dark') ? 'dark' : 'light');
-
-        // Listen for Theme Changes
-        window.addEventListener('theme-changed', (e) => {
-            updateSceneTheme(e.detail.theme);
-        });
+        // Cleanup: remove any legacy theme listeners just in case
+        // (No listeners added)
 
 
 
@@ -499,6 +479,7 @@
         };
 
         let currentMat = materials.water;
+        let isSimPaused = false;
 
         // UI References
         const els = {
@@ -1010,7 +991,9 @@
             });
         }
 
-        function animate(time) {
+
+        function animate(time = 0) {
+            if (isSimPaused) return;
             requestAnimationFrame(animate);
             updatePhysics();
             animateMacroscopicState(time);
@@ -1266,6 +1249,26 @@
         // Initial State: Hidden
         videoElement.style.display = 'none';
         gestureGuide.style.display = 'none';
+
+        // PAUSE LOGIC
+        // isSimPaused moved to top
+
+        window.addEventListener('app-paused', () => {
+            isSimPaused = true;
+            if (cameraUtils) cameraUtils.stop(); // Stop webcam to save resource
+        });
+
+        window.addEventListener('app-resumed', () => {
+            isSimPaused = false;
+            // if (handTrackingEnabled && cameraUtils) cameraUtils.start(); // Resume webcam if active
+
+            // Restart loop if it was stopped completely, but careful not to double-start
+            // Since we return from animate() when paused, the loop breaks. We need to restart it.
+            animate();
+        });
+
+        // Loop Removed - Duplicate Logic
+
     </script>
 </body>
 
