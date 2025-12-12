@@ -4,885 +4,694 @@
 <head>
     <meta charset="UTF-8">
     <meta name="viewport" content="width=device-width, initial-scale=1.0">
-    <title>Mô Phỏng Đo Sóng Âm</title>
-    <!-- Tải Tailwind CSS -->
+    <title>Đo Sóng Âm (Oscilloscope)</title>
     <script src="https://cdn.tailwindcss.com"></script>
     <script src="js/tailwind-config.js"></script>
     <script src="https://unpkg.com/lucide@latest"></script>
+    <link
+        href="https://fonts.googleapis.com/css2?family=Inter:wght@400;500;600;700&family=Rajdhani:wght@500;600;700&display=swap"
+        rel="stylesheet">
     <link rel="stylesheet" href="css/global.css">
     <style>
-        /* Đảm bảo Canvas chiếm toàn bộ không gian container */
-        #oscilloscope {
-            /* background-color handled by JS/Tailwind now */
-            border-radius: 0.5rem;
-            display: block;
+        body {
+            font-family: 'Inter', sans-serif;
+        }
+
+        .font-tech {
+            font-family: 'Rajdhani', sans-serif;
+        }
+
+        input[type=range] {
+            -webkit-appearance: none;
+            background: transparent;
+        }
+
+        input[type=range]::-webkit-slider-thumb {
+            -webkit-appearance: none;
+            height: 16px;
+            width: 16px;
+            border-radius: 50%;
+            background: #10b981;
+            margin-top: -6px;
+            cursor: pointer;
+            box-shadow: 0 0 0 2px rgba(255, 255, 255, 0.5);
+            border: 2px solid white;
+        }
+
+        input[type=range]::-webkit-slider-runnable-track {
             width: 100%;
-            height: 100%;
-            cursor: crosshair;
+            height: 4px;
+            cursor: pointer;
+            background: #475569;
+            border-radius: 2px;
         }
 
-        /* Điều chỉnh màu đỏ cho sai số tỷ đối */
-        .text-red-experiment {
-            color: #ef4444;
-            font-weight: 600;
+        .dark input[type=range]::-webkit-slider-runnable-track {
+            background: #334155;
         }
 
-        .grid-container {
-            display: grid;
-            grid-template-columns: 2fr 1fr;
-            gap: 1.5rem;
+        /* Custom Scrollbar for History Table */
+        .history-scroll::-webkit-scrollbar {
+            width: 6px;
         }
 
-        /* Media query cho mobile */
-        @media (max-width: 1024px) {
-            .grid-container {
-                grid-template-columns: 1fr;
-            }
+        .history-scroll::-webkit-scrollbar-track {
+            background: transparent;
+        }
+
+        .history-scroll::-webkit-scrollbar-thumb {
+            background: #475569;
+            border-radius: 3px;
         }
     </style>
 </head>
 
 <body
-    class="bg-gray-100 dark:bg-lab-dark_bg text-gray-800 dark:text-lab-dark_text transition-colors duration-300 p-4 lg:p-8 font-sans">
+    class="h-screen flex overflow-hidden bg-slate-50 dark:bg-slate-900 text-slate-800 dark:text-slate-300 transition-colors duration-300">
 
+    <!-- SIDEBAR -->
+    <aside
+        class="w-72 flex-shrink-0 flex flex-col bg-white dark:bg-[#1e293b] border-r border-slate-200 dark:border-slate-700 z-20 shadow-xl">
+        <div class="h-16 flex items-center justify-between px-6 border-b border-slate-200 dark:border-slate-700">
+            <h1 class="font-tech font-bold text-xl text-green-500 uppercase tracking-wider">Sound Lab</h1>
+            <a href="index.html"
+                class="p-2 rounded-lg hover:bg-slate-700 text-slate-400 hover:text-white transition-colors">
+                <i data-lucide="home" class="w-5 h-5"></i>
+            </a>
+        </div>
 
-    <!-- Dark Mode Toggle -->
-    <button onclick="toggleDarkMode()"
-        class="fixed top-4 right-4 z-50 p-3 bg-white/80 dark:bg-slate-800/80 backdrop-blur-md text-slate-700 dark:text-slate-200 rounded-full shadow-lg border border-slate-200 dark:border-slate-700 hover:bg-slate-100 dark:hover:bg-slate-700 transition-all duration-300 group">
-        <i id="theme-icon" data-lucide="moon" class="w-5 h-5 group-hover:rotate-12 transition-transform"></i>
-    </button>
+        <div class="flex-1 overflow-y-auto p-6 space-y-8 custom-scrollbar">
 
-    <div class="max-w-7xl mx-auto">
-        <h1 class="text-3xl font-bold mb-6 text-center text-blue-600 dark:text-blue-400">
-            Mô Phỏng Thực Hành Đo Sóng Âm
-        </h1>
-
-        <div class="grid-container">
-            <!-- Cột 1: Điều khiển và Đồ thị Sóng Âm -->
-            <div class="space-y-6">
-
-                <!-- Bảng Điều khiển Nguồn Âm -->
-                <div
-                    class="bg-white dark:bg-lab-dark_panel p-4 rounded-xl shadow-lg border border-gray-300 dark:border-slate-700">
-                    <h2 class="text-xl font-semibold mb-3 text-green-700 dark:text-green-400">1. Điều Khiển Nguồn Âm
-                    </h2>
-                    <div class="grid md:grid-cols-2 gap-4">
-
-                        <!-- Tần Số Có Sẵn -->
-                        <div class="p-3 bg-gray-200 dark:bg-slate-700 rounded-lg space-y-2">
-                            <h3 class="font-medium text-lg text-indigo-700 dark:text-indigo-400">Tạo Tần Số (500 Hz -
-                                2000 Hz)</h3>
-                            <div class="flex items-center justify-between">
-                                <label for="freqInput" class="text-sm w-1/3 text-gray-800 dark:text-gray-200">Tần số
-                                    (Hz):</label>
-                                <input type="number" id="freqInput" value="1000" min="500" max="2000"
-                                    class="w-2/3 p-1 rounded bg-white dark:bg-slate-600 text-center border border-gray-400 dark:border-slate-500 text-gray-800 dark:text-gray-100">
-                            </div>
-                            <input type="range" id="freqRange" min="500" max="2000" value="1000"
-                                class="w-full h-2 bg-gray-300 rounded-lg appearance-none cursor-pointer">
-
-                            <div class="flex items-center justify-between">
-                                <label for="volumeInput" class="text-sm w-1/3">Độ lớn:</label>
-                                <input type="range" id="volumeInput" min="0" max="1" step="0.01" value="0.5"
-                                    class="w-2/3 h-2 bg-gray-300 rounded-lg appearance-none cursor-pointer">
-                            </div>
-
-                            <div class="flex justify-between pt-2">
-                                <button id="toggleSoundBtn"
-                                    class="bg-blue-600 hover:bg-blue-700 text-white font-bold py-2 px-4 rounded-lg transition duration-200 w-[48%]">
-                                    Bật Âm Thanh
-                                </button>
-                                <button id="microphoneBtn"
-                                    class="bg-teal-600 hover:bg-teal-700 text-white font-bold py-2 px-4 rounded-lg transition duration-200 w-[48%]">
-                                    Dùng Micro
-                                </button>
-                            </div>
-                        </div>
-
-                        <!-- Điều khiển Hiển thị -->
-                        <div class="p-3 bg-gray-200 dark:bg-slate-700 rounded-lg space-y-2">
-                            <h3 class="font-medium text-lg text-indigo-700 dark:text-indigo-400">Điều Khiển Hiển Thị
-                            </h3>
-                            <div class="flex justify-between space-x-2">
-                                <button id="pauseBtn"
-                                    class="bg-yellow-500 hover:bg-yellow-600 text-white font-bold py-2 px-4 rounded-lg transition duration-200 w-1/2">
-                                    <span id="pauseText">Tạm Dừng</span>
-                                </button>
-                                <button id="saveBtn"
-                                    class="bg-green-600 hover:bg-green-700 text-white font-bold py-2 px-4 rounded-lg transition duration-200 w-1/2">
-                                    Lưu Lần Đo
-                                </button>
-                            </div>
-
-                            <label class="block text-sm pt-2">Time/Div (ms): <span id="timeDivDisplay">5</span></label>
-                            <input type="range" id="timeDivRange" min="1" max="50" value="5"
-                                class="w-full h-2 bg-gray-300 rounded-lg appearance-none cursor-pointer">
-
-                            <label class="block text-sm">Volt/Div (V): <span id="voltDivDisplay">50</span></label>
-                            <input type="range" id="voltDivRange" min="10" max="100" value="50"
-                                class="w-full h-2 bg-gray-300 rounded-lg appearance-none cursor-pointer">
-                        </div>
+            <!-- Source Control -->
+            <div class="space-y-4">
+                <div class="flex items-center justify-between">
+                    <label class="text-xs font-bold text-slate-500 uppercase tracking-widest">Nguồn Âm</label>
+                    <div class="flex gap-2">
+                        <button id="toneBtn" class="p-2 rounded bg-slate-700 hover:bg-slate-600 text-white transition"
+                            title="Máy Phát Sóng">
+                            <i data-lucide="activity" class="w-4 h-4"></i>
+                        </button>
+                        <button id="micBtn" class="p-2 rounded bg-slate-700 hover:bg-slate-600 text-white transition"
+                            title="Microphone">
+                            <i data-lucide="mic" class="w-4 h-4"></i>
+                        </button>
                     </div>
                 </div>
 
-                <!-- Đồ Thị Sóng Âm (Canvas) -->
-                <div class="bg-gray-200 dark:bg-slate-900 p-2 rounded-xl shadow-inner border border-blue-600 h-[400px]">
-                    <canvas id="oscilloscope"></canvas>
-                </div>
-
-                <!-- Bảng Thông Số Tự Động -->
-                <div
-                    class="bg-white dark:bg-lab-dark_panel p-4 rounded-xl shadow-lg border border-gray-300 dark:border-slate-700">
-                    <h2 class="text-xl font-semibold mb-3 text-green-700 dark:text-green-400">2. Thông Số Tự Động
-                        (Real-time)</h2>
-                    <div class="grid grid-cols-3 gap-4 text-center">
-                        <div class="bg-gray-200 dark:bg-slate-700 p-3 rounded-lg">
-                            <div class="text-sm text-gray-500 dark:text-gray-300">Tần số (Hz)</div>
-                            <div id="displayFrequency" class="text-2xl font-mono text-indigo-600 dark:text-indigo-400">
-                                0.00</div>
+                <!-- Frequency Generator Controls -->
+                <div id="genControls"
+                    class="p-4 bg-white dark:bg-slate-800 rounded-lg space-y-4 border border-slate-200 dark:border-slate-700">
+                    <div>
+                        <div class="flex justify-between text-xs mb-1.5">
+                            <label class="font-medium text-slate-400">Tần số (Hz)</label>
+                            <span id="freqDisplay" class="font-mono font-bold text-green-400">1000</span>
                         </div>
-                        <div class="bg-gray-200 dark:bg-slate-700 p-3 rounded-lg">
-                            <div class="text-sm text-gray-500 dark:text-gray-300">Chu kỳ (s)</div>
-                            <div id="displayPeriod" class="text-2xl font-mono text-indigo-600 dark:text-indigo-400">
-                                0.0000</div>
-                        </div>
-                        <div class="bg-gray-200 dark:bg-slate-700 p-3 rounded-lg">
-                            <div class="text-sm text-gray-500 dark:text-gray-300">Biên độ (A)</div>
-                            <div id="displayAmplitude" class="text-2xl font-mono text-indigo-600 dark:text-indigo-400">
-                                0.00</div>
-                        </div>
+                        <input type="range" id="freqInput" min="200" max="2000" step="10" value="1000" class="w-full">
                     </div>
-
-                    <!-- Hiển thị con trỏ điểm -->
-                    <div id="pointCursorDisplay" class="mt-4 text-center p-2 border-t border-gray-300 hidden">
-                        <span class="font-medium text-blue-600 dark:text-blue-400">Điểm Chọn: </span>
-                        Thời gian (t): <span id="cursorTime" class="font-mono text-gray-800 dark:text-gray-200"></span>,
-                        Biên độ (A): <span id="cursorAmplitude"
-                            class="font-mono text-gray-800 dark:text-gray-200"></span>
+                    <div>
+                        <div class="flex justify-between text-xs mb-1.5">
+                            <label class="font-medium text-slate-400">Âm lượng</label>
+                            <span id="volDisplay" class="font-mono font-bold text-green-400">50%</span>
+                        </div>
+                        <input type="range" id="volInput" min="0" max="1" step="0.05" value="0.5" class="w-full">
                     </div>
                 </div>
             </div>
 
-            <!-- Cột 2: Bảng Lịch Sử Đo -->
-            <div class="space-y-6">
-                <div
-                    class="bg-white dark:bg-lab-dark_panel p-4 rounded-xl shadow-lg border border-gray-300 dark:border-slate-700">
-                    <h2 class="text-xl font-semibold mb-3 text-green-700 dark:text-green-400">3. Bảng Lịch Sử Đo</h2>
+            <!-- Scope Control -->
+            <div class="space-y-4">
+                <label class="text-xs font-bold text-slate-500 uppercase tracking-widest block">Oscilloscope</label>
 
-                    <div class="overflow-y-auto max-h-[300px] mb-4">
-                        <table class="min-w-full text-sm">
-                            <thead class="bg-gray-200 dark:bg-slate-700 sticky top-0">
-                                <tr>
-                                    <th class="p-2 text-left">Lần Đo</th>
-                                    <th class="p-2 text-right">Tần số (Hz)</th>
-                                    <th class="p-2 text-right">Chu kỳ (s)</th>
-                                </tr>
-                            </thead>
-                            <tbody id="historyTableBody" class="text-gray-700 dark:text-gray-300">
-                                <!-- Dữ liệu lịch sử sẽ được chèn vào đây -->
-                            </tbody>
-                        </table>
-                    </div>
-
-                    <button id="clearHistoryBtn"
-                        class="bg-red-600 hover:bg-red-700 text-white font-bold py-2 px-4 rounded-lg transition duration-200 w-full mb-4">
-                        Xóa Lịch Sử Đo
+                <div class="grid grid-cols-2 gap-3">
+                    <button id="pauseBtn"
+                        class="flex items-center justify-center gap-2 px-3 py-2 bg-yellow-600 hover:bg-yellow-500 text-white rounded transition text-sm font-medium">
+                        <i data-lucide="pause" class="w-4 h-4"></i> Pause
                     </button>
+                    <button id="saveBtn"
+                        class="flex items-center justify-center gap-2 px-3 py-2 bg-blue-600 hover:bg-blue-500 text-white rounded transition text-sm font-medium">
+                        <i data-lucide="save" class="w-4 h-4"></i> Lưu
+                    </button>
+                </div>
 
-                    <h3 class="text-xl font-semibold mb-3 text-green-700 border-t border-gray-300 pt-3">Kết Quả Tổng Kết
-                    </h3>
-                    <div id="summaryResults" class="space-y-2">
-                        <!-- Kết quả tổng kết sẽ được chèn vào đây -->
-                        <p class="text-sm text-gray-500 italic">Chưa có kết quả đo nào.</p>
+                <div
+                    class="space-y-3 p-4 bg-white dark:bg-slate-800 rounded-lg border border-slate-200 dark:border-slate-700">
+                    <div>
+                        <div class="flex justify-between text-xs mb-1">
+                            <label class="font-medium text-slate-400">Time/Div</label>
+                            <span class="font-mono text-white"><span id="timeDivVal">5</span> ms</span>
+                        </div>
+                        <input type="range" id="timeDivInput" min="1" max="20" step="1" value="5" class="w-full">
                     </div>
+                    <div>
+                        <div class="flex justify-between text-xs mb-1">
+                            <label class="font-medium text-slate-400">Volt/Div</label>
+                            <span class="font-mono text-slate-900 dark:text-white"><span id="voltDivVal">50</span>
+                                u</span>
+                        </div>
+                        <input type="range" id="voltDivInput" min="10" max="100" step="10" value="50" class="w-full">
+                    </div>
+                </div>
+            </div>
+
+            <!-- Realtime Stats -->
+            <div
+                class="p-4 bg-white/80 dark:bg-slate-800/80 border border-slate-200 dark:border-slate-700 rounded-lg text-xs font-mono space-y-3">
+                <h3 class="uppercase tracking-widest text-slate-500 font-bold border-b border-slate-700 pb-1 mb-2">Đo
+                    Tức Thời</h3>
+
+                <div class="flex justify-between items-center">
+                    <span class="text-slate-400">Tần số (f):</span>
+                    <span id="rtFreq" class="text-xl font-bold text-green-400">0.00 Hz</span>
+                </div>
+                <div class="flex justify-between items-center">
+                    <span class="text-slate-400">Chu kỳ (T):</span>
+                    <span id="rtPeriod" class="text-lg font-bold text-green-400">0.00 ms</span>
+                </div>
+            </div>
+
+            <!-- Error Calculation -->
+            <div
+                class="p-4 bg-white/80 dark:bg-slate-800/80 border border-slate-200 dark:border-slate-700 rounded-lg text-xs font-mono space-y-3">
+                <h3 class="uppercase tracking-widest text-slate-500 font-bold border-b border-slate-700 pb-1 mb-2">Sai
+                    Số Phép Đo</h3>
+                <div>
+                    <div class="flex justify-between items-center mb-2">
+                        <label class="text-slate-400">Giá trị trung bình (<span
+                                style="text-decoration: overline">f</span>)</label>
+                        <input id="refFreqInput" type="number" readonly
+                            class="bg-slate-100 dark:bg-slate-900 border border-slate-300 dark:border-slate-600 rounded px-2 py-1 w-20 text-right text-slate-900 dark:text-white focus:border-green-500 outline-none"
+                            value="0">
+                    </div>
+                </div>
+                <div class="flex justify-between items-center border-t border-slate-700/50 pt-2">
+                    <span class="text-slate-400">Sai số tuyệt đối (<span
+                            style="text-decoration: overline">Δf</span>):</span>
+                    <span id="absErrorDisplay" class="text-lg font-bold text-amber-500">0.00 Hz</span>
+                </div>
+                <div class="flex justify-between items-center">
+                    <span class="text-slate-400">Sai số tỷ đối (δ):</span>
+                    <span id="relErrorDisplay" class="text-lg font-bold text-red-500">0.00 %</span>
+                </div>
+            </div>
+
+        </div>
+    </aside>
+
+    <!-- MAIN -->
+    <main class="flex-1 overflow-hidden flex flex-col bg-white dark:bg-black">
+        <!-- Oscilloscope Canvas -->
+        <div class="flex-1 relative border-b border-slate-200 dark:border-slate-800 group">
+            <canvas id="scopeCanvas" class="absolute inset-0 w-full h-full block cursor-crosshair z-10"></canvas>
+
+            <!-- Cursor Lines (Custom HTML overlays or drawn on canvas? Canvas is better) -->
+
+            <!-- Overlay Info -->
+            <div
+                class="absolute top-4 right-4 bg-white/90 dark:bg-slate-900/90 backdrop-blur p-3 rounded-lg border border-slate-200 dark:border-slate-700 text-xs font-mono z-20 shadow-lg">
+                <div class="grid grid-cols-2 gap-x-6 gap-y-1">
+                    <span class="text-slate-500">Time:</span> <span id="cursorTime"
+                        class="text-slate-900 dark:text-white font-bold text-right">-- ms</span>
+                    <span class="text-slate-500">Amp:</span> <span id="cursorAmp"
+                        class="text-slate-900 dark:text-white font-bold text-right">-- V</span>
+                    <span
+                        class="text-slate-500 col-span-2 border-t border-slate-200 dark:border-slate-700/50 mt-1 pt-1 italic text-slate-400 text-[10px]"
+                        id="cursorHint">Click/Hover graph</span>
                 </div>
             </div>
         </div>
-    </div>
 
+        <!-- History / Data Panel -->
+        <div class="h-48 bg-slate-50 dark:bg-[#0f172a] flex flex-col">
+            <div
+                class="px-4 py-2 bg-white dark:bg-slate-800 border-b border-slate-200 dark:border-slate-700 flex justify-between items-center">
+                <h3 class="font-tech font-bold text-slate-300 uppercase tracking-widest text-sm">Lịch Sử Đo</h3>
+                <div id="statsResult" class="text-xs font-mono text-emerald-400 hidden">
+                    Avg F: <span id="avgF">--</span> Hz
+                </div>
+                <button id="clearHistory" class="text-xs text-red-400 hover:text-red-300 hover:underline">Xóa
+                    Hết</button>
+            </div>
+            <div class="flex-1 overflow-auto history-scroll p-4">
+                <table class="w-full text-left border-collapse text-xs font-mono text-slate-400">
+                    <thead>
+                        <tr class="border-b border-slate-700 text-slate-500">
+                            <th class="py-1">#</th>
+                            <th class="py-1 text-right">Tần số (Hz)</th>
+                            <th class="py-1 text-right">Chu kỳ (ms)</th>
+                            <th class="py-1 text-right">Thời gian</th>
+                        </tr>
+                    </thead>
+                    <tbody id="historyBody">
+                        <!-- Rows -->
+                    </tbody>
+                </table>
+                <div id="emptyMsg" class="text-center text-slate-600 text-sm mt-4 italic">Chưa có dữ liệu nào được lưu.
+                </div>
+            </div>
+        </div>
+    </main>
+
+    <script src="js/theme.js"></script>
     <script>
-        // --- CÁC HẰNG SỐ VÀ KHỞI TẠO ---
-        const audioContext = new (window.AudioContext || window.webkitAudioContext)();
-        const canvas = document.getElementById('oscilloscope');
-        const ctx = canvas.getContext('2d');
+        // --- AUDIO ENGINE ---
+        const audioCtx = new (window.AudioContext || window.webkitAudioContext)();
+        let analyser = audioCtx.createAnalyser();
+        analyser.fftSize = 32768; // Increased for better Time/Div resolution (Max size)
+        // Buffer size will be 32768. Sample rate ~48k. -> ~0.68s of data.
 
-        let analyser, source, oscillator;
-        let generatorGainNode; // Nút khuếch đại cho Generator
-        let micGainNode;       // Nút khuếch đại cho Micro
-        let currentStream;     // Biến để quản lý luồng micro một cách rõ ràng
+        let oscillator = null;
+        let gainNode = null;
 
-        let animationFrameId;
-        let isPaused = false;
-        let isSoundOn = false;
+        let micStream = null;
+        let micSource = null;
+
+        let isGenOn = false;
         let isMicOn = false;
 
-        // Cấu hình ban đầu của Scope
-        let timeDiv = 5; // ms per major division (5ms/div)
-        let voltDiv = 50; // Amplitude scale (50 units/div)
-        const GRID_DIVISIONS = 8; // 8 divisions (4 above, 4 below)
-
-        // Lịch sử đo (dùng localStorage để lưu)
-        let history = JSON.parse(localStorage.getItem('soundScopeHistory')) || [];
-
-        // Trạng thái kéo điểm (di chuyển)
-        let isDraggingCursor = false;
-
-        // Lưu trữ mảng dữ liệu cuối cùng khi tạm dừng
-        let lastDataArray = null;
-
-        // --- KHỞI TẠO CÁC PHẦN TỬ UI ---
+        // --- UI REFS ---
+        const toneBtn = document.getElementById('toneBtn');
+        const micBtn = document.getElementById('micBtn');
         const freqInput = document.getElementById('freqInput');
-        const freqRange = document.getElementById('freqRange');
-        const volumeInput = document.getElementById('volumeInput');
-        const toggleSoundBtn = document.getElementById('toggleSoundBtn');
-        const microphoneBtn = document.getElementById('microphoneBtn');
+        const volInput = document.getElementById('volInput');
+        const freqDisplay = document.getElementById('freqDisplay');
+        const volDisplay = document.getElementById('volDisplay');
+
+        const canvas = document.getElementById('scopeCanvas');
+        const ctx = canvas.getContext('2d');
+
+        const timeDivInput = document.getElementById('timeDivInput');
+        const voltDivInput = document.getElementById('voltDivInput');
+        const timeDivVal = document.getElementById('timeDivVal');
+        const voltDivVal = document.getElementById('voltDivVal');
+
         const pauseBtn = document.getElementById('pauseBtn');
         const saveBtn = document.getElementById('saveBtn');
-        const clearHistoryBtn = document.getElementById('clearHistoryBtn');
-        const timeDivRange = document.getElementById('timeDivRange');
-        const voltDivRange = document.getElementById('voltDivRange');
-        const timeDivDisplay = document.getElementById('timeDivDisplay');
-        const voltDivDisplay = document.getElementById('voltDivDisplay');
-        const historyTableBody = document.getElementById('historyTableBody');
-        const summaryResults = document.getElementById('summaryResults');
+        const rtFreq = document.getElementById('rtFreq');
+        const rtPeriod = document.getElementById('rtPeriod');
 
-        // --- HÀM KHỞI TẠO WEB AUDIO API ---
-        function setupAudio() {
-            if (analyser) return;
-            analyser = audioContext.createAnalyser();
-            analyser.fftSize = 2048;
-            // Chỉ kết nối với Analyser, không kết nối với audioContext.destination ở đây
-            // Điều này cho phép chúng ta chỉ trực quan hóa mà không phát ra âm thanh (trừ khi dùng generator/mic)
-            // Tuy nhiên, để nghe được tiếng khi dùng generator, ta sẽ kết nối sau.
-        }
+        // Error Calc Refs
+        // Error Calc Refs
+        const refFreqInput = document.getElementById('refFreqInput');
+        const absErrorDisplay = document.getElementById('absErrorDisplay');
+        const relErrorDisplay = document.getElementById('relErrorDisplay');
 
-        // --- HÀM CẬP NHẬT ĐỘ LỚN (VOLUME) TỨC THỜI ---
-        function updateVolume(value) {
-            const gainValue = parseFloat(value);
+        // Cursor Refs
+        const cursorTimeDisplay = document.getElementById('cursorTime');
+        const cursorAmpDisplay = document.getElementById('cursorAmp');
 
-            if (isSoundOn && generatorGainNode) {
-                // Điều chỉnh độ lớn cho Generator
-                generatorGainNode.gain.setValueAtTime(gainValue, audioContext.currentTime);
-            } else if (isMicOn && micGainNode) {
-                // Điều chỉnh độ lớn cho Micro
-                micGainNode.gain.setValueAtTime(gainValue, audioContext.currentTime);
-            }
-        }
+        const historyBody = document.getElementById('historyBody');
+        const clearHistory = document.getElementById('clearHistory');
+        const statsResult = document.getElementById('statsResult');
+        const avgF = document.getElementById('avgF');
+        const emptyMsg = document.getElementById('emptyMsg');
 
-        // --- NGUỒN ÂM: TẠO TẦN SỐ ---
-        function startToneGenerator() {
-            setupAudio();
-            if (oscillator) {
-                try { oscillator.stop(); } catch (e) { }
-                oscillator = null;
-            }
+        // --- STATE ---
+        let isPaused = false;
+        let animationId;
+        let timeDiv = 5; // ms
+        let voltDiv = 50;
+        let lastData = new Uint8Array(analyser.frequencyBinCount);
+        let history = [];
+        let cursor = { x: -1, y: -1, active: false };
 
-            // Tạo Gain Node mới và lưu vào generatorGainNode
-            generatorGainNode = audioContext.createGain();
+        // --- GENERATOR LOGIC ---
+        function startGen() {
+            if (isMicOn) stopMic();
+            if (isGenOn) { stopGen(); return; }
 
-            oscillator = audioContext.createOscillator();
+            if (audioCtx.state === 'suspended') audioCtx.resume();
+
+            oscillator = audioCtx.createOscillator();
+            gainNode = audioCtx.createGain();
+
             oscillator.type = 'sine';
-            oscillator.frequency.setValueAtTime(parseFloat(freqInput.value), audioContext.currentTime);
+            const f = parseFloat(freqInput.value);
+            oscillator.frequency.setValueAtTime(f, audioCtx.currentTime);
+            gainNode.gain.setValueAtTime(parseFloat(volInput.value), audioCtx.currentTime);
 
-            // Kết nối: Oscillator -> GeneratorGainNode -> Analyser (Visual) & Destination (Sound)
-            oscillator.connect(generatorGainNode);
-            generatorGainNode.connect(analyser);
-            generatorGainNode.connect(audioContext.destination); // Phát ra âm thanh
+            // Auto Update Ref Freq if history is empty
+            if (history.length === 0) {
+                refFreqInput.value = f;
+            }
 
-            // Áp dụng giá trị volume hiện tại từ thanh trượt
-            updateVolume(volumeInput.value);
+            oscillator.connect(gainNode);
+            gainNode.connect(analyser); // For Visuals
+            gainNode.connect(audioCtx.destination); // For Ear
 
             oscillator.start();
-            isSoundOn = true;
-            toggleSoundBtn.textContent = 'Tắt Âm Thanh';
-            // Thay đổi màu nút cho light mode: Bật (Đỏ)
-            toggleSoundBtn.classList.remove('bg-blue-600', 'bg-teal-600');
-            toggleSoundBtn.classList.add('bg-red-600');
 
-            isMicOn = false;
-            microphoneBtn.textContent = 'Dùng Micro';
-            // Thay đổi màu nút cho light mode: Tắt (Xanh Teal)
-            microphoneBtn.classList.remove('bg-yellow-600');
-            microphoneBtn.classList.add('bg-teal-600');
-            // Dừng micro nếu đang bật
-            stopMicrophone();
+            isGenOn = true;
+            toneBtn.classList.add('bg-green-600', 'hover:bg-green-500');
+            toneBtn.classList.remove('bg-slate-700', 'hover:bg-slate-600');
         }
 
-        function stopToneGenerator() {
-            if (oscillator) {
-                oscillator.stop();
-                oscillator.disconnect();
-                oscillator = null;
-                if (generatorGainNode) {
-                    generatorGainNode.disconnect();
-                    generatorGainNode = null;
-                }
-            }
-            isSoundOn = false;
-            toggleSoundBtn.textContent = 'Bật Âm Thanh';
-            // Thay đổi màu nút cho light mode: Tắt (Xanh Blue)
-            toggleSoundBtn.classList.remove('bg-red-600');
-            toggleSoundBtn.classList.add('bg-blue-600');
+        function stopGen() {
+            if (oscillator) { oscillator.stop(); oscillator.disconnect(); }
+            if (gainNode) { gainNode.disconnect(); }
+            isGenOn = false;
+            toneBtn.classList.remove('bg-green-600', 'hover:bg-green-500');
+            toneBtn.classList.add('bg-slate-700', 'hover:bg-slate-600');
         }
 
-        // --- NGUỒN ÂM: MICROPHONE ---
-        async function startMicrophone() {
-            setupAudio();
-            stopToneGenerator();
+        // --- MIC LOGIC ---
+        async function startMic() {
+            if (isGenOn) stopGen();
+            if (isMicOn) { stopMic(); return; }
+
+            if (audioCtx.state === 'suspended') audioCtx.resume();
 
             try {
-                const stream = await navigator.mediaDevices.getUserMedia({ audio: true });
-                currentStream = stream; // Lưu trữ stream để dễ dàng tắt hoàn toàn
-                source = audioContext.createMediaStreamSource(stream);
-
-                // Tạo Gain Node mới cho Micro và lưu vào micGainNode
-                micGainNode = audioContext.createGain();
-
-                // Kết nối: Source -> MicGainNode -> Analyser (Visual)
-                source.connect(micGainNode);
-                micGainNode.connect(analyser);
-
-                // Áp dụng giá trị volume hiện tại từ thanh trượt
-                updateVolume(volumeInput.value);
+                micStream = await navigator.mediaDevices.getUserMedia({ audio: true });
+                micSource = audioCtx.createMediaStreamSource(micStream);
+                micSource.connect(analyser); // Only visual, no feedback loop to destination
 
                 isMicOn = true;
-                microphoneBtn.textContent = 'Dừng Micro';
-                // Thay đổi màu nút cho light mode: Bật (Vàng)
-                microphoneBtn.classList.remove('bg-teal-600');
-                microphoneBtn.classList.add('bg-yellow-600');
-            } catch (err) {
-                console.error('Không thể truy cập Microphone:', err);
-                // Sử dụng giao diện tùy chỉnh thay vì alert()
-                console.log('Lỗi: Không thể truy cập Microphone. Vui lòng kiểm tra quyền.'); // Log thay vì alert
-                isMicOn = false;
-                microphoneBtn.textContent = 'Dùng Micro';
-                // Thay đổi màu nút cho light mode: Tắt (Xanh Teal)
-                microphoneBtn.classList.remove('bg-yellow-600');
-                microphoneBtn.classList.add('bg-teal-600');
+                micBtn.classList.add('bg-red-600', 'hover:bg-red-500');
+                micBtn.classList.remove('bg-slate-700', 'hover:bg-slate-600');
+            } catch (e) {
+                console.error("Mic Error", e);
+                alert("Không thể truy cập Microphone");
             }
         }
 
-        function stopMicrophone() {
-            // Đảm bảo dừng các track (tắt thu âm từ micro)
-            if (currentStream) {
-                currentStream.getTracks().forEach(track => track.stop());
-                currentStream = null;
-            }
-
-            if (source) {
-                source.disconnect();
-                source = null;
-            }
-
-            if (micGainNode) {
-                micGainNode.disconnect();
-                micGainNode = null;
-            }
-
+        function stopMic() {
+            if (micStream) micStream.getTracks().forEach(t => t.stop());
+            if (micSource) micSource.disconnect();
             isMicOn = false;
-            microphoneBtn.textContent = 'Dùng Micro';
-            // Thay đổi màu nút cho light mode: Tắt (Xanh Teal)
-            microphoneBtn.classList.remove('bg-yellow-600');
-            microphoneBtn.classList.add('bg-teal-600');
+            micBtn.classList.remove('bg-red-600', 'hover:bg-red-500');
+            micBtn.classList.add('bg-slate-700', 'hover:bg-slate-600');
         }
 
-        // --- XỬ LÝ SỰ KIỆN NGUỒN ÂM ---
-        toggleSoundBtn.addEventListener('click', () => {
-            if (audioContext.state === 'suspended') {
-                audioContext.resume();
-            }
-            if (isSoundOn) {
-                stopToneGenerator();
-            } else {
-                startToneGenerator();
-            }
-        });
+        // --- SCOPE DRAWING ---
+        let isTabPaused = false;
 
-        microphoneBtn.addEventListener('click', () => {
-            if (audioContext.state === 'suspended') {
-                audioContext.resume();
-            }
-            if (isMicOn) {
-                stopMicrophone();
-            } else {
-                startMicrophone();
-            }
-        });
-
-        freqInput.addEventListener('input', () => {
-            freqRange.value = freqInput.value;
-            if (oscillator) {
-                oscillator.frequency.setValueAtTime(parseFloat(freqInput.value), audioContext.currentTime);
-            }
-        });
-        freqRange.addEventListener('input', () => {
-            freqInput.value = freqRange.value;
-            if (oscillator) {
-                oscillator.frequency.setValueAtTime(parseFloat(freqInput.value), audioContext.currentTime);
-            }
-        });
-
-        // Cập nhật: Gọi updateVolume khi thay đổi thanh trượt
-        volumeInput.addEventListener('input', (e) => {
-            updateVolume(e.target.value);
-        });
-
-
-        // --- OSCILLOSCOPE & CANVAS LOGIC ---
-        function resizeCanvas() {
-            const container = canvas.parentElement;
-            canvas.width = container.clientWidth;
-            canvas.height = container.clientHeight;
+        function resize() {
+            canvas.width = canvas.parentElement.clientWidth;
+            canvas.height = canvas.parentElement.clientHeight;
         }
+        window.addEventListener('resize', resize);
 
-        window.addEventListener('resize', resizeCanvas);
-        resizeCanvas();
+        function draw() {
+            if (isTabPaused) return;
+            if (!isPaused) {
+                analyser.getByteTimeDomainData(lastData);
+            }
 
-        function drawGrid() {
-            const w = canvas.width;
-            const h = canvas.height;
-            const center = h / 2;
-
-            // Xóa canvas
-            // Xóa canvas
-            ctx.clearRect(0, 0, w, h);
-
+            // Fill BG
             const isDark = document.documentElement.classList.contains('dark');
-            ctx.fillStyle = isDark ? '#0f172a' : 'white';
-            ctx.fillRect(0, 0, w, h);
+            ctx.fillStyle = isDark ? '#000000' : '#ffffff';
+            ctx.fillRect(0, 0, canvas.width, canvas.height);
 
-            // Vẽ lưới (gray lines)
-            ctx.strokeStyle = isDark ? '#334155' : '#e0e0e0';
+            // Grid
+            ctx.strokeStyle = isDark ? '#334155' : '#e2e8f0';
             ctx.lineWidth = 1;
 
-            // Vẽ trục ngang (Y)
-            const h_div = h / GRID_DIVISIONS;
-            for (let i = 0; i <= GRID_DIVISIONS; i++) {
-                ctx.beginPath();
-                ctx.moveTo(0, i * h_div);
-                ctx.lineTo(w, i * h_div);
-                ctx.stroke();
-            }
 
-            // Vẽ trục dọc (X)
-            const w_div = w / GRID_DIVISIONS;
-            for (let i = 0; i <= GRID_DIVISIONS; i++) {
-                ctx.beginPath();
-                ctx.moveTo(i * w_div, 0);
-                ctx.lineTo(i * w_div, h);
-                ctx.stroke();
-            }
+            ctx.beginPath();
+            const hDivs = 8;
+            const vDivs = 10;
+            const dw = canvas.width / vDivs;
+            const dh = canvas.height / hDivs;
 
-            // Vẽ trục chính (X và Y)
-            ctx.strokeStyle = isDark ? '#64748b' : '#bdbdbd';
+            for (let i = 1; i < vDivs; i++) { ctx.moveTo(i * dw, 0); ctx.lineTo(i * dw, canvas.height); }
+            for (let i = 1; i < hDivs; i++) { ctx.moveTo(0, i * dh); ctx.lineTo(canvas.width, i * dh); }
+            ctx.stroke();
+
+            // Axis
+            ctx.strokeStyle = isDark ? '#64748b' : '#94a3b8';
             ctx.lineWidth = 2;
             ctx.beginPath();
-            // Trục ngang chính (Y=0)
-            ctx.moveTo(0, center);
-            ctx.lineTo(w, center);
-            // Trục dọc chính (X=0)
-            ctx.moveTo(w / 2, 0);
-            ctx.lineTo(w / 2, h);
+            ctx.moveTo(0, canvas.height / 2); ctx.lineTo(canvas.width, canvas.height / 2);
+            ctx.moveTo(canvas.width / 2, 0); ctx.lineTo(canvas.width / 2, canvas.height);
             ctx.stroke();
-        }
 
-        let pointCursor = null; // {x: number, y: number, time: number, amplitude: number}
+            // --- WAVEFORM DRAWING LOGIC (Fixed) ---
+            ctx.strokeStyle = '#10b981'; // Green signal
+            ctx.lineWidth = 2;
+            ctx.beginPath();
 
-        // Hàm cập nhật vị trí con trỏ và tính toán giá trị
-        function updateCursor(x, y) {
-            const w = canvas.width;
-            const h = canvas.height;
-            const center = h / 2;
+            // Calculations
+            const totalTimeVisible = timeDiv * vDivs; // Total MS on screen (e.g. 5ms/div * 10 = 50ms)
+            const sampleRate = audioCtx.sampleRate || 48000;
 
-            // Giữ con trỏ trong phạm vi canvas
-            const clampedX = Math.max(0, Math.min(w, x));
-            const clampedY = Math.max(0, Math.min(h, y));
+            // Samples needed to cover the Total Time Visible
+            const samplesNeeded = Math.floor((totalTimeVisible / 1000) * sampleRate);
 
-            // Tính toán giá trị thực
-            const totalTimeMs = timeDiv * GRID_DIVISIONS;
+            // We use the available buffer (lastData)
+            // If samplesNeeded > available, we are zoomed out too much (or limited by FFT). 
+            // With FFT 32768, we have ~680ms, so 50ms (or even 200ms) fits easily.
 
-            // Biên độ (Giả định biên độ max là 100 đơn vị, center là 0)
-            // Lấy giá trị từ -100 (đỉnh dưới) đến 100 (đỉnh trên)
-            const amplitude = ((center - clampedY) / (h / 2)) * 100;
+            const availableSamples = lastData.length;
+            const samplesToDraw = Math.min(availableSamples, samplesNeeded);
 
-            // Thời gian (Giả định 0ms là góc trái)
-            const time_ms = (clampedX / w) * totalTimeMs;
+            // MAPPING: We map [0 ... samplesToDraw] to [0 ... canvas.width]
 
-            pointCursor = { x: clampedX, y: clampedY, time: time_ms, amplitude: amplitude };
-            updateCursorDisplay();
-        }
+            const step = canvas.width / samplesToDraw;
 
-        canvas.addEventListener('mousedown', (e) => {
-            if (isPaused) {
-                const rect = canvas.getBoundingClientRect();
-                const x = e.clientX - rect.left;
-                const y = e.clientY - rect.top;
-
-                // Kiểm tra xem con trỏ có gần điểm hiện tại không (dành cho chế độ kéo)
-                if (pointCursor && Math.hypot(x - pointCursor.x, y - pointCursor.y) < 15) {
-                    isDraggingCursor = true;
-                    canvas.style.cursor = 'grabbing';
-                } else {
-                    // Nếu không gần, đặt điểm mới (click)
-                    updateCursor(x, y);
-                    // Buộc vẽ lại để hiển thị ngay cả khi Tạm Dừng
-                    drawWave(true);
-                }
-            } else {
-                // Nếu đang chạy, chỉ đặt điểm mới (click)
-                const rect = canvas.getBoundingClientRect();
-                updateCursor(e.clientX - rect.left, e.clientY - rect.top);
-            }
-        });
-
-        canvas.addEventListener('mousemove', (e) => {
-            const rect = canvas.getBoundingClientRect();
-            const x = e.clientX - rect.left;
-            const y = e.clientY - rect.top;
-
-            if (isDraggingCursor) {
-                // Kéo điểm
-                updateCursor(x, y);
-                // Buộc vẽ lại để hiển thị ngay cả khi Tạm Dừng
-                drawWave(true);
-            } else if (isPaused && pointCursor && Math.hypot(x - pointCursor.x, y - pointCursor.y) < 15) {
-                // Thay đổi con trỏ nếu đang tạm dừng và di chuột gần điểm
-                canvas.style.cursor = 'grab';
-            } else {
-                canvas.style.cursor = 'crosshair';
-            }
-        });
-
-        canvas.addEventListener('mouseup', () => {
-            isDraggingCursor = false;
-            canvas.style.cursor = 'crosshair';
-        });
-
-        canvas.addEventListener('mouseleave', () => {
-            isDraggingCursor = false;
-            canvas.style.cursor = 'crosshair';
-        });
-
-        function updateCursorDisplay() {
-            if (pointCursor) {
-                document.getElementById('pointCursorDisplay').classList.remove('hidden');
-                document.getElementById('cursorTime').textContent = pointCursor.time.toFixed(2) + ' ms';
-                document.getElementById('cursorAmplitude').textContent = pointCursor.amplitude.toFixed(2);
-            } else {
-                document.getElementById('pointCursorDisplay').classList.add('hidden');
-            }
-        }
-
-        function drawPointCursor() {
-            const isDark = document.documentElement.classList.contains('dark');
-            if (pointCursor) {
-                ctx.fillStyle = isDark ? '#22c55e' : '#006400';
-                ctx.beginPath();
-                ctx.arc(pointCursor.x, pointCursor.y, 5, 0, 2 * Math.PI);
-                ctx.fill();
-
-                // Vẽ đường gióng
-                ctx.strokeStyle = isDark ? '#22c55e' : '#006400';
-                ctx.setLineDash([5, 5]); // Nét đứt
-
-                // Trục X (Thời gian)
-                ctx.beginPath();
-                ctx.moveTo(pointCursor.x, 0);
-                ctx.lineTo(pointCursor.x, canvas.height);
-                ctx.stroke();
-
-                // Trục Y (Biên độ)
-                ctx.beginPath();
-                ctx.moveTo(0, pointCursor.y);
-                ctx.lineTo(canvas.width, pointCursor.y);
-                ctx.stroke();
-
-                ctx.setLineDash([]); // Tắt nét đứt
-            }
-        }
-
-        /**
-         * Vẽ đồ thị sóng âm.
-         * @param {boolean} forceRedraw Buộc vẽ lại ngay cả khi đang tạm dừng (dùng khi thay đổi zoom/cursor).
-         */
-        function drawWave(forceRedraw = false) {
-            // 1. Kiểm tra trạng thái Tạm Dừng
-            if (isPaused && !forceRedraw) {
-                // Nếu đang tạm dừng VÀ không bị buộc vẽ lại, thì KHÔNG làm gì cả và thoát.
-                return;
-            }
-
-            // 2. Khởi tạo và Lấy dữ liệu
-            drawGrid();
-
-            if (!analyser) {
-                // Nếu chưa có analyser, chỉ vẽ lưới và tiếp tục vòng lặp (nếu không tạm dừng)
-                if (!isPaused) animationFrameId = requestAnimationFrame(drawWave);
-                return;
-            }
-
-            const bufferLength = analyser.frequencyBinCount;
-            let dataArray;
-
-            if (isPaused) {
-                // Nếu đang tạm dừng (và bị forceRedraw), dùng mảng dữ liệu đã lưu
-                dataArray = lastDataArray || new Uint8Array(bufferLength);
-            } else {
-                // Nếu đang chạy, lấy dữ liệu mới và lưu lại
-                dataArray = new Uint8Array(bufferLength);
-                analyser.getByteTimeDomainData(dataArray);
-                lastDataArray = dataArray; // Lưu mảng dữ liệu mới nhất
-            }
-
-            // 3. Tính toán thông số hiển thị
-
-            // FIX: Tính toán sliceWidth - độ rộng pixel cho mỗi mẫu
-            // 1. Tính toán sliceWidth cơ bản
-            let sliceWidth = canvas.width * 1.0 / bufferLength;
-
-            // 2. Áp dụng Time/Div (Zoom Factor)
-            // Mức mặc định Time/Div = 5
-            const defaultTimeDiv = 5;
-            const zoomFactor = defaultTimeDiv / timeDiv; // Tỷ lệ phóng (TimeDiv nhỏ -> Zoom lớn)
-            sliceWidth *= zoomFactor; // Áp dụng zoom
+            // Pre-calculate Scale Y
+            // Value 0..255 -> -1..1 -> Offset from Center
+            // voltDiv = X units/div. 
+            // Standard: Full Scale ~ 1.0 (Unit). 
+            // Let's rely on voltDiv scaling visually.
+            const scaleY = (50 / voltDiv);
+            const centerY = canvas.height / 2;
 
             let x = 0;
+            // Keep drawing path
+            for (let i = 0; i < samplesToDraw; i++) {
+                // Optimization: if step is < 1 pixel, skip? No, aliasing issues. Draw all.
+                // Or max one point per pixel?
+                const v = (lastData[i] / 128.0) - 1.0; // -1 to 1
+                const y = centerY - (v * centerY * scaleY); // Invert Y for canvas
 
-            // 4. Vẽ sóng
-            const isDark = document.documentElement.classList.contains('dark');
-            ctx.lineWidth = 2;
-            ctx.strokeStyle = isDark ? '#60a5fa' : '#007bff'; // Blue 400 for dark, Blue 500 for light
-            ctx.beginPath();
+                if (i === 0) ctx.moveTo(x, y);
+                else ctx.lineTo(x, y);
 
-            for (let i = 0; i < bufferLength; i++) {
-                let v = dataArray[i] / 128.0; // Chuẩn hóa về 0-2
-                // Điều chỉnh theo Volt/Div (Mức mặc định Volt/Div = 50)
-                const defaultVoltDiv = 50;
-                const voltZoomFactor = defaultVoltDiv / voltDiv; // VoltDiv nhỏ -> Zoom lớn
-
-                // Chuẩn hóa Y theo voltDiv
-                let y = (v - 1) * (canvas.height / 2) * voltZoomFactor + (canvas.height / 2);
-
-                if (i === 0) {
-                    ctx.moveTo(x, y);
-                } else {
-                    ctx.lineTo(x, y);
-                }
-
-                x += sliceWidth;
+                x += step;
             }
-
-            ctx.lineTo(canvas.width, canvas.height / 2);
             ctx.stroke();
 
-            // 5. Vẽ con trỏ điểm
-            drawPointCursor();
+            // --- DRAW CURSOR ---
+            if (cursor.active) {
+                // Draw Crosshair
+                ctx.strokeStyle = '#e11d48'; // Red-600
+                ctx.lineWidth = 1;
+                ctx.setLineDash([4, 4]);
 
-            // 6. Cập nhật thông số tự động
-            // CHỈ cập nhật khi KHÔNG tạm dừng
-            if (!isPaused) {
-                updateRealtimeValues(dataArray, bufferLength);
-            }
+                // Vertical Line
+                ctx.beginPath();
+                ctx.moveTo(cursor.x, 0); ctx.lineTo(cursor.x, canvas.height);
+                ctx.stroke();
 
-            // 7. Tiếp tục vòng lặp (CHỈ khi KHÔNG tạm dừng)
-            if (!isPaused) {
-                animationFrameId = requestAnimationFrame(drawWave);
-            }
-        }
+                // Compute Intersect
+                // Find nearest sample index based on cursor.x
+                const ratio = cursor.x / canvas.width;
+                const sampleIdx = Math.floor(ratio * samplesToDraw);
 
-        // --- TÍNH TOÁN VÀ CẬP NHẬT GIÁ TRỊ THỜI GIAN THỰC ---
-        function updateRealtimeValues(dataArray, bufferLength) {
-            let frequency = 0.00;
-            let period = 0.00;
-            let maxAmplitude = 0;
+                if (sampleIdx >= 0 && sampleIdx < samplesToDraw) {
+                    const rawVal = lastData[sampleIdx];
+                    const v = (rawVal / 128.0) - 1.0; // -1 to 1
+                    const y = centerY - (v * centerY * scaleY);
 
-            // 1. Tính Biên độ (Amplitude)
-            for (let i = 0; i < bufferLength; i++) {
-                // Giá trị tuyệt đối của độ lệch so với 128 (mức 0)
-                maxAmplitude = Math.max(maxAmplitude, Math.abs(dataArray[i] - 128));
-            }
-            // Chuẩn hóa biên độ (max 128 -> max 100)
-            const normalizedAmplitude = (maxAmplitude / 128) * 100;
-            document.getElementById('displayAmplitude').textContent = normalizedAmplitude.toFixed(2);
+                    // Horizontal Line at signal value (optional, or at cursor Y?)
+                    // Usually cursor tracks the mouse Y, but for "Trace" feature, maybe snap to signal?
+                    // User said "click vào... xem biên độ". Best to snap to signal Y at that X.
 
+                    // Draw Intersection Dot
+                    ctx.fillStyle = '#ef4444';
+                    ctx.beginPath(); ctx.arc(cursor.x, y, 4, 0, 2 * Math.PI); ctx.fill();
 
-            // 2. Tính Tần số (Frequency)
-            if (isSoundOn) {
-                // Nếu dùng Generator, ta lấy tần số đã biết (tối ưu cho mô phỏng)
-                frequency = parseFloat(freqInput.value);
-            } else if (isMicOn) {
-                // Nếu dùng Micro, ta dùng giá trị giả định hoặc ước lượng đơn giản (giả định 440 Hz cho tiếng nói)
-                // Đây là phần mô phỏng đo lường: ta lấy 440Hz +/- 5Hz
-                const simulatedBaseFreq = 440; // Giả định tiếng nói
-                frequency = simulatedBaseFreq + (Math.random() * 10 - 5); // Độ nhiễu nhẹ
+                    // Update UI Stats
+                    const timeAtX = (sampleIdx / sampleRate) * 1000; // ms relative to window start
+                    const displayAmp = v.toFixed(3); // Normalized V
+
+                    cursorTimeDisplay.innerText = timeAtX.toFixed(2) + " ms";
+                    cursorAmpDisplay.innerText = displayAmp + " V";
+                }
+                ctx.setLineDash([]);
             } else {
-                // Không có nguồn âm
-                frequency = 0.00;
+                // cursorTimeDisplay.innerText = "-- ms";
+                // cursorAmpDisplay.innerText = "-- V";
             }
 
-            // 3. Tính Chu kỳ (Period)
-            if (frequency > 0) {
-                period = 1 / frequency;
+            if (!isPaused) computeStats(lastData, sampleRate);
+
+            animationId = requestAnimationFrame(draw);
+        }
+
+        function computeStats(data, sampleRate) {
+            // ... Zero Crossing Logic ...
+            let crossings = [];
+            // Use subset for stability if needed, but whole buffer is mostly consistent signal
+            // Limit to first N samples to speed up?
+            for (let i = 1; i < data.length; i++) {
+                if ((data[i - 1] < 128 && data[i] >= 128) || (data[i - 1] > 128 && data[i] <= 128)) {
+                    crossings.push(i);
+                }
+            }
+
+            let avgPeriodSamples = 0;
+            if (crossings.length > 1) {
+                let distSum = 0;
+                // Average over many crossings
+                for (let i = 0; i < crossings.length - 1; i++) {
+                    distSum += (crossings[i + 1] - crossings[i]);
+                }
+                const avgHalfPeriod = distSum / (crossings.length - 1);
+                avgPeriodSamples = avgHalfPeriod * 2;
+            }
+
+            let freq = 0;
+            let p_ms = 0;
+
+            if (avgPeriodSamples > 0) {
+                const periodSec = avgPeriodSamples / sampleRate;
+                freq = 1 / periodSec;
+                p_ms = periodSec * 1000;
+
+                rtFreq.innerText = freq.toFixed(2) + " Hz";
+                rtPeriod.innerText = p_ms.toFixed(2) + " ms";
             } else {
-                period = 0.00;
+                rtFreq.innerText = "0.00 Hz";
+                rtPeriod.innerText = "0.00 ms";
             }
 
-            document.getElementById('displayFrequency').textContent = frequency.toFixed(2);
-            document.getElementById('displayPeriod').textContent = period.toFixed(4);
-        }
-
-        // --- XỬ LÝ LỊCH SỬ ĐO & SAI SỐ ---
-        function saveMeasurement() {
-            // Lấy giá trị từ lần đo cuối cùng, không phải giá trị realtime (nếu đang tạm dừng)
-            const freq = parseFloat(document.getElementById('displayFrequency').textContent);
-            const period = parseFloat(document.getElementById('displayPeriod').textContent);
-
-            // Cho phép lưu ngay cả khi bảng trống (history.length === 0)
-            if (freq === 0 && period === 0 && !isSoundOn && !isMicOn) {
-                // Nếu đang không đo gì cả (tất cả đều 0), không lưu và báo lỗi
-                console.log("Vui lòng bật nguồn âm (Tạo tần số hoặc Micro) trước khi lưu.");
-                return;
-            }
-
-            history.push({
-                F: freq,
-                T: period,
-                id: Date.now()
-            });
-
-            // Lưu vào localStorage
-            localStorage.setItem('soundScopeHistory', JSON.stringify(history));
-
-            // Cập nhật lại UI
-            updateHistoryTable();
-            updateSummaryResults();
-        }
-
-        function updateHistoryTable() {
-            historyTableBody.innerHTML = '';
-            history.forEach((item, index) => {
-                const row = historyTableBody.insertRow();
-                row.classList.add('border-b', 'border-gray-300', 'dark:border-slate-600', 'hover:bg-gray-200', 'dark:hover:bg-slate-600');
-                row.innerHTML = `
-                    <td class="p-2">${index + 1}</td>
-                    <td class="p-2 text-right">${item.F.toFixed(2)}</td>
-                    <td class="p-2 text-right">${item.T.toFixed(4)}</td>
-                `;
-            });
-        }
-
-        function calculateSummary(values) {
-            if (values.length === 0) {
-                return { avg: 0, delta: 0, epsilon: 0 };
-            }
-
-            // Giá trị Trung bình (Tham chiếu)
-            const N = values.length;
-            const avg = values.reduce((sum, val) => sum + val, 0) / N;
-
-            // Tính sai số tuyệt đối ($\Delta X_{tb}$) - Lấy trung bình làm tham chiếu để tính sai số thống kê
-            if (N < 2) {
-                // Nếu chỉ có 1 lần đo, không thể tính sai số thống kê
-                return { avg: avg, delta: 0.00, epsilon: 0.00 };
-            }
-
-            const varianceSum = values.reduce((sum, val) => sum + Math.pow(val - avg, 2), 0);
-            const delta = Math.sqrt(varianceSum / (N * (N - 1)));
-
-            // Sai số Tỷ đối ($\delta X_{tb}$)
-            const epsilon = (delta / avg) * 100; // Tính theo %
-
-            return { avg: avg, delta: delta, epsilon: epsilon };
-        }
-
-        function updateSummaryResults() {
+            // Update Error Calculation real-time?
+            // With new logic (Mean of History), we only calculate when History updates.
+            // So we clear real-time updates here or leave placeholders.
+            // Let's just reset placeholders if no history.
             if (history.length === 0) {
-                summaryResults.innerHTML = '<p class="text-sm text-gray-500 italic">Chưa có kết quả đo nào.</p>';
-                return;
+                absErrorDisplay.innerText = "0.00 Hz";
+                relErrorDisplay.innerText = "0.00 %";
             }
-
-            // 1. Tính toán Tần số
-            const F_values = history.map(item => item.F);
-            const F_summary = calculateSummary(F_values);
-
-            // 2. Tính toán Chu kỳ
-            const T_values = history.map(item => item.T);
-            const T_summary = calculateSummary(T_values);
-
-            // Thay đổi màu nền/viền
-            summaryResults.innerHTML = `
-                <div class="bg-gray-200 dark:bg-slate-700 p-3 rounded-lg">
-                    <h4 class="font-medium text-lg text-indigo-700 dark:text-indigo-400 mb-1">Tần số (Hz)</h4>
-                    <p class="text-sm">Kết quả trung bình: ${F_summary.avg.toFixed(2)} Hz</p>
-                    <p class="text-sm">Sai số tuyệt đối: ± ${F_summary.delta.toFixed(2)} Hz</p>
-                    <p class="text-sm text-red-experiment">Sai số tỷ đối: ${F_summary.epsilon.toFixed(2)} %</p>
-                </div>
-                <div class="bg-gray-200 dark:bg-slate-700 p-3 rounded-lg">
-                    <h4 class="font-medium text-lg text-indigo-700 dark:text-indigo-400 mb-1">Chu kỳ (s)</h4>
-                    <p class="text-sm">Kết quả trung bình: ${T_summary.avg.toFixed(4)} s</p>
-                    <p class="text-sm">Sai số tuyệt đối: ± ${T_summary.delta.toFixed(4)} s</p>
-                    <p class="text-sm text-red-experiment">Sai số tỷ đối: ${T_summary.epsilon.toFixed(2)} %</p>
-                </div>
-            `;
         }
 
-        saveBtn.addEventListener('click', saveMeasurement);
+        // --- INTERACTION ---
+        function handleCursor(e) {
+            const rect = canvas.getBoundingClientRect();
+            cursor.x = e.clientX - rect.left;
+            cursor.y = e.clientY - rect.top;
+            cursor.active = true;
+        }
 
-        clearHistoryBtn.addEventListener('click', () => {
-            history = [];
-            localStorage.removeItem('soundScopeHistory');
-            updateHistoryTable();
-            updateSummaryResults();
+        canvas.addEventListener('mousemove', handleCursor);
+        canvas.addEventListener('mousedown', handleCursor); // Determine active on click too
+        canvas.addEventListener('mouseleave', () => { cursor.active = false; });
+
+        // Touch support
+        canvas.addEventListener('touchstart', (e) => {
+            e.preventDefault();
+            const rect = canvas.getBoundingClientRect();
+            cursor.x = e.touches[0].clientX - rect.left;
+            cursor.y = e.touches[0].clientY - rect.top;
+            cursor.active = true;
         });
 
+        // --- CONTROLS ---
+        toneBtn.onclick = startGen;
+        micBtn.onclick = startMic;
 
-        // --- XỬ LÝ ĐIỀU KHIỂN SCOPE ---
-        pauseBtn.addEventListener('click', () => {
+        freqInput.oninput = () => {
+            freqDisplay.innerText = freqInput.value;
+            // Also update Ref Freq if user is driving the measured signal and history is empty
+            if (history.length === 0) {
+                refFreqInput.value = freqInput.value;
+            }
+
+            if (oscillator) oscillator.frequency.setValueAtTime(parseFloat(freqInput.value), audioCtx.currentTime);
+        };
+
+        volInput.oninput = () => {
+            volDisplay.innerText = Math.round(volInput.value * 100) + "%";
+            if (gainNode) gainNode.gain.setValueAtTime(parseFloat(volInput.value), audioCtx.currentTime);
+        };
+
+        timeDivInput.oninput = () => { timeDiv = parseInt(timeDivInput.value); timeDivVal.innerText = timeDiv; };
+        voltDivInput.oninput = () => { voltDiv = parseInt(voltDivInput.value); voltDivVal.innerText = voltDiv; };
+
+        pauseBtn.onclick = () => {
             isPaused = !isPaused;
-            if (isPaused) {
-                document.getElementById('pauseText').textContent = 'Tiếp Tục';
-                // Khi tạm dừng, dừng vòng lặp animation và đảm bảo đã lưu dữ liệu cuối cùng
-                cancelAnimationFrame(animationFrameId);
-                // Cập nhật lại một lần cuối cùng để lưu lại hình ảnh tĩnh và dữ liệu lastDataArray
-                drawWave(true);
+            pauseBtn.innerHTML = isPaused ? `<i data-lucide="play" class="w-4 h-4"></i> Resume` : `<i data-lucide="pause" class="w-4 h-4"></i> Pause`;
+            lucide.createIcons();
+        };
+
+        // Save logic to include Error info? 
+        saveBtn.onclick = () => {
+            const f = parseFloat(rtFreq.innerText);
+            const p = parseFloat(rtPeriod.innerText);
+            if (f <= 0) return;
+
+            history.push({ f, p, t: new Date().toLocaleTimeString() });
+            updateHistory();
+        };
+
+        clearHistory.onclick = () => {
+            history = [];
+            updateHistory();
+        };
+
+        function updateHistory() {
+            historyBody.innerHTML = '';
+            let fSum = 0;
+            history.forEach((h, i) => {
+                fSum += h.f;
+                const tr = document.createElement('tr');
+                tr.className = "border-b border-slate-700 hover:bg-slate-800 transition";
+                tr.innerHTML = `<td class="py-2 text-slate-500">${i + 1}</td>
+                                 <td class="py-2 text-right font-bold text-green-400">${h.f.toFixed(2)}</td>
+                                 <td class="py-2 text-right text-slate-400">${h.p.toFixed(2)}</td>
+                                 <td class="py-2 text-right text-slate-500 text-[10px]">${h.t}</td>`;
+                historyBody.appendChild(tr);
+            });
+
+            if (history.length > 0) {
+                emptyMsg.classList.add('hidden');
+                statsResult.classList.remove('hidden');
+                const avg = fSum / history.length;
+                avgF.innerText = avg.toFixed(2);
+                refFreqInput.value = avg.toFixed(2);
+
+                // 2. Absolute Error (Mean Deviation)
+                // Delta_f_i = |f_i - avg|
+                // Mean_Delta_f = Sum(Delta_f_i) / N
+                let sumDelta = 0;
+                history.forEach(h => {
+                    sumDelta += Math.abs(h.f - avg);
+                });
+                const meanAbsError = sumDelta / history.length;
+
+                // 3. Relative Error
+                // delta = (Mean_Delta_f / avg) * 100
+                const relError = (meanAbsError / avg) * 100;
+
+                absErrorDisplay.innerText = meanAbsError.toFixed(2) + " Hz";
+                relErrorDisplay.innerText = relError.toFixed(2) + " %";
             } else {
-                document.getElementById('pauseText').textContent = 'Tạm Dừng';
-                // Khi tiếp tục, gọi lại drawWave để bắt đầu lại vòng lặp
-                drawWave();
+                emptyMsg.classList.remove('hidden');
+                statsResult.classList.add('hidden');
             }
-        });
-
-        timeDivRange.addEventListener('input', (e) => {
-            timeDiv = parseFloat(e.target.value);
-            // Giới hạn phạm vi Time/Div mượt mà hơn (ví dụ: 0.5ms đến 100ms)
-            if (timeDiv < 1) timeDiv = 1;
-            if (timeDiv > 50) timeDiv = 50;
-            timeDivDisplay.textContent = timeDiv;
-            // Kích hoạt vẽ lại để cập nhật zoom ngay lập tức, chỉ 1 lần nếu đang Tạm Dừng
-            if (isPaused) drawWave(true);
-        });
-
-        voltDivRange.addEventListener('input', (e) => {
-            voltDiv = parseFloat(e.target.value);
-            voltDivDisplay.textContent = voltDiv;
-            // Kích hoạt vẽ lại để cập nhật zoom ngay lập tức, chỉ 1 lần nếu đang Tạm Dừng
-            if (isPaused) drawWave(true);
-        });
-
-
-        // --- CHẠY CHƯƠNG TRÌNH ---
-        function init() {
-            // Cập nhật lại bảng lịch sử và tổng kết từ localStorage
-            updateHistoryTable();
-            updateSummaryResults();
-
-            // Bắt đầu vòng lặp vẽ đồ thị
-            drawWave();
         }
 
-        init();
+        // --- AUTO-PAUSE LOGIC ---
+        window.addEventListener('app-paused', () => {
+            isTabPaused = true;
+            if (audioCtx.state === 'running') audioCtx.suspend();
+            cancelAnimationFrame(animationId);
+        });
+
+        window.addEventListener('app-resumed', () => {
+            isTabPaused = false;
+            // Only resume if not manually paused and context was suspended
+            if (audioCtx.state === 'suspended' && (isGenOn || isMicOn)) audioCtx.resume();
+            if (!isPaused) animationId = requestAnimationFrame(draw);
+        });
+
+        // Init
+        resize();
+        requestAnimationFrame(draw);
+        lucide.createIcons();
+
     </script>
-    <script src="js/theme.js"></script>
 </body>
 
 </html>

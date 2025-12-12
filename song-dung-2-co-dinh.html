@@ -4,351 +4,338 @@
 <head>
     <meta charset="UTF-8">
     <meta name="viewport" content="width=device-width, initial-scale=1.0">
-    <title>Mô Phỏng Sóng Dừng (Hai Đầu Cố Định)</title>
+    <title>Sóng Dừng - 2 Đầu Cố Định</title>
     <script src="https://cdn.tailwindcss.com"></script>
     <script src="js/tailwind-config.js"></script>
     <script src="https://unpkg.com/lucide@latest"></script>
+    <link
+        href="https://fonts.googleapis.com/css2?family=Inter:wght@400;500;600;700&family=Rajdhani:wght@500;600;700&display=swap"
+        rel="stylesheet">
     <link rel="stylesheet" href="css/global.css">
     <style>
-        @import url('https://fonts.googleapis.com/css2?family=Inter:wght@400;600;700&display=swap');
-
-        /* Body color handled by utility classes now */
         body {
             font-family: 'Inter', sans-serif;
         }
 
-        .container-card {
-            background-color: white;
-            padding: 1.5rem;
-            border-radius: 1rem;
-            box-shadow: 0 10px 15px -3px rgba(0, 0, 0, 0.1), 0 4px 6px -2px rgba(0, 0, 0, 0.05);
-            transition: all 0.3s ease;
+        .font-tech {
+            font-family: 'Rajdhani', sans-serif;
         }
 
-        .dark .container-card {
-            background-color: #1e293b;
-            /* slate-800 */
-            box-shadow: 0 10px 15px -3px rgba(0, 0, 0, 0.3);
-        }
-
-        input[type="range"] {
+        input[type=range] {
             -webkit-appearance: none;
-            width: 100%;
-            height: 8px;
-            background: #cbd5e1;
-            border-radius: 4px;
-            outline: none;
-            opacity: 0.7;
-            -webkit-transition: .2s;
-            transition: opacity .2s;
+            background: transparent;
         }
 
-        .dark input[type="range"] {
+        input[type=range]::-webkit-slider-thumb {
+            -webkit-appearance: none;
+            height: 16px;
+            width: 16px;
+            border-radius: 50%;
+            background: #06b6d4;
+            margin-top: -6px;
+            cursor: pointer;
+            box-shadow: 0 0 0 2px rgba(255, 255, 255, 0.5);
+        }
+
+        input[type=range]::-webkit-slider-runnable-track {
+            width: 100%;
+            height: 4px;
+            cursor: pointer;
+            background: #cbd5e1;
+            border-radius: 2px;
+        }
+
+        .dark input[type=range]::-webkit-slider-runnable-track {
             background: #475569;
         }
 
-        input[type="range"]:hover {
-            opacity: 1;
+        .hud-panel {
+            background: rgba(255, 255, 255, 0.9);
+            backdrop-filter: blur(8px);
+            border: 1px solid rgba(255, 255, 255, 0.2);
+            box-shadow: 0 4px 6px -1px rgba(0, 0, 0, 0.1);
         }
 
-        input[type="range"]::-webkit-slider-thumb {
-            -webkit-appearance: none;
-            appearance: none;
-            width: 18px;
-            height: 18px;
-            border-radius: 50%;
-            background: #4f46e5;
-            cursor: pointer;
-            box-shadow: 0 0 5px rgba(0, 0, 0, 0.2);
-        }
-
-        #simulationCanvas {
-            /* background-color handled by JS for consistency */
-            border-radius: 0.75rem;
-            border: 2px solid #4f46e5;
+        .dark .hud-panel {
+            background: rgba(15, 23, 42, 0.85);
+            border: 1px solid rgba(255, 255, 255, 0.05);
         }
     </style>
 </head>
-</head>
 
 <body
-    class="p-4 sm:p-8 bg-gray-50 dark:bg-lab-dark_bg text-gray-900 dark:text-lab-dark_text transition-colors duration-300">
-    <a href="index.html"
-        class="fixed top-4 left-4 z-50 p-3 bg-blue-600 text-white rounded-lg shadow-xl hover:bg-blue-700 transition duration-300 flex items-center space-x-2">
-        <svg xmlns="http://www.w3.org/2000/svg" class="h-5 w-5" viewBox="0 0 20 20" fill="currentColor">
-            <path
-                d="M10.707 2.293a1 1 0 00-1.414 0l-7 7a1 1 0 001.414 1.414L4 10.414V17a1 1 0 001 1h2a1 1 0 001-1v-2a1 1 0 011-1h2a1 1 0 011 1v2a1 1 0 001 1h2a1 1 0 001-1v-6.586l.293.293a1 1 0 001.414-1.414l-7-7z" />
-        </svg>
-        <span class="font-semibold hidden sm:inline">Quay về Trang Chủ</span>
-    </a>
+    class="h-screen flex overflow-hidden bg-slate-50 dark:bg-[#0f172a] text-slate-700 dark:text-slate-300 transition-colors duration-300">
 
-    <!-- Dark Mode Toggle -->
-    <button onclick="toggleDarkMode()"
-        class="fixed top-4 right-4 z-50 p-3 bg-white/80 dark:bg-slate-800/80 backdrop-blur-md text-slate-700 dark:text-slate-200 rounded-full shadow-lg border border-slate-200 dark:border-slate-700 hover:bg-slate-100 dark:hover:bg-slate-700 transition-all duration-300 group">
-        <i id="theme-icon" data-lucide="moon" class="w-5 h-5 group-hover:rotate-12 transition-transform"></i>
-    </button>
+    <!-- SIDEBAR -->
+    <aside
+        class="w-72 flex-shrink-0 flex flex-col bg-white dark:bg-[#1e293b] border-r border-slate-200 dark:border-slate-800 z-20 shadow-lg">
+        <div class="h-16 flex items-center justify-between px-6 border-b border-slate-100 dark:border-slate-700/50">
+            <h1 class="font-tech font-bold text-xl text-slate-800 dark:text-white uppercase tracking-wider">Control
+                Panel</h1>
+            <a href="index.html"
+                class="p-2 rounded-lg hover:bg-slate-100 dark:hover:bg-slate-700 text-slate-400 hover:text-cyan-500 transition-colors">
+                <i data-lucide="home" class="w-5 h-5"></i>
+            </a>
+        </div>
 
-    <div class="max-w-4xl mx-auto space-y-8">
-        <header class="text-center">
-            <h1 class="text-3xl sm:text-4xl font-extrabold text-gray-900 dark:text-white">
-                Mô Phỏng Sóng Dừng (Hai Đầu Cố Định)
-            </h1>
-            <p class="text-gray-500 dark:text-gray-400 mt-2">Điều chỉnh thông số để quan sát hình ảnh sóng dừng</p>
-        </header>
+        <div class="flex-1 overflow-y-auto p-4 space-y-5 custom-scrollbar">
 
-        <!-- Đã điều chỉnh bố cục grid: Cột 1 là điều khiển, Cột 2 là Canvas -->
-        <div class="grid grid-cols-1 lg:grid-cols-3 gap-6">
+            <!-- Controls -->
+            <div>
+                <label
+                    class="text-xs font-bold text-slate-400 dark:text-slate-500 uppercase tracking-widest mb-2 block">Điểu
+                    Khiển</label>
+                <button id="resetButton"
+                    class="w-full flex items-center justify-center gap-2 px-3 py-2 bg-slate-200 dark:bg-slate-700 text-slate-600 dark:text-slate-300 hover:text-slate-900 dark:hover:text-white rounded-lg transition font-medium">
+                    <i data-lucide="rotate-ccw" class="w-4 h-4"></i> <span class="text-xs">Đặt Lại</span>
+                </button>
+            </div>
 
-            <!-- Cột 1: Điều khiển -->
-            <div class="lg:col-span-1 container-card h-full">
-                <h2 class="text-xl font-bold text-indigo-700 dark:text-indigo-400 mb-4">Điều Khiển Tham Số</h2>
-                <div class="space-y-4 text-sm">
-
-                    <!-- Biên độ -->
-                    <div>
-                        <label for="amplitude" class="block font-medium text-gray-700 dark:text-gray-300 mb-1">Biên độ
-                            Sóng (A): <span id="amplitudeValue"
-                                class="font-semibold text-indigo-600 dark:text-indigo-400">1.0</span> cm</label>
-                        <input type="range" id="amplitude" min="0.1" max="2.0" step="0.1" value="1.0" class="w-full">
+            <!-- Parameters -->
+            <div class="space-y-4">
+                <div>
+                    <div class="flex justify-between text-xs mb-1">
+                        <label class="font-medium text-slate-600 dark:text-slate-300">Số bụng sóng (k)</label>
+                        <span class="font-mono text-cyan-600 dark:text-cyan-400 font-bold" id="modeDisplay">1</span>
                     </div>
-
-                    <!-- Chế độ Sóng Dừng (Mode k) -->
-                    <div>
-                        <label for="mode" class="block font-medium text-gray-700 dark:text-gray-300 mb-1">Chế độ Sóng
-                            Dừng (k): <span id="modeValue"
-                                class="font-semibold text-indigo-600 dark:text-indigo-400">1</span></label>
-                        <input type="range" id="mode" min="1" max="8" step="1" value="1" class="w-full">
+                    <!-- Discrete Steps -->
+                    <input type="range" id="modeInput" min="1" max="8" step="1" value="1" class="w-full">
+                    <div class="flex justify-between text-[10px] text-slate-400 px-1 mt-1 font-mono">
+                        <span>1</span><span>8</span>
                     </div>
+                </div>
 
-                    <!-- Sức căng dây -->
-                    <div>
-                        <label for="tension" class="block font-medium text-gray-700 dark:text-gray-300 mb-1">Sức Căng
-                            Dây (T): <span id="tensionValue"
-                                class="font-semibold text-indigo-600 dark:text-indigo-400">10.0</span> N</label>
-                        <input type="range" id="tension" min="1" max="50" step="1.0" value="10.0" class="w-full">
+                <div>
+                    <div class="flex justify-between text-xs mb-1">
+                        <label class="font-medium text-slate-600 dark:text-slate-300">Lực căng dây (T)</label>
+                        <span class="font-mono text-cyan-600 dark:text-cyan-400"><span id="tensionDisplay">10.0</span>
+                            N</span>
                     </div>
+                    <input type="range" id="tensionInput" min="1" max="50" step="1" value="10" class="w-full">
+                </div>
 
-                    <button id="resetButton"
-                        class="w-full mt-6 py-2 bg-indigo-600 text-white font-semibold rounded-lg hover:bg-indigo-700 transition duration-150 shadow-md">
-                        Đặt Lại Mô Phỏng
-                    </button>
+                <div>
+                    <div class="flex justify-between text-xs mb-1">
+                        <label class="font-medium text-slate-600 dark:text-slate-300">Biên độ nguồn (A)</label>
+                        <span class="font-mono text-cyan-600 dark:text-cyan-400"><span id="ampDisplay">1.0</span>
+                            cm</span>
+                    </div>
+                    <input type="range" id="ampInput" min="0.1" max="2.0" step="0.1" value="1.0" class="w-full">
                 </div>
             </div>
 
-            <!-- Cột 2: Mô phỏng (Đã chiếm 2/3 không gian còn lại) -->
-            <div class="lg:col-span-2 space-y-6">
-
-                <!-- Canvas Mô Phỏng -->
-                <div class="container-card h-full flex flex-col">
-                    <h2 class="text-xl font-bold text-indigo-700 dark:text-indigo-400 mb-4">Mô Phỏng Sóng Dừng</h2>
-                    <canvas id="simulationCanvas" width="800" height="200" class="w-full flex-grow"></canvas>
-                    <!-- Thêm thông báo trạng thái nhỏ thay thế cho Result Box -->
-                    <p class="mt-4 text-sm text-center text-green-700 font-semibold bg-green-100 p-2 rounded-lg">
-                        Trạng thái: Sóng dừng ổn định (mode <span id="statusModeDisplay">1</span> bụng sóng).
-                    </p>
+            <!-- Info Box -->
+            <div
+                class="p-3 bg-indigo-50 dark:bg-indigo-900/10 border border-indigo-100 dark:border-indigo-900/30 rounded-lg text-xs font-mono space-y-1.5">
+                <div class="flex justify-between text-indigo-800 dark:text-indigo-300">
+                    <span>Vận tốc (v):</span>
+                    <span id="velDisplay" class="font-bold">-- m/s</span>
+                </div>
+                <div class="flex justify-between text-indigo-800 dark:text-indigo-300">
+                    <span>Bước sóng (λ):</span>
+                    <span id="lambdaDisplay" class="font-bold">-- m</span>
+                </div>
+                <div class="flex justify-between text-indigo-800 dark:text-indigo-300">
+                    <span>Tần số (f):</span>
+                    <span id="freqDisplay" class="font-bold">-- Hz</span>
                 </div>
             </div>
         </div>
 
-    </div>
+        <!-- Footer -->
+        <div class="p-4 border-t border-slate-200 dark:border-slate-800 bg-slate-50 dark:bg-slate-900/50">
+            <button onclick="toggleDarkMode()"
+                class="w-full flex items-center justify-center gap-2 py-2 rounded-lg text-slate-500 hover:bg-slate-200 dark:hover:bg-slate-800 transition">
+                <i id="theme-icon" data-lucide="moon" class="w-4 h-4"></i>
+                <span class="text-xs font-medium uppercase">Toggle Theme</span>
+            </button>
+        </div>
+    </aside>
 
-    <script type="module">
-        // --- CÁC HẰNG SỐ VẬT LÝ VÀ THIẾT LẬP BAN ĐẦU ---
-        // Giữ lại các hằng số này trong code để đảm bảo tính toán vật lý chính xác, 
-        // nhưng không hiển thị ra giao diện người dùng theo yêu cầu.
-        const L = 4.0; // Chiều dài dây (m) - Cố định
-        const MU = 0.01; // Khối lượng riêng tuyến tính (kg/m) - Cố định
-        const CANVAS_WIDTH = 800; // Giá trị ban đầu
-        const CANVAS_HEIGHT = 200; // Giá trị cố định
+    <!-- MAIN -->
+    <main class="flex-1 relative bg-white dark:bg-[#0f172a] overflow-hidden flex flex-col">
+        <!-- Canvas Container -->
+        <div class="flex-1 relative bg-grid-pattern dark:bg-grid-pattern-dark bg-[length:40px_40px]">
+            <canvas id="simCanvas" class="absolute inset-0 w-full h-full block"></canvas>
 
-        // Lấy các phần tử DOM
-        const canvas = document.getElementById('simulationCanvas');
+            <!-- HUD -->
+            <div class="absolute top-4 right-4 w-48 hud-panel rounded-xl p-3 shadow-xl z-10 backdrop-blur-md">
+                <div
+                    class="text-xs font-bold text-slate-500 dark:text-slate-400 uppercase tracking-wider mb-2 border-b border-slate-200 dark:border-slate-700 pb-1">
+                    Trạng thái dây</div>
+                <div class="space-y-1 font-mono text-xs">
+                    <div class="flex justify-between items-center text-green-600 dark:text-green-400">
+                        <span>Chế độ:</span>
+                        <span class="font-bold"><span id="hudMode">1</span> bó sóng</span>
+                    </div>
+                </div>
+            </div>
+        </div>
+    </main>
+
+    <script src="js/theme.js"></script>
+    <script>
+        // --- CONSTANTS ---
+        const L = 4.0; // Length 4m
+        const MU = 0.01; // mass density
+
+        const canvas = document.getElementById('simCanvas');
         const ctx = canvas.getContext('2d');
-        const amplitudeInput = document.getElementById('amplitude');
-        const modeInput = document.getElementById('mode');
-        const tensionInput = document.getElementById('tension');
-        const amplitudeValueSpan = document.getElementById('amplitudeValue');
-        const modeValueSpan = document.getElementById('modeValue');
-        const tensionValueSpan = document.getElementById('tensionValue');
+
+        // Inputs
+        const modeInput = document.getElementById('modeInput');
+        const tensionInput = document.getElementById('tensionInput');
+        const ampInput = document.getElementById('ampInput');
         const resetButton = document.getElementById('resetButton');
-        const statusModeDisplay = document.getElementById('statusModeDisplay'); // Thêm display mode
 
-        // Biến trạng thái
-        let amplitude = parseFloat(amplitudeInput.value); // Biên độ (cm)
-        let mode = parseInt(modeInput.value);     // Chế độ sóng dừng (k)
-        let tension = parseFloat(tensionInput.value);     // Sức căng (N)
-        let resonantFrequency = 0; // Tần số cộng hưởng (f_k)
-        let time = 0; // Biến thời gian cho mô phỏng
+        // Displays
+        const modeDisplay = document.getElementById('modeDisplay');
+        const tensionDisplay = document.getElementById('tensionDisplay');
+        const ampDisplay = document.getElementById('ampDisplay');
+        const velDisplay = document.getElementById('velDisplay');
+        const lambdaDisplay = document.getElementById('lambdaDisplay');
+        const freqDisplay = document.getElementById('freqDisplay');
+        const hudMode = document.getElementById('hudMode');
 
-        // Hệ số tỷ lệ màn hình
-        const SCALE_Y = (CANVAS_HEIGHT / 2) / amplitudeInput.max; // Tỷ lệ cho biên độ
-        const Y_CENTER = CANVAS_HEIGHT / 2;
-        let X_SCALE = CANVAS_WIDTH / L; // Tỷ lệ cho chiều dài 
+        // State
+        let k = 1;
+        let T = 10.0;
+        let A = 1.0;
+        let time = 0;
 
-        // --- HÀM TÍNH TOÁN VẬT LÝ ---
+        let width, height;
 
-        // 1. Tính tốc độ truyền sóng (v = sqrt(T/μ))
-        function calculateVelocity(T, mu) {
-            // Đảm bảo T không âm
-            if (T <= 0) return 0;
-            return Math.sqrt(T / mu);
+        // --- PHYSICS ---
+        function getPhysics() {
+            const v = Math.sqrt(T / MU);
+            const lambda = (2 * L) / k; // Condition for fixed-fixed: L = k * lambda/2 -> lambda = 2L/k
+            const f = v / lambda;
+            const omega = 2 * Math.PI * f;
+            return { v, lambda, f, omega };
         }
 
-        // 3. Tính toán các giá trị cần thiết cho mô phỏng (không hiển thị ra UI)
-        function updateCalculations() {
-            // 1. Tốc độ sóng (v = sqrt(T/μ))
-            const v = calculateVelocity(tension, MU);
+        function updateUI() {
+            k = parseInt(modeInput.value);
+            T = parseFloat(tensionInput.value);
+            A = parseFloat(ampInput.value);
 
-            // 2. Bước sóng cần thiết cho mode k: λk = 2 * L / k
-            const lambda_k = (2 * L) / mode;
+            modeDisplay.innerText = k;
+            hudMode.innerText = k;
+            tensionDisplay.innerText = T.toFixed(1);
+            ampDisplay.innerText = A.toFixed(1);
 
-            // 3. Tần số cần thiết (tần số cộng hưởng): fk = v / λk
-            resonantFrequency = v / lambda_k;
+            const { v, lambda, f } = getPhysics();
 
-            // Cập nhật nhãn k
-            modeValueSpan.textContent = mode;
-            statusModeDisplay.textContent = mode; // Cập nhật trạng thái dưới canvas
+            velDisplay.innerText = v.toFixed(1) + ' m/s';
+            lambdaDisplay.innerText = lambda.toFixed(2) + ' m';
+            freqDisplay.innerText = f.toFixed(1) + ' Hz';
         }
 
-        // --- HÀM VẼ MÔ PHỎNG ---
-
-        // Hàm tính li độ tại vị trí x và thời điểm t
-        function getY(x, t) {
-            // Công thức sóng dừng: u = 2A * sin(2πx/λk) * cos(2πfkt)
-            const lambda_k = (2 * L) / mode;
-
-            const k_num = (2 * Math.PI) / lambda_k; // Số sóng
-            const omega = 2 * Math.PI * resonantFrequency; // Tần số góc, dùng f_k
-
-            const amplitudeX = 2 * amplitude * Math.sin(k_num * x); // Biên độ dao động tại x (cm)
-
-            // Chuyển biên độ từ cm sang pixel, li độ từ cm sang pixel
-            const displacement = amplitudeX * Math.cos(omega * t) * SCALE_Y / amplitude;
-
-            return Y_CENTER - displacement;
+        // --- DRAWING ---
+        function resize() {
+            canvas.width = canvas.parentElement.clientWidth;
+            canvas.height = canvas.parentElement.clientHeight;
+            width = canvas.width;
+            height = canvas.height;
         }
+        window.addEventListener('resize', resize);
 
-        function drawSimulation() {
-            // Xóa canvas
-            // Xóa canvas
-            ctx.clearRect(0, 0, canvas.width, canvas.height);
-            // Adaptive background
-            const isDark = document.documentElement.classList.contains('dark');
-            ctx.fillStyle = isDark ? '#1f2937' : '#262626'; // Keep dark for high contrast in bot modes or slightly lighter in dark mode? 
-            // Actually let's trust the previous design choice of dark background for wave contrast (#262626)
-            // But let's allow it to be light in Light Mode ?? 
-            // The Original was always dark #262626.
-            // Let's make it Light Gray in Light Mode and Dark in Dark Mode.
-            ctx.fillStyle = isDark ? '#0f172a' : '#f1f5f9';
-            ctx.fillRect(0, 0, canvas.width, canvas.height);
-
-            // Vẽ trục giữa (dây khi chưa dao động)
-            ctx.strokeStyle = isDark ? '#4b5563' : '#9ca3af'; // gray-600 vs gray-400
-            ctx.lineWidth = 1;
-            ctx.beginPath();
-            ctx.moveTo(0, Y_CENTER);
-            ctx.lineTo(canvas.width, Y_CENTER);
-            ctx.stroke();
-
-            // Vẽ sóng dừng
-            ctx.strokeStyle = isDark ? '#a78bfa' : '#6366f1'; // violet-400 vs indigo-500
-            ctx.lineWidth = 3;
-            ctx.beginPath();
-
-            // Lấy 1000 điểm để vẽ sóng mượt
-            for (let i = 0; i <= canvas.width; i++) {
-                const x_pixel = i;
-                const x_meter = x_pixel / X_SCALE; // Tọa độ x trên dây (m)
-                const y_pixel = getY(x_meter, time);
-
-                if (i === 0) {
-                    ctx.moveTo(x_pixel, y_pixel);
-                } else {
-                    ctx.lineTo(x_pixel, y_pixel);
-                }
-            }
-            ctx.stroke();
-
-            // Đánh dấu 2 nút cố định (A, B)
-            function drawFixedPoint(x_pixel, label) {
-                ctx.fillStyle = '#ef4444'; // red-500
-                ctx.beginPath();
-                ctx.arc(x_pixel, Y_CENTER, 6, 0, 2 * Math.PI);
-                ctx.fill();
-                ctx.font = '14px Inter';
-                ctx.fillText(label, x_pixel - 5, Y_CENTER - 20);
-            }
-
-            drawFixedPoint(0, 'A');
-            drawFixedPoint(canvas.width, 'B');
-        }
-
-        // --- VÒNG LẶP HOẠT HÌNH ---
-        let lastTime = 0;
-        function animate(timestamp) {
-            const deltaTime = timestamp - lastTime;
+        function draw(timestamp) {
+            const dt = (timestamp - lastTime) / 1000;
             lastTime = timestamp;
+            time += dt;
 
-            // Cập nhật thời gian
-            time += deltaTime / 1000; // Đổi từ ms sang s
+            ctx.clearRect(0, 0, width, height);
 
-            // Vẽ mô phỏng
-            drawSimulation();
+            // Draw String
+            const centerY = height / 2;
+            const stringLenPx = width - 100; // Padding 50px each side
+            const startX = 50;
+            const endX = width - 50;
 
-            // Lặp lại vòng lặp
-            requestAnimationFrame(animate);
+            const { omega, lambda } = getPhysics();
+            const k_wave = (2 * Math.PI) / lambda;
+
+            // Draw Axis
+            ctx.beginPath();
+            ctx.strokeStyle = localStorage.getItem('theme') === 'dark' ? '#334155' : '#cbd5e1';
+            ctx.lineWidth = 1; ctx.setLineDash([5, 5]);
+            ctx.moveTo(startX, centerY); ctx.lineTo(endX, centerY);
+            ctx.stroke(); ctx.setLineDash([]);
+
+            // Draw Vibrating String
+            // u(x,t) = 2A sin(kx) cos(omega t)
+            // Need to map x_pixel to x_real (0 to L)
+            const metersPerPx = L / stringLenPx;
+
+            ctx.beginPath();
+            ctx.strokeStyle = '#6366f1'; // Indigo-500
+            ctx.lineWidth = 3;
+
+            const points = stringLenPx;
+            for (let i = 0; i <= points; i++) {
+                const px = startX + i;
+                const x_real = i * metersPerPx;
+
+                // Standing Wave Eq
+                // 2A is max amplitude of belly
+                // Wait, simulation A input is source amplitude? Or belly amplitude?
+                // Usually A input is source, standing wave belly is 2A.
+                // Let's assume A is the belly amplitude for simplicity control? 
+                // Previous code: y = 2A sin(kx) ...
+                // Let's use A as input for "Amplitude Factor".
+
+                // Scale for visual: 1cm = ? px. 
+                // Let's make it look good. Max A=2cm. 
+                // total height ~ 200px. +/- 50px is good.
+                const pxPerCm = 20;
+
+                // Standing wave term
+                // sin(k_wave * x) matches boundary conditions sin(0)=0 and sin(k_wave*L) = sin(2pi/lambda * k*lambda/2) = sin(k*pi)=0. Correct.
+                const displacement = 2 * A * Math.sin(k_wave * x_real) * Math.cos(omega * time);
+
+                const py = centerY - displacement * pxPerCm;
+
+                if (i === 0) ctx.moveTo(px, py);
+                else ctx.lineTo(px, py);
+            }
+            ctx.stroke();
+
+            // Draw Nodes (Fixed extremities)
+            const drawEnd = (x, label) => {
+                ctx.fillStyle = '#ef4444';
+                ctx.beginPath(); ctx.arc(x, centerY, 6, 0, Math.PI * 2); ctx.fill();
+                ctx.fillStyle = localStorage.getItem('theme') === 'dark' ? '#94a3b8' : '#475569';
+                ctx.font = 'bold 12px Inter'; ctx.fillText(label, x - 5, centerY - 15);
+            };
+            drawEnd(startX, 'A');
+            drawEnd(endX, 'B');
+
+            requestAnimationFrame(draw);
         }
 
-        // --- XỬ LÝ SỰ KIỆN ---
-        function handleInputChange() {
-            // Cập nhật giá trị
-            amplitude = parseFloat(amplitudeInput.value);
-            mode = parseInt(modeInput.value); // Lấy giá trị mode mới
-            tension = parseFloat(tensionInput.value);
+        // --- CONTROL LISTENERS ---
+        let lastTime = performance.now();
 
-            // Cập nhật nhãn
-            amplitudeValueSpan.textContent = amplitude.toFixed(1);
-            tensionValueSpan.textContent = tension.toFixed(1);
+        modeInput.oninput = updateUI;
+        tensionInput.oninput = updateUI;
+        ampInput.oninput = updateUI;
 
-            // Cập nhật tính toán (chỉ tính f_k)
-            updateCalculations();
-        }
-
-        amplitudeInput.addEventListener('input', handleInputChange);
-        modeInput.addEventListener('input', handleInputChange); // Xử lý sự kiện cho Mode
-        tensionInput.addEventListener('input', handleInputChange);
-
-        resetButton.addEventListener('click', () => {
-            // Đặt lại các giá trị về mặc định
-            amplitudeInput.value = 1.0;
+        resetButton.onclick = () => {
             modeInput.value = 1;
-            tensionInput.value = 10.0;
-            handleInputChange(); // Cập nhật các biến và tính toán
-            time = 0; // Đặt lại thời gian
-        });
+            tensionInput.value = 10;
+            ampInput.value = 1.0;
+            time = 0;
+            updateUI();
+        };
 
-
-        // --- KHỞI TẠO ---
-        // Đặt kích thước canvas thực tế để mô phỏng hiển thị đúng
-        function resizeCanvas() {
-            const parent = canvas.parentElement;
-            canvas.width = parent.offsetWidth;
-            canvas.height = 200;
-            // Cập nhật tỷ lệ X_SCALE
-            X_SCALE = canvas.width / L;
-        }
-
-        window.addEventListener('resize', resizeCanvas);
-        resizeCanvas();
-
-        // Cập nhật tính toán ban đầu
-        handleInputChange();
-
-        // Bắt đầu vòng lặp hoạt hình
-        animate(0);
+        // Init
+        resize();
+        updateUI();
+        requestAnimationFrame(draw);
+        lucide.createIcons();
 
     </script>
-    <script src="js/theme.js"></script>
 </body>
 
 </html>

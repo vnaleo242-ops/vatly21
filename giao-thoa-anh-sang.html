@@ -4,504 +4,442 @@
 <head>
     <meta charset="UTF-8">
     <meta name="viewport" content="width=device-width, initial-scale=1.0">
-    <title>Phân Tích Giao Thoa Ánh Sáng Nâng Cao</title>
-    <!-- Tải Tailwind CSS -->
+    <title>Giao Thoa Ánh Sáng (Khe Young)</title>
     <script src="https://cdn.tailwindcss.com"></script>
-    <!-- Thiết lập cấu hình Tailwind -->
-    <script>
-        tailwind.config = {
-            darkMode: 'class',
-            theme: {
-                extend: {
-                    colors: {
-                        'primary': '#059669', /* Xanh lá cây đậm mới */
-                        'secondary': '#10b981',
-                        'dark-bg': '#0f172a',
-                        'light-text': '#f1f5f9',
-                        // Lab colors for compatibility with shared global.css
-                        lab: {
-                            cyan: '#b298d3',
-                            dark_bg: '#0f172a',
-                            dark_text: '#f1f5f9'
-                        }
-                    },
-                    fontFamily: {
-                        sans: ['Inter', 'sans-serif'],
-                    },
-                }
-            }
-        }
-    </script>
+    <script src="js/tailwind-config.js"></script>
     <script src="https://unpkg.com/lucide@latest"></script>
+    <link
+        href="https://fonts.googleapis.com/css2?family=Inter:wght@400;500;600;700&family=Rajdhani:wght@500;600;700&display=swap"
+        rel="stylesheet">
     <link rel="stylesheet" href="css/global.css">
     <style>
         body {
             font-family: 'Inter', sans-serif;
-            /* background-color: #f8fafc; replaced by tailwind class */
         }
 
-        .container-card {
-            box-shadow: 0 10px 15px -3px rgba(0, 0, 0, 0.1), 0 4px 6px -2px rgba(0, 0, 0, 0.05);
+        .font-tech {
+            font-family: 'Rajdhani', sans-serif;
         }
 
         input[type=range] {
-            width: 100%;
+            -webkit-appearance: none;
+            background: transparent;
         }
 
-        .simulation-area {
-            background-color: #0f172a;
-            /* Nền tối cho màn quan sát */
-            border-radius: 0.75rem;
-            border: 1px solid #1e293b;
-            min-height: 400px;
-            /* Đảm bảo chiều cao đủ */
+        input[type=range]::-webkit-slider-thumb {
+            -webkit-appearance: none;
+            height: 16px;
+            width: 16px;
+            border-radius: 50%;
+            background: #e2e8f0;
+            margin-top: -6px;
+            cursor: pointer;
+            box-shadow: 0 0 0 2px rgba(0, 0, 0, 0.5);
+            border: 2px solid white;
+        }
+
+        input[type=range]::-webkit-slider-runnable-track {
+            width: 100%;
+            height: 4px;
+            cursor: pointer;
+            background: #64748b;
+            border-radius: 2px;
+        }
+
+        .dark input[type=range]::-webkit-slider-runnable-track {
+            background: #475569;
+        }
+
+        .hud-panel {
+            background: rgba(15, 23, 42, 0.9);
+            backdrop-filter: blur(8px);
+            border: 1px solid rgba(255, 255, 255, 0.1);
+            box-shadow: 0 4px 6px -1px rgba(0, 0, 0, 0.3);
+            color: white;
         }
     </style>
 </head>
 
-<body
-    class="p-4 sm:p-8 bg-gray-50 dark:bg-lab-dark_bg text-lab-text dark:text-lab-dark_text transition-colors duration-300 min-h-screen">
-    <a href="index.html"
-        class="fixed top-4 left-4 z-50 p-3 bg-blue-600 text-white rounded-lg shadow-xl hover:bg-blue-700 transition duration-300 flex items-center space-x-2">
-        <svg xmlns="http://www.w3.org/2000/svg" class="h-5 w-5" viewBox="0 0 20 20" fill="currentColor">
-            <path
-                d="M10.707 2.293a1 1 0 00-1.414 0l-7 7a1 1 0 001.414 1.414L4 10.414V17a1 1 0 001 1h2a1 1 0 001-1v-2a1 1 0 011-1h2a1 1 0 011 1v2a1 1 0 001 1h2a1 1 0 001-1v-6.586l.293.293a1 1 0 001.414-1.414l-7-7z" />
-        </svg>
-        <span class="font-semibold hidden sm:inline">Quay về Trang Chủ</span>
-    </a>
+<body class="h-screen flex overflow-hidden bg-slate-900 text-slate-300 transition-colors duration-300">
 
-    <!-- Dark Mode Toggle -->
-    <button onclick="toggleDarkMode()"
-        class="fixed top-4 right-4 z-50 p-3 bg-white/80 dark:bg-slate-800/80 backdrop-blur-md text-slate-700 dark:text-slate-200 rounded-full shadow-lg border border-slate-200 dark:border-slate-700 hover:bg-slate-100 dark:hover:bg-slate-700 transition-all duration-300 group">
-        <i id="theme-icon" data-lucide="moon" class="w-5 h-5 group-hover:rotate-12 transition-transform"></i>
-    </button>
-
-    <div class="max-w-6xl mx-auto">
-        <h1 class="text-3xl sm:text-4xl font-extrabold text-gray-900 dark:text-white mb-6 translate-y-0 text-center">
-            🔬 Phân Tích Giao Thoa Ánh Sáng (Khe Young)
-        </h1>
-        <p class="text-center text-gray-600 dark:text-gray-300 mb-8">
-            Điều chỉnh các thông số và chọn chế độ phân tích để xem sự thay đổi của mẫu hình giao thoa.
-        </p>
-
-        <div class="grid grid-cols-1 lg:grid-cols-3 gap-8">
-
-            <!-- Khu vực điều khiển (Inputs) -->
-            <div class="lg:col-span-1 bg-white dark:bg-slate-800 p-6 rounded-xl container-card shadow-lg flex flex-col">
-                <h2 class="text-2xl font-semibold text-primary mb-5">⚙️ Điều Khiển & Chế Độ</h2>
-
-                <!-- CHỌN CHẾ ĐỘ PHÂN TÍCH -->
-                <div class="mb-6 p-3 bg-gray-100 dark:bg-slate-700 rounded-lg">
-                    <h3 class="text-base font-semibold text-gray-800 dark:text-gray-200 mb-2">Chế độ Phân tích</h3>
-                    <div class="flex flex-wrap gap-2">
-                        <label class="flex items-center space-x-2 cursor-pointer">
-                            <input type="radio" name="mode" value="single" checked onchange="updateMode()"
-                                class="form-radio text-primary">
-                            <span class="text-sm">Đơn sắc ($\lambda_1$)</span>
-                        </label>
-                        <label class="flex items-center space-x-2 cursor-pointer">
-                            <input type="radio" name="mode" value="two_colors" onchange="updateMode()"
-                                class="form-radio text-primary">
-                            <span class="text-sm">Hai màu ($\lambda_1, \lambda_2$)</span>
-                        </label>
-                        <label class="flex items-center space-x-2 cursor-pointer">
-                            <input type="radio" name="mode" value="white_light" onchange="updateMode()"
-                                class="form-radio text-primary">
-                            <span class="text-sm">Ánh sáng Trắng</span>
-                        </label>
-                    </div>
-                </div>
-
-                <!-- Input 1: Bước sóng (lambda 1) -->
-                <div class="mb-6" id="lambda1_group">
-                    <label for="lambda1" class="block text-sm font-medium text-gray-700 dark:text-gray-300">
-                        Bước sóng 1 (λ₁): <span id="lambda1Value" class="font-bold text-lg text-primary">600</span> nm
-                    </label>
-                    <input type="range" id="lambda1" min="400" max="750" value="600" step="5" oninput="updateInputs()"
-                        class="w-full h-2 bg-gray-200 rounded-lg appearance-none cursor-pointer range-lg">
-                    <div class="flex justify-between text-xs text-gray-500 mt-1"><span>400 nm (Tím)</span><span>750 nm
-                            (Đỏ)</span></div>
-                </div>
-
-                <!-- Input 2: Bước sóng (lambda 2) - Chỉ hiện khi chế độ two_colors -->
-                <div class="mb-6 hidden" id="lambda2_group">
-                    <label for="lambda2" class="block text-sm font-medium text-gray-700 dark:text-gray-300">
-                        Bước sóng 2 (λ₂): <span id="lambda2Value" class="font-bold text-lg text-primary">450</span> nm
-                    </label>
-                    <input type="range" id="lambda2" min="400" max="750" value="450" step="5" oninput="updateInputs()"
-                        class="w-full h-2 bg-gray-200 rounded-lg appearance-none cursor-pointer range-lg">
-                    <div class="flex justify-between text-xs text-gray-500 mt-1"><span>400 nm (Tím)</span><span>750 nm
-                            (Đỏ)</span></div>
-                </div>
-
-                <!-- Input 3: Khoảng cách hai khe (a) -->
-                <div class="mb-6">
-                    <label for="a" class="block text-sm font-medium text-gray-700 dark:text-gray-300">
-                        Khoảng cách hai khe (a): <span id="aValue" class="font-bold text-lg text-primary">0.5</span> mm
-                    </label>
-                    <input type="range" id="a" min="0.1" max="2.0" value="0.5" step="0.05" oninput="updateInputs()"
-                        class="w-full h-2 bg-gray-200 rounded-lg appearance-none cursor-pointer range-lg">
-                    <div class="flex justify-between text-xs text-gray-500 mt-1"><span>0.1 mm</span><span>2.0 mm</span>
-                    </div>
-                </div>
-
-                <!-- Input 4: Khoảng cách đến màn (D) -->
-                <div class="mb-6">
-                    <label for="D" class="block text-sm font-medium text-gray-700 dark:text-gray-300">
-                        Khoảng cách đến màn (D): <span id="DValue" class="font-bold text-lg text-primary">2.0</span> m
-                    </label>
-                    <input type="range" id="D" min="0.5" max="5.0" value="2.0" step="0.1" oninput="updateInputs()"
-                        class="w-full h-2 bg-gray-200 rounded-lg appearance-none cursor-pointer range-lg">
-                    <div class="flex justify-between text-xs text-gray-500 mt-1"><span>0.5 m</span><span>5.0 m</span>
-                    </div>
-                </div>
-            </div>
-
-            <!-- Khu vực kết quả và mô phỏng -->
-            <div class="lg:col-span-2 flex flex-col gap-8">
-
-                <!-- Khu vực kết quả tính toán -->
-                <div class="bg-primary text-white p-4 rounded-xl shadow-lg">
-                    <h3 class="text-xl font-bold mb-2">📊 Kết Quả Phân Tích</h3>
-                    <div id="results_single" class="p-1">
-                        <p class="text-sm">
-                            Khoảng vân (i₁): <span id="fringeSpacing1" class="text-2xl font-extrabold ml-2">...</span>
-                            mm
-                        </p>
-                    </div>
-                    <div id="results_two_colors" class="hidden p-1">
-                        <p class="text-sm">
-                            Khoảng vân i₁: <span id="fringeSpacing1_two" class="text-lg font-bold ml-1">...</span> mm
-                            (λ₁)
-                        </p>
-                        <p class="text-sm">
-                            Khoảng vân i₂: <span id="fringeSpacing2_two" class="text-lg font-bold ml-1">...</span> mm
-                            (λ₂)
-                        </p>
-                        <p class="text-sm mt-3 border-t border-white/50 pt-2">
-                            Khoảng cách Vân trùng (i_trùng): <span id="lcmFringeSpacing"
-                                class="text-2xl font-extrabold ml-2">...</span> mm
-                        </p>
-                    </div>
-                    <div id="results_white_light" class="hidden p-1">
-                        <p class="text-sm">
-                            Vân trung tâm là vân sáng <span class="font-bold text-white bg-black/30 px-1 rounded">Màu
-                                Trắng</span>.
-                        </p>
-                        <p class="text-sm">
-                            Vân bậc cao là các dải quang phổ, càng xa vân trung tâm sự chồng chập càng lớn.
-                        </p>
-                    </div>
-                    <p class="text-xs mt-3 opacity-80 border-t border-white/50 pt-2">
-                        Công thức cơ bản: $i = \frac{\lambda D}{a}$
-                    </p>
-                </div>
-
-                <!-- Khu vực mô phỏng (Canvas) -->
-                <div class="bg-white dark:bg-slate-800 p-4 rounded-xl container-card shadow-lg flex flex-col flex-grow">
-                    <h2 class="text-2xl font-semibold text-primary mb-3">🌌 Mẫu Hình Giao Thoa</h2>
-                    <div class="simulation-area flex-grow overflow-hidden relative">
-                        <canvas id="interferenceCanvas" class="w-full h-full"></canvas>
-                        <div class="absolute inset-0 flex items-center justify-center pointer-events-none">
-                            <span class="text-white text-opacity-30 text-xs transform -rotate-90">MÀN QUAN SÁT</span>
-                            <span
-                                class="absolute top-1/2 left-1/2 -translate-x-1/2 -translate-y-1/2 bg-black/50 text-white px-2 py-1 rounded-full text-xs">Vân
-                                Trung Tâm (k=0)</span>
-                        </div>
-                    </div>
-                    <p class="text-center text-xs text-gray-500 mt-2">
-                        Mô phỏng trực quan mẫu hình giao thoa trên màn chắn (hiển thị 10 mm vật lý ở trung tâm).
-                    </p>
-                </div>
-            </div>
+    <!-- SIDEBAR -->
+    <aside
+        class="w-72 flex-shrink-0 flex flex-col bg-[#1e293b] border-r border-slate-700 z-20 shadow-xl overflow-hidden">
+        <div class="h-16 flex items-center justify-between px-6 border-b border-slate-700">
+            <h1 class="font-tech font-bold text-xl text-white uppercase tracking-wider">Optics Lab</h1>
+            <a href="index.html"
+                class="p-2 rounded-lg hover:bg-slate-700 text-slate-400 hover:text-white transition-colors">
+                <i data-lucide="home" class="w-5 h-5"></i>
+            </a>
         </div>
-    </div>
 
+        <div class="flex-1 overflow-y-auto p-6 space-y-8 custom-scrollbar">
+
+            <!-- Mode Selection -->
+            <div>
+                <label class="text-xs font-bold text-slate-500 uppercase tracking-widest mb-3 block">Chế độ nguồn
+                    sáng</label>
+                <div class="grid grid-cols-1 gap-2">
+                    <label
+                        class="flex items-center gap-3 p-3 rounded-lg bg-slate-800/50 border border-slate-700 cursor-pointer hover:bg-slate-700 transition">
+                        <input type="radio" name="mode" value="single" checked
+                            class="text-cyan-500 focus:ring-cyan-500">
+                        <span class="text-sm font-medium">Đơn sắc (λ₁)</span>
+                    </label>
+                    <label
+                        class="flex items-center gap-3 p-3 rounded-lg bg-slate-800/50 border border-slate-700 cursor-pointer hover:bg-slate-700 transition">
+                        <input type="radio" name="mode" value="two_colors" class="text-cyan-500 focus:ring-cyan-500">
+                        <span class="text-sm font-medium">Hai màu (λ₁, λ₂)</span>
+                    </label>
+                    <label
+                        class="flex items-center gap-3 p-3 rounded-lg bg-slate-800/50 border border-slate-700 cursor-pointer hover:bg-slate-700 transition">
+                        <input type="radio" name="mode" value="white_light" class="text-cyan-500 focus:ring-cyan-500">
+                        <span class="text-sm font-medium">Ánh sáng trắng</span>
+                    </label>
+                </div>
+            </div>
+
+            <!-- Parameters -->
+            <div class="space-y-6">
+
+                <!-- Lambda 1 -->
+                <div id="group-lambda1">
+                    <div class="flex justify-between text-xs mb-1.5">
+                        <label class="font-medium text-slate-400">Bước sóng λ₁</label>
+                        <span class="font-mono font-bold" id="lambda1Display" style="color: #ef4444">600 nm</span>
+                    </div>
+                    <!-- Gradient slider track? -->
+                    <input type="range" id="lambda1" min="380" max="760" step="1" value="600" class="w-full">
+                </div>
+
+                <!-- Lambda 2 -->
+                <div id="group-lambda2" class="hidden">
+                    <div class="flex justify-between text-xs mb-1.5">
+                        <label class="font-medium text-slate-400">Bước sóng λ₂</label>
+                        <span class="font-mono font-bold" id="lambda2Display" style="color: #3b82f6">450 nm</span>
+                    </div>
+                    <input type="range" id="lambda2" min="380" max="760" step="1" value="450" class="w-full">
+                </div>
+
+                <!-- Geometry -->
+                <div>
+                    <div class="flex justify-between text-xs mb-1.5">
+                        <label class="font-medium text-slate-400">Khoảng cách khe (a)</label>
+                        <span class="font-mono text-white"><span id="aDisplay">0.5</span> mm</span>
+                    </div>
+                    <input type="range" id="aInput" min="0.1" max="2.0" step="0.05" value="0.5" class="w-full">
+                </div>
+
+                <div>
+                    <div class="flex justify-between text-xs mb-1.5">
+                        <label class="font-medium text-slate-400">Khoảng cách màn (D)</label>
+                        <span class="font-mono text-white"><span id="DDisplay">2.0</span> m</span>
+                    </div>
+                    <input type="range" id="DInput" min="0.5" max="5.0" step="0.1" value="2.0" class="w-full">
+                </div>
+            </div>
+
+            <!-- Calculations Results -->
+            <div class="p-4 bg-slate-800/80 border border-slate-700 rounded-lg text-xs font-mono space-y-3">
+                <h3 class="uppercase tracking-widest text-slate-500 font-bold border-b border-slate-700 pb-1 mb-2">Kết
+                    quả tính toán</h3>
+
+                <div id="result-i1" class="flex justify-between">
+                    <span class="text-slate-400">Khoảng vân i₁:</span>
+                    <span id="val-i1" class="font-bold text-white">-- mm</span>
+                </div>
+
+                <div id="result-i2" class="flex justify-between hidden">
+                    <span class="text-slate-400">Khoảng vân i₂:</span>
+                    <span id="val-i2" class="font-bold text-white">-- mm</span>
+                </div>
+
+                <div id="result-coincidence" class="flex justify-between hidden border-t border-slate-700 pt-2">
+                    <span class="text-slate-400">Vân trùng gần nhất:</span>
+                    <span id="val-coincidence" class="font-bold text-white">-- mm</span>
+                </div>
+
+                <div id="result-white" class="hidden text-slate-400 leading-relaxed italic">
+                    Ánh sáng trắng bị tán sắc. Vân trung tâm có màu trắng. Các vân sáng bậc cao có cầu vồng tím ở trong,
+                    đỏ ở ngoài.
+                </div>
+            </div>
+
+        </div>
+    </aside>
+
+    <!-- MAIN -->
+    <main class="flex-1 relative bg-black overflow-hidden flex flex-col justify-center items-center">
+        <!-- Canvas Container -->
+        <canvas id="interferenceCanvas" class="w-full h-full block"></canvas>
+
+        <!-- HUD Overlay for Screen Scale -->
+        <div class="absolute inset-0 pointer-events-none flex items-center justify-center">
+            <!-- Crosshair & Label -->
+            <div class="relative h-full flex flex-col items-center justify-end pb-4">
+                <div
+                    class="absolute inset-y-0 border-l-2 border-red-500 border-dashed shadow-[0_0_5px_rgba(239,68,68,0.8)]">
+                </div>
+                <span
+                    class="text-red-500 font-bold text-xs uppercase tracking-widest bg-black/60 px-2 py-1 rounded backdrop-blur-sm whitespace-nowrap z-10">Vân
+                    trung tâm</span>
+            </div>
+            <div class="h-px w-full bg-white/10 absolute"></div>
+
+            <!-- Scale Ruler Removed -->
+        </div>
+    </main>
+
+    <script src="js/theme.js"></script> <!-- Keep generic theme script just in case, though we force dark mode here -->
     <script>
-        // --- Tham Chiếu DOM & Hằng Số ---
-        const lambda1Input = document.getElementById('lambda1');
-        const lambda2Input = document.getElementById('lambda2');
-        const aInput = document.getElementById('a');
-        const DInput = document.getElementById('D');
-
-        const lambda1ValueSpan = document.getElementById('lambda1Value');
-        const lambda2ValueSpan = document.getElementById('lambda2Value');
-        const aValueSpan = document.getElementById('aValue');
-        const DValueSpan = document.getElementById('DValue');
-
-        const lambda1Group = document.getElementById('lambda1_group');
-        const lambda2Group = document.getElementById('lambda2_group');
-
-        const resultsSingle = document.getElementById('results_single');
-        const resultsTwoColors = document.getElementById('results_two_colors');
-        const resultsWhiteLight = document.getElementById('results_white_light');
-
-        const fringeSpacing1Span = document.getElementById('fringeSpacing1');
-        const fringeSpacing1TwoSpan = document.getElementById('fringeSpacing1_two');
-        const fringeSpacing2TwoSpan = document.getElementById('fringeSpacing2_two');
-        const lcmFringeSpacingSpan = document.getElementById('lcmFringeSpacing');
+        // --- CONSTANTS ---
+        const VISIBLE_MM = 10; // Viewport height covers 10mm physical
 
         const canvas = document.getElementById('interferenceCanvas');
         const ctx = canvas.getContext('2d');
 
-        const VISIBLE_HEIGHT_MM = 10; // Giả sử canvas hiển thị 10 mm vật lý ở trung tâm
-        const WHITE_LIGHT_STEPS = [420, 480, 550, 600, 650, 700]; // Đại diện cho 6 bước sóng chính
+        // Mode Radios
+        const modeRadios = document.getElementsByName('mode');
 
-        let currentMode = 'single';
+        // Inputs
+        const lambda1Input = document.getElementById('lambda1');
+        const lambda2Input = document.getElementById('lambda2');
+        const aInput = document.getElementById('aInput');
+        const DInput = document.getElementById('DInput');
 
-        // --- Hàm Toán Học ---
+        // Groups & Displays
+        const groupLambda1 = document.getElementById('group-lambda1');
+        const groupLambda2 = document.getElementById('group-lambda2');
 
-        // Greatest Common Divisor (Ước chung lớn nhất)
-        function gcd(a, b) {
-            return b ? gcd(b, a % b) : a;
-        }
+        const lambda1Display = document.getElementById('lambda1Display');
+        const lambda2Display = document.getElementById('lambda2Display');
+        const aDisplay = document.getElementById('aDisplay');
+        const DDisplay = document.getElementById('DDisplay');
 
-        // Least Common Multiple (Bội chung nhỏ nhất)
-        function lcm(a, b) {
-            return (a * b) / gcd(a, b);
-        }
+        const resultI1 = document.getElementById('result-i1');
+        const resultI2 = document.getElementById('result-i2');
+        const resultCoin = document.getElementById('result-coincidence');
+        const resultWhite = document.getElementById('result-white');
 
-        // --- Chuyển đổi Bước sóng sang Màu RGB (Dựa trên hàm cũ) ---
-        function wavelengthToColor(wavelength) {
+        const valI1 = document.getElementById('val-i1');
+        const valI2 = document.getElementById('val-i2');
+        const valCoin = document.getElementById('val-coincidence');
+
+        // --- MATH HELPERS ---
+        function wavelengthToRGB(Wavelength) {
             let R, G, B;
-            const gamma = 0.8;
+            const Gamma = 0.8;
+            const IntensityMax = 255;
 
-            if (wavelength >= 380 && wavelength < 440) {
-                R = -(wavelength - 440) / (440 - 380); G = 0.0; B = 1.0;
-            } else if (wavelength >= 440 && wavelength < 490) {
-                R = 0.0; G = (wavelength - 440) / (490 - 440); B = 1.0;
-            } else if (wavelength >= 490 && wavelength < 510) {
-                R = 0.0; G = 1.0; B = -(wavelength - 510) / (510 - 490);
-            } else if (wavelength >= 510 && wavelength < 580) {
-                R = (wavelength - 510) / (580 - 510); G = 1.0; B = 0.0;
-            } else if (wavelength >= 580 && wavelength < 645) {
-                R = 1.0; G = -(wavelength - 645) / (645 - 580); B = 0.0;
-            } else if (wavelength >= 645 && wavelength <= 750) {
+            if (Wavelength >= 380 && Wavelength < 440) {
+                R = -(Wavelength - 440) / (440 - 380); G = 0.0; B = 1.0;
+            } else if (Wavelength >= 440 && Wavelength < 490) {
+                R = 0.0; G = (Wavelength - 440) / (490 - 440); B = 1.0;
+            } else if (Wavelength >= 490 && Wavelength < 510) {
+                R = 0.0; G = 1.0; B = -(Wavelength - 510) / (510 - 490);
+            } else if (Wavelength >= 510 && Wavelength < 580) {
+                R = (Wavelength - 510) / (580 - 510); G = 1.0; B = 0.0;
+            } else if (Wavelength >= 580 && Wavelength < 645) {
+                R = 1.0; G = -(Wavelength - 645) / (645 - 580); B = 0.0;
+            } else if (Wavelength >= 645 && Wavelength <= 780) {
                 R = 1.0; G = 0.0; B = 0.0;
             } else {
                 R = 0.0; G = 0.0; B = 0.0;
             }
 
-            let S = 1.0;
-            if (wavelength > 700) S = 0.3 + 0.7 * (750 - wavelength) / (750 - 700);
-            else if (wavelength < 420) S = 0.3 + 0.7 * (wavelength - 380) / (420 - 380);
+            // Falloff
+            let factor = 0;
+            if (Wavelength >= 380 && Wavelength < 420) factor = 0.3 + 0.7 * (Wavelength - 380) / (420 - 380);
+            else if (Wavelength >= 420 && Wavelength < 700) factor = 1.0;
+            else if (Wavelength >= 700 && Wavelength <= 780) factor = 0.3 + 0.7 * (780 - Wavelength) / (780 - 700);
+            else factor = 0.0;
 
-            R = Math.pow(R * S, gamma) * 255;
-            G = Math.pow(G * S, gamma) * 255;
-            B = Math.pow(B * S, gamma) * 255;
-
-            return { r: Math.round(R), g: Math.round(G), b: Math.round(B) };
+            const r = Math.round(IntensityMax * Math.pow(R * factor, Gamma));
+            const g = Math.round(IntensityMax * Math.pow(G * factor, Gamma));
+            const b = Math.round(IntensityMax * Math.pow(B * factor, Gamma));
+            return { r, g, b, css: `rgb(${r},${g},${b})` };
         }
 
-        // --- Hàm Tính Khoảng Vân ---
-        function calculateFringeSpacing(lambda_nm, D_m, a_mm) {
-            // i (mm) = (lambda (nm) / 1000) * D (m) / a (mm)
-            return (lambda_nm / 1000) * D_m / a_mm;
+        function calculateI(lambdaNm, aMm, DM) {
+            // i (mm) = lambda(m) * D(m) / a(m) 
+            // = (lambdaNm * 1e-9) * DM / (aMm * 1e-3)
+            // = lambdaNm * DM / aMm * 1e-6 * 1e3 (gives result in meters) ??
+            // i(mm) = lambda(nm) * D(m) / a(mm) / 1000 ? No.
+            // i = lambdaD/a. 
+            // lambda=600nm = 0.6um = 0.0006mm.
+            // i(mm) = 0.0006 * D(m) / a(mm) * 1000 ?? No.
+            // i (mm) = lambda (mm) * D (mm) / a (mm).
+            // lambda (mm) = lambdaNm * 1e-6.
+            // D (mm) = DM * 1000.
+            // i = (lambdaNm * 1e-6) * (DM * 1000) / aMm = lambdaNm * DM / aMm / 1000.
+            return (lambdaNm * DM) / (aMm * 1000);
         }
 
-        // --- Cập nhật UI theo chế độ ---
-        function updateMode() {
-            currentMode = document.querySelector('input[name="mode"]:checked').value;
+        function gcd(a, b) { return b === 0 ? a : gcd(b, a % b); }
+        function lcm(a, b) { return (a * b) / gcd(a, b); }
 
-            // Ẩn/Hiện inputs λ₂
-            if (currentMode === 'two_colors') {
-                lambda2Group.classList.remove('hidden');
+        // --- MAIN LOGIC ---
+        function update() {
+            // Read Mode
+            let mode = 'single';
+            for (const r of modeRadios) if (r.checked) mode = r.value;
+
+            // Read Inputs
+            const lambda1 = parseInt(lambda1Input.value);
+            const lambda2 = parseInt(lambda2Input.value);
+            const a = parseFloat(aInput.value);
+            const D = parseFloat(DInput.value);
+
+            // Update UI Labels
+            lambda1Display.textContent = lambda1 + " nm";
+            lambda1Display.style.color = wavelengthToRGB(lambda1).css;
+            lambda2Display.textContent = lambda2 + " nm";
+            lambda2Display.style.color = wavelengthToRGB(lambda2).css;
+            aDisplay.textContent = a.toFixed(2);
+            DDisplay.textContent = D.toFixed(1);
+
+            // Visibility
+            if (mode === 'single') {
+                groupLambda2.classList.add('hidden');
+                resultI2.classList.add('hidden');
+                resultCoin.classList.add('hidden');
+                resultWhite.classList.add('hidden');
+                resultI1.classList.remove('hidden');
+            } else if (mode === 'two_colors') {
+                groupLambda2.classList.remove('hidden');
+                resultI2.classList.remove('hidden');
+                resultCoin.classList.remove('hidden');
+                resultWhite.classList.add('hidden');
+                resultI1.classList.remove('hidden');
             } else {
-                lambda2Group.classList.add('hidden');
+                groupLambda1.classList.add('hidden');
+                groupLambda2.classList.add('hidden');
+                resultI1.classList.add('hidden');
+                resultI2.classList.add('hidden');
+                resultCoin.classList.add('hidden');
+                resultWhite.classList.remove('hidden');
             }
 
-            // Ẩn/Hiện khu vực kết quả
-            resultsSingle.classList.toggle('hidden', currentMode !== 'single');
-            resultsTwoColors.classList.toggle('hidden', currentMode !== 'two_colors');
-            resultsWhiteLight.classList.toggle('hidden', currentMode !== 'white_light');
+            // Calculate Results
+            const i1 = calculateI(lambda1, a, D);
+            valI1.textContent = i1.toFixed(3) + " mm";
+            valI1.style.color = wavelengthToRGB(lambda1).css;
 
-            updateInputs();
+            if (mode === 'two_colors') {
+                const i2 = calculateI(lambda2, a, D);
+                valI2.textContent = i2.toFixed(3) + " mm";
+                valI2.style.color = wavelengthToRGB(lambda2).css;
+
+                // Coincidence
+                // i_co = LCM(i1, i2). 
+                // Approx by int ratio of lambda
+                const l1 = Math.round(lambda1 / 5); // simplify
+                const l2 = Math.round(lambda2 / 5);
+                const LCM = lcm(l1, l2);
+                const i_co = i1 * (LCM / l1);
+                valCoin.textContent = i_co.toFixed(2) + " mm";
+            }
+
+            // Draw
+            draw(mode, lambda1, lambda2, a, D, i1);
         }
 
-        // --- Tính toán và Mô phỏng (Hàm chính) ---
-        function updateInputs() {
-            // Cập nhật giá trị hiển thị bên cạnh slider
-            lambda1ValueSpan.textContent = lambda1Input.value;
-            aValueSpan.textContent = aInput.value;
-            DValueSpan.textContent = DInput.value;
-            if (currentMode === 'two_colors') {
-                lambda2ValueSpan.textContent = lambda2Input.value;
-            }
+        function draw(mode, l1, l2, a, D, i1) {
+            canvas.width = canvas.parentElement.clientWidth;
+            canvas.height = canvas.parentElement.clientHeight;
 
-            // Lấy giá trị cố định
-            const a_mm = parseFloat(aInput.value);
-            const D_m = parseFloat(DInput.value);
+            const w = canvas.width;
+            const h = canvas.height;
+            const cx = w / 2;
 
-            // Tính toán khoảng vân dựa trên chế độ
-            let i1_mm, i2_mm;
+            // Background
+            ctx.fillStyle = '#000000';
+            ctx.fillRect(0, 0, w, h);
 
-            if (currentMode === 'single' || currentMode === 'two_colors') {
-                const lambda1_nm = parseFloat(lambda1Input.value);
-                i1_mm = calculateFringeSpacing(lambda1_nm, D_m, a_mm);
+            // Scale: Total WIDTH is equivalent to VISIBLE_MM (10mm)
+            const ppm = w / VISIBLE_MM;
 
-                // Cập nhật kết quả đơn sắc
-                fringeSpacing1Span.textContent = i1_mm.toFixed(3);
-                fringeSpacing1Span.style.color = `rgb(${wavelengthToColor(lambda1_nm).r}, ${wavelengthToColor(lambda1_nm).g}, ${wavelengthToColor(lambda1_nm).b})`;
+            const imgData = ctx.createImageData(w, h);
+            const data = imgData.data;
 
-                if (currentMode === 'two_colors') {
-                    const lambda2_nm = parseFloat(lambda2Input.value);
-                    i2_mm = calculateFringeSpacing(lambda2_nm, D_m, a_mm);
+            // For white light, we sum multiple wavelengths
+            const whiteSteps = mode === 'white_light' ? [
+                380, 420, 460, 500, 540, 580, 620, 660, 700, 740
+            ] : [];
 
-                    // Cập nhật kết quả hai màu
-                    fringeSpacing1TwoSpan.textContent = i1_mm.toFixed(3);
-                    fringeSpacing2TwoSpan.textContent = i2_mm.toFixed(3);
-                    fringeSpacing1TwoSpan.style.color = `rgb(${wavelengthToColor(lambda1_nm).r}, ${wavelengthToColor(lambda1_nm).g}, ${wavelengthToColor(lambda1_nm).b})`;
-                    fringeSpacing2TwoSpan.style.color = `rgb(${wavelengthToColor(lambda2_nm).r}, ${wavelengthToColor(lambda2_nm).g}, ${wavelengthToColor(lambda2_nm).b})`;
+            // Precalculate colors for white steps
+            const whiteColors = whiteSteps.map(l => wavelengthToRGB(l));
+            const whiteIs = whiteSteps.map(l => calculateI(l, a, D));
 
-                    // Tính khoảng vân trùng (i_trùng)
-                    // Ta có k1*i1 = k2*i2 => k1/k2 = i2/i1
-                    // i_trùng = Bội chung nhỏ nhất của i1 và i2. Do i là số thực, ta phải làm việc với tỉ số nguyên.
-                    // Lấy tỉ số bước sóng: lambda1 / lambda2 = m/n (phân số tối giản)
-                    // Vân trùng: x = k * i_trùng = k * m * i2 = k * n * i1
+            const c1 = wavelengthToRGB(l1);
+            const c2 = wavelengthToRGB(l2);
+            const i2 = calculateI(l2, a, D);
 
-                    // Sử dụng bội chung nhỏ nhất của bước sóng để tính i_trùng
-                    const lambda1_int = Math.round(lambda1_nm / 5); // Đưa về số nguyên gần nhất (chia cho 5 để giảm độ lớn)
-                    const lambda2_int = Math.round(lambda2_nm / 5);
-                    const i_trung_lcm = lcm(lambda1_int, lambda2_int);
+            // Optimization: Compute 1 ROW of colors, then copy to all rows
+            // Since fringes are vertical, color depends only on X.
 
-                    // i_trùng thực tế: i_trùng = i1 * (i_trung_lcm / lambda1_int)
-                    const i_trung_mm = i1_mm * (i_trung_lcm / lambda1_int);
+            // 1. Calculate one row of colors
+            const rowColors = new Uint8ClampedArray(w * 4);
 
-                    lcmFringeSpacingSpan.textContent = isFinite(i_trung_mm) ? i_trung_mm.toFixed(3) : "Không xác định";
-                    lcmFringeSpacingSpan.style.color = 'white'; // Vân trùng luôn là trắng (tổng hợp)
-                }
-            }
+            for (let x = 0; x < w; x++) {
+                // Physical X from center (mm)
+                const x_mm = (x - cx) / ppm;
 
-            // CHỖ SỬA LỖI: Truyền a_mm và D_m vào drawPattern
-            drawPattern(currentMode, i1_mm, i2_mm, a_mm, D_m);
-        }
+                let r = 0, g = 0, b = 0;
 
-        // --- Hàm Vẽ Mẫu Hình Giao Thoa ---
-        // CHỖ SỬA LỖI: Định nghĩa hàm nhận a_mm và D_m
-        function drawPattern(mode, i1_mm, i2_mm, a_mm, D_m) {
-            // Cập nhật kích thước canvas
-            const container = canvas.parentElement;
-            canvas.width = container.clientWidth;
-            canvas.height = container.clientHeight;
-
-            const W = canvas.width;
-            const H = canvas.height;
-            const centerY = H / 2;
-
-            // Xóa canvas
-            ctx.fillStyle = '#0f172a'; // Nền tối
-            ctx.fillRect(0, 0, W, H);
-
-            // Tỉ lệ (Scale factor: mm -> pixel)
-            const scale = H / VISIBLE_HEIGHT_MM;
-
-            // Lấy giá trị đầu vào
-            const lambda1_nm = parseFloat(lambda1Input.value);
-            const lambda2_nm = parseFloat(lambda2Input.value);
-
-            // Duyệt qua từng hàng pixel (tọa độ y) trên canvas
-            for (let y = 0; y < H; y++) {
-                // y_from_center_mm: Khoảng cách vật lý (mm) từ vân trung tâm (y=centerY)
-                const y_from_center_mm = (y - centerY) / scale;
-
-                let totalR = 0;
-                let totalG = 0;
-                let totalB = 0;
-                let totalIntensity = 0;
-
-                // --- 1. Chế độ Ánh sáng Đơn sắc ---
                 if (mode === 'single') {
-                    const color = wavelengthToColor(lambda1_nm);
-
-                    // k_prime: Tọa độ theo khoảng vân (y/i)
-                    const k_prime = y_from_center_mm / i1_mm;
-
-                    // Tính cường độ theo công thức Cos^2 (I = I_max * cos^2(pi * k_prime))
-                    const phase = Math.PI * k_prime;
-                    const intensity = Math.pow(Math.cos(phase), 2);
-
-                    totalR = color.r * intensity;
-                    totalG = color.g * intensity;
-                    totalB = color.b * intensity;
-                    totalIntensity = intensity;
-
+                    // Phase = 2pi * x / i
+                    const intensity = Math.cos(Math.PI * x_mm / i1) ** 2;
+                    r = c1.r * intensity;
+                    g = c1.g * intensity;
+                    b = c1.b * intensity;
                 }
-                // --- 2. Chế độ Hai Ánh sáng Đơn sắc ---
                 else if (mode === 'two_colors') {
-                    const color1 = wavelengthToColor(lambda1_nm);
-                    const color2 = wavelengthToColor(lambda2_nm);
+                    const int1 = Math.cos(Math.PI * x_mm / i1) ** 2;
+                    const int2 = Math.cos(Math.PI * x_mm / i2) ** 2;
 
-                    // Cường độ I₁
-                    const k_prime1 = y_from_center_mm / i1_mm;
-                    const phase1 = Math.PI * k_prime1;
-                    const intensity1 = Math.pow(Math.cos(phase1), 2);
-
-                    // Cường độ I₂
-                    const k_prime2 = y_from_center_mm / i2_mm;
-                    const phase2 = Math.PI * k_prime2;
-                    const intensity2 = Math.pow(Math.cos(phase2), 2);
-
-                    // Tổng cường độ (Additive combination)
-                    totalR = color1.r * intensity1 + color2.r * intensity2;
-                    totalG = color1.g * intensity1 + color2.g * intensity2;
-                    totalB = color1.b * intensity1 + color2.b * intensity2;
-                    totalIntensity = intensity1 + intensity2;
+                    r = c1.r * int1 + c2.r * int2;
+                    g = c1.g * int1 + c2.g * int2;
+                    b = c1.b * int1 + c2.b * int2;
                 }
-                // --- 3. Chế độ Ánh sáng Trắng ---
                 else if (mode === 'white_light') {
-                    // Tính tổng đóng góp của một số bước sóng đại diện
-                    WHITE_LIGHT_STEPS.forEach(lambda_step => {
-                        // SỬ DỤNG D_m và a_mm đã được truyền vào
-                        const i_step_mm = calculateFringeSpacing(lambda_step, D_m, a_mm);
-                        const color_step = wavelengthToColor(lambda_step);
-
-                        const k_prime_step = y_from_center_mm / i_step_mm;
-                        const phase_step = Math.PI * k_prime_step;
-                        const intensity_step = Math.pow(Math.cos(phase_step), 2);
-
-                        totalR += color_step.r * intensity_step;
-                        totalG += color_step.g * intensity_step;
-                        totalB += color_step.b * intensity_step;
-                        totalIntensity += intensity_step;
-                    });
+                    let tr = 0, tg = 0, tb = 0;
+                    for (let k = 0; k < whiteSteps.length; k++) {
+                        const i_wav = whiteIs[k];
+                        const int = Math.cos(Math.PI * x_mm / i_wav) ** 2;
+                        tr += whiteColors[k].r * int;
+                        tg += whiteColors[k].g * int;
+                        tb += whiteColors[k].b * int;
+                    }
+                    r = tr / 3; g = tg / 3; b = tb / 3;
                 }
 
-                // Chuẩn hóa và vẽ màu
-                if (totalIntensity > 0) {
-                    // Chuẩn hóa cường độ theo số lượng nguồn hoặc bước sóng đại diện (cho màu sắc chính xác)
-                    let normalizer = (mode === 'single') ? 255 : (mode === 'two_colors' ? 510 : (WHITE_LIGHT_STEPS.length * 255));
+                r = Math.min(255, r); g = Math.min(255, g); b = Math.min(255, b);
 
-                    let finalR = Math.min(255, totalR * 255 / normalizer);
-                    let finalG = Math.min(255, totalG * 255 / normalizer);
-                    let finalB = Math.min(255, totalB * 255 / normalizer);
-
-                    ctx.fillStyle = `rgb(${Math.round(finalR)}, ${Math.round(finalG)}, ${Math.round(finalB)})`;
-                } else {
-                    ctx.fillStyle = '#0f172a'; // Vân tối tuyệt đối
-                }
-
-                ctx.globalAlpha = 1.0;
-                ctx.fillRect(0, y, W, 1); // Vẽ một hàng pixel
+                rowColors[x * 4] = r;
+                rowColors[x * 4 + 1] = g;
+                rowColors[x * 4 + 2] = b;
+                rowColors[x * 4 + 3] = 255; // Alpha
             }
+
+            // 2. Copy to all rows
+            for (let y = 0; y < h; y++) {
+                data.set(rowColors, y * w * 4);
+            }
+
+            ctx.putImageData(imgData, 0, 0);
         }
 
-        // Đảm bảo canvas được vẽ lại khi cửa sổ trình duyệt thay đổi kích thước
-        window.addEventListener('resize', updateInputs);
+        // Init
+        lambda1Input.oninput = update;
+        lambda2Input.oninput = update;
+        aInput.oninput = update;
+        DInput.oninput = update;
+        for (const r of modeRadios) r.onchange = update;
+        window.addEventListener('resize', update);
 
-        // Khởi tạo ứng dụng khi tải trang
-        window.onload = function () {
-            // Đặt kích thước ban đầu cho canvas
-            const container = canvas.parentElement;
-            canvas.width = container.clientWidth;
-            canvas.height = container.clientHeight;
-
-            // Khởi tạo chế độ và chạy lần đầu tiên
-            updateMode();
-        };
-
+        update();
     </script>
-
-    <script src="js/theme.js"></script>
 </body>
 
 </html>

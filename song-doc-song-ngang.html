@@ -4,467 +4,333 @@
 <head>
     <meta charset="UTF-8">
     <meta name="viewport" content="width=device-width, initial-scale=1.0">
-    <title>Mô Phỏng Sóng Cơ Học Tương Tác</title>
-    <!-- Tải Tailwind CSS để tạo kiểu dáng hiện đại và đáp ứng (responsive) -->
+    <title>Sóng Dọc & Sóng Ngang</title>
     <script src="https://cdn.tailwindcss.com"></script>
     <script src="js/tailwind-config.js"></script>
     <script src="https://unpkg.com/lucide@latest"></script>
-    <link rel="stylesheet" href="css/global.css">
-    <!-- Tải thư viện P5.js để vẽ đồ họa mô phỏng -->
     <script src="https://cdnjs.cloudflare.com/ajax/libs/p5.js/1.9.3/p5.js"></script>
+    <link
+        href="https://fonts.googleapis.com/css2?family=Inter:wght@400;500;600;700&family=Rajdhani:wght@500;600;700&display=swap"
+        rel="stylesheet">
+    <link rel="stylesheet" href="css/global.css">
     <style>
-        /* Thiết lập font Inter */
         body {
             font-family: 'Inter', sans-serif;
-            background-color: #f7f7f9;
         }
 
-        /* Đảm bảo canvas được hiển thị đúng cách */
-        #wave-container {
-            display: flex;
-            justify-content: center;
-            align-items: center;
+        .font-tech {
+            font-family: 'Rajdhani', sans-serif;
+        }
+
+        input[type=range] {
+            -webkit-appearance: none;
+            background: transparent;
+        }
+
+        input[type=range]::-webkit-slider-thumb {
+            -webkit-appearance: none;
+            height: 16px;
+            width: 16px;
+            border-radius: 50%;
+            background: #06b6d4;
+            margin-top: -6px;
+            cursor: pointer;
+            box-shadow: 0 0 0 2px rgba(255, 255, 255, 0.5);
+        }
+
+        input[type=range]::-webkit-slider-runnable-track {
             width: 100%;
-            height: 400px;
-
-            #wave-container {
-                display: flex;
-                justify-content: center;
-                align-items: center;
-                width: 100%;
-                height: 400px;
-                /* background-color handled by P5.js logic */
-                border-radius: 0.75rem;
-                /* rounded-xl */
-                border: 1px solid #e5e7eb;
-                /* gray-200 */
-            }
-
-            .dark #wave-container {
-                border-color: #334155;
-                /* slate-700 */
-            }
-
-            box-shadow: 0 4px 6px -1px rgba(0, 0, 0, 0.1),
-            0 2px 4px -2px rgba(0, 0, 0, 0.1);
-            overflow: hidden;
+            height: 4px;
+            cursor: pointer;
+            background: #cbd5e1;
+            border-radius: 2px;
         }
 
-        /* CSS để làm nổi bật mô tả chuyển động bên ngoài Canvas, thay vì vẽ lên Canvas */
-        #description-panel {
-            min-height: 80px;
-            /* Tăng chiều cao để chứa mô tả chi tiết */
-            background-color: #e5f1ff;
-            border-left: 4px solid #3b82f6;
-            padding: 1rem;
-            margin-top: 1rem;
-            border-radius: 0.5rem;
+        .dark input[type=range]::-webkit-slider-runnable-track {
+            background: #475569;
         }
 
-        .dark #description-panel {
-            background-color: #1e293b;
-            border-color: #60a5fa;
-            color: #e2e8f0;
+        .hud-panel {
+            background: rgba(255, 255, 255, 0.9);
+            backdrop-filter: blur(8px);
+            border: 1px solid rgba(255, 255, 255, 0.2);
+            box-shadow: 0 4px 6px -1px rgba(0, 0, 0, 0.1);
+        }
+
+        .dark .hud-panel {
+            background: rgba(15, 23, 42, 0.85);
+            border: 1px solid rgba(255, 255, 255, 0.05);
         }
     </style>
 </head>
-</head>
 
-<body class="bg-gray-50 dark:bg-lab-dark_bg transition-colors duration-300">
-    <a href="index.html"
-        class="fixed top-4 left-4 z-50 p-3 bg-blue-600 text-white rounded-lg shadow-xl hover:bg-blue-700 transition duration-300 flex items-center space-x-2">
-        <svg xmlns="http://www.w3.org/2000/svg" class="h-5 w-5" viewBox="0 0 20 20" fill="currentColor">
-            <path
-                d="M10.707 2.293a1 1 0 00-1.414 0l-7 7a1 1 0 001.414 1.414L4 10.414V17a1 1 0 001 1h2a1 1 0 001-1v-2a1 1 0 011-1h2a1 1 0 011 1v2a1 1 0 001 1h2a1 1 0 001-1v-6.586l.293.293a1 1 0 001.414-1.414l-7-7z" />
-        </svg>
-        <span class="font-semibold hidden sm:inline">Quay về Trang Chủ</span>
-    </a>
+<body
+    class="h-screen flex overflow-hidden bg-slate-50 dark:bg-[#0f172a] text-slate-700 dark:text-slate-300 transition-colors duration-300">
 
-    <!-- Dark Mode Toggle -->
-    <button onclick="toggleDarkMode()"
-        class="fixed top-4 right-4 z-50 p-3 bg-white/80 dark:bg-slate-800/80 backdrop-blur-md text-slate-700 dark:text-slate-200 rounded-full shadow-lg border border-slate-200 dark:border-slate-700 hover:bg-slate-100 dark:hover:bg-slate-700 transition-all duration-300 group">
-        <i id="theme-icon" data-lucide="moon" class="w-5 h-5 group-hover:rotate-12 transition-transform"></i>
-    </button>
-
-    <div class="container mx-auto p-4 md:p-8 max-w-4xl">
-        <h1 class="text-3xl font-bold text-center text-blue-800 dark:text-blue-400 mb-6">Mô Phỏng Sóng Cơ Học</h1>
-
-        <!-- Vùng hiển thị Canvas P5.js -->
-        <div id="wave-container" class="mb-8">
-            <!-- Canvas sẽ được chèn vào đây bởi P5.js -->
+    <!-- SIDEBAR -->
+    <aside
+        class="w-72 flex-shrink-0 flex flex-col bg-white dark:bg-[#1e293b] border-r border-slate-200 dark:border-slate-800 z-20 shadow-lg">
+        <div class="h-16 flex items-center justify-between px-6 border-b border-slate-100 dark:border-slate-700/50">
+            <h1 class="font-tech font-bold text-xl text-slate-800 dark:text-white uppercase tracking-wider">Control
+                Panel</h1>
+            <a href="index.html"
+                class="p-2 rounded-lg hover:bg-slate-100 dark:hover:bg-slate-700 text-slate-400 hover:text-cyan-500 transition-colors">
+                <i data-lucide="home" class="w-5 h-5"></i>
+            </a>
         </div>
 
-        <!-- Khối Mô Tả Chuyển Động (Được di chuyển ra ngoài Canvas) -->
-        <div id="description-panel" class="mb-4">
-            <p id="wave-description" class="text-gray-700 dark:text-gray-300 font-medium"></p>
-        </div>
+        <div class="flex-1 overflow-y-auto p-6 space-y-8 custom-scrollbar">
 
-        <!-- Khối Điều khiển -->
-        <div
-            class="bg-white dark:bg-lab-dark_panel p-6 rounded-xl shadow-lg border border-gray-100 dark:border-slate-700">
-            <h2 class="text-xl font-semibold mb-4 text-gray-700 dark:text-gray-200">Điều Chỉnh Tham Số Sóng</h2>
-
-            <!-- Thanh trượt Biên độ (A) -->
-            <div class="mb-4">
-                <label for="amplitude-slider" class="block text-sm font-medium text-gray-600 dark:text-gray-400 mb-2">
-                    Biên độ (A): <span id="amplitude-value"
-                        class="font-bold text-lg text-red-600 dark:text-red-400">50</span> mm
-                </label>
-                <input type="range" id="amplitude-slider" min="10" max="150" value="50" step="1"
-                    class="w-full h-2 bg-red-100 rounded-lg appearance-none cursor-pointer range-lg">
-            </div>
-
-            <!-- Thanh trượt Tần số (f / Hz) -->
-            <div class="mb-6">
-                <label for="frequency-slider" class="block text-sm font-medium text-gray-600 dark:text-gray-400 mb-2">
-                    Tần số (f): <span id="frequency-value"
-                        class="font-bold text-lg text-green-600 dark:text-green-400">1.0</span> Hz
-                </label>
-                <input type="range" id="frequency-slider" min="0.1" max="10.0" value="1.0" step="0.1"
-                    class="w-full h-2 bg-green-100 rounded-lg appearance-none cursor-pointer range-lg">
-            </div>
-
-            <!-- Chọn Loại Sóng -->
-            <div
-                class="flex flex-col md:flex-row md:justify-between items-center bg-blue-50 dark:bg-slate-700 p-3 rounded-lg">
-                <label class="text-lg font-medium text-blue-700 dark:text-blue-300 mr-4">Chọn Loại Sóng:</label>
-                <div class="flex space-x-4 mt-2 md:mt-0">
-                    <button id="transverse-btn"
-                        class="wave-btn bg-blue-500 hover:bg-blue-600 text-white font-semibold py-2 px-4 rounded-lg shadow-md transition duration-300">
+            <!-- Wave Type -->
+            <div>
+                <label
+                    class="text-xs font-bold text-slate-400 dark:text-slate-500 uppercase tracking-widest mb-3 block">Loại
+                    Sóng</label>
+                <div class="grid grid-cols-2 gap-2 bg-slate-100 dark:bg-slate-800 p-1 rounded-lg">
+                    <button id="btnTransverse"
+                        class="px-3 py-2 rounded-md text-sm font-semibold transition-all shadow-sm bg-white dark:bg-slate-700 text-cyan-600 dark:text-cyan-400 ring-1 ring-black/5 dark:ring-white/10">
                         Sóng Ngang
                     </button>
-                    <button id="longitudinal-btn"
-                        class="wave-btn bg-gray-400 hover:bg-gray-500 text-white font-semibold py-2 px-4 rounded-lg shadow-md transition duration-300">
+                    <button id="btnLongitudinal"
+                        class="px-3 py-2 rounded-md text-sm font-medium text-slate-500 dark:text-slate-400 hover:text-slate-700 dark:hover:text-slate-200 hover:bg-slate-50 dark:hover:bg-slate-750 transition-all">
                         Sóng Dọc
                     </button>
                 </div>
             </div>
+
+            <!-- Parameters -->
+            <div class="space-y-6">
+                <div>
+                    <div class="flex justify-between text-xs mb-1.5">
+                        <label class="font-medium text-slate-600 dark:text-slate-300">Biên độ (A)</label>
+                        <span class="font-mono text-cyan-600 dark:text-cyan-400"><span id="ampDisplay">50</span>
+                            mm</span>
+                    </div>
+                    <input type="range" id="ampSlider" min="10" max="150" value="50" step="1" class="w-full">
+                </div>
+
+                <div>
+                    <div class="flex justify-between text-xs mb-1.5">
+                        <label class="font-medium text-slate-600 dark:text-slate-300">Tần số (f)</label>
+                        <span class="font-mono text-cyan-600 dark:text-cyan-400"><span id="freqDisplay">1.0</span>
+                            Hz</span>
+                    </div>
+                    <input type="range" id="freqSlider" min="0.1" max="5.0" value="1.0" step="0.1" class="w-full">
+                </div>
+            </div>
+
+            <!-- Description Box -->
+            <div id="descPanel"
+                class="p-4 bg-slate-100 dark:bg-slate-800/50 rounded-lg text-xs leading-relaxed text-slate-600 dark:text-slate-400 border border-slate-200 dark:border-slate-700">
+                <!-- Content injected via JS -->
+            </div>
+
         </div>
 
-    </div>
+        <!-- Footer -->
+        <div class="p-4 border-t border-slate-200 dark:border-slate-800 bg-slate-50 dark:bg-slate-900/50">
+            <button onclick="toggleDarkMode()"
+                class="w-full flex items-center justify-center gap-2 py-2 rounded-lg text-slate-500 hover:bg-slate-200 dark:hover:bg-slate-800 transition">
+                <i id="theme-icon" data-lucide="moon" class="w-4 h-4"></i>
+                <span class="text-xs font-medium uppercase">Toggle Theme</span>
+            </button>
+        </div>
+    </aside>
 
-    <!-- JavaScript Logic -->
+    <!-- MAIN -->
+    <main class="flex-1 relative bg-white dark:bg-[#0f172a] overflow-hidden flex flex-col">
+        <div id="p5-container" class="flex-1 relative overflow-hidden">
+            <!-- P5 Canvas will correspond here -->
+
+            <!-- HUD -->
+            <div class="absolute top-4 right-4 hud-panel rounded-xl p-3 shadow-xl z-10 backdrop-blur-md min-w-[150px]">
+                <div
+                    class="text-xs font-bold text-slate-500 dark:text-slate-400 uppercase tracking-wider mb-2 border-b border-slate-200 dark:border-slate-700 pb-1">
+                    Trạng thái</div>
+                <div class="space-y-1 font-mono text-xs">
+                    <div class="flex justify-between items-center text-cyan-600 dark:text-cyan-400">
+                        <span>Type:</span>
+                        <span id="hudType" class="font-bold">Ngang</span>
+                    </div>
+                </div>
+            </div>
+        </div>
+    </main>
+
+    <script src="js/theme.js"></script>
     <script>
-        // Khai báo các biến toàn cục
-        let amplitudeSlider, frequencySlider;
-        let amplitudeValueDisplay, frequencyValueDisplay;
-        let waveType = 'transverse'; // Mặc định là sóng ngang
-        let waveButtons = {};
-        let waveDescriptionPanel; // Panel mô tả mới
-
-        // Các vị trí X cố định để vẽ 5 chất điểm quan sát trên sóng ngang
-        // Chọn 5 điểm cách đều nhau để thể hiện các pha khác nhau
+        // --- GLOBAL State ---
+        let waveType = 'transverse';
+        let angle = 0;
+        const particleCount = 60;
         const keyPointPositions = [0.1, 0.3, 0.5, 0.7, 0.9];
-        // Các chỉ số để chọn 5 hạt trong mô phỏng sóng dọc (từ 60 hạt)
         const highlightIndices = [5, 15, 30, 45, 55];
 
-        // -------------------------------------------------------------------
-        // Các biến P5.js
-        // -------------------------------------------------------------------
-        let canvasWidth = 800;
-        let canvasHeight = 400;
-        let angle = 0; // Biến pha để tạo chuyển động sóng
-        const particleCount = 60; // Số lượng "hạt" mô phỏng sóng dọc
+        // UI Refs
+        const ampSlider = document.getElementById('ampSlider');
+        const freqSlider = document.getElementById('freqSlider');
+        const ampDisplay = document.getElementById('ampDisplay');
+        const freqDisplay = document.getElementById('freqDisplay');
+        const descPanel = document.getElementById('descPanel');
+        const hudType = document.getElementById('hudType');
 
-        /**
-         * Hàm setup() của P5.js: Khởi tạo
-         */
-        function setup() {
-            // Tạo Canvas và đặt nó vào div 'wave-container'
-            const canvas = createCanvas(canvasWidth, canvasHeight);
-            canvas.parent('wave-container');
+        const btnTransverse = document.getElementById('btnTransverse');
+        const btnLongitudinal = document.getElementById('btnLongitudinal');
 
-            // Lấy các phần tử HTML
-            amplitudeSlider = document.getElementById('amplitude-slider');
-            frequencySlider = document.getElementById('frequency-slider');
-            amplitudeValueDisplay = document.getElementById('amplitude-value');
-            frequencyValueDisplay = document.getElementById('frequency-value');
-            waveDescriptionPanel = document.getElementById('wave-description');
+        // Styles
+        const activeClass = "px-3 py-2 rounded-md text-sm font-semibold transition-all shadow-sm bg-white dark:bg-slate-700 text-cyan-600 dark:text-cyan-400 ring-1 ring-black/5 dark:ring-white/10";
+        const inactiveClass = "px-3 py-2 rounded-md text-sm font-medium text-slate-500 dark:text-slate-400 hover:text-slate-700 dark:hover:text-slate-200 hover:bg-slate-50 dark:hover:bg-slate-750 transition-all";
 
-            // Nút bấm
-            waveButtons.transverse = document.getElementById('transverse-btn');
-            waveButtons.longitudinal = document.getElementById('longitudinal-btn');
+        function updateUI() {
+            ampDisplay.innerText = ampSlider.value;
+            freqDisplay.innerText = parseFloat(freqSlider.value).toFixed(1);
+            hudType.innerText = waveType === 'transverse' ? 'Ngang' : 'Dọc';
 
-            // Gán sự kiện cho các nút
-            waveButtons.transverse.onclick = () => setWaveType('transverse');
-            waveButtons.longitudinal.onclick = () => setWaveType('longitudinal');
-
-            // Cập nhật giá trị khi thanh trượt thay đổi
-            amplitudeSlider.oninput = updateDisplay;
-            frequencySlider.oninput = updateDisplay;
-
-            // Thiết lập trạng thái ban đầu
-            updateDisplay();
-            updateButtonStyles();
-
-            // Đảm bảo canvas responsive (dù P5.js đã xử lý phần nào)
-            window.addEventListener('resize', resizeCanvasOnScreen);
-            resizeCanvasOnScreen();
-        }
-
-        /**
-         * Điều chỉnh kích thước Canvas để phù hợp với kích thước màn hình
-         */
-        function resizeCanvasOnScreen() {
-            const container = document.getElementById('wave-container');
-            canvasWidth = container.clientWidth;
-            canvasHeight = 400;
-            resizeCanvas(canvasWidth, canvasHeight);
-        }
-
-        /**
-         * Hàm draw() của P5.js: Vẽ lặp lại (Game Loop)
-         */
-        function draw() {
-            // Lấy giá trị hiện tại
-            const A = parseFloat(amplitudeSlider.value); // Biên độ (mm)
-            const f = parseFloat(frequencySlider.value); // Tần số (Hz)
-
-            // Xóa nền (Adaptive)
-            if (document.documentElement.classList.contains('dark')) {
-                background(15, 23, 42); // Slate-900
-            } else {
-                background(255);
-            }
-
-            // Cập nhật pha (thời gian) dựa trên Tần số (f)
-            angle += f * 0.05;
-
-            // Vẽ mô phỏng
             if (waveType === 'transverse') {
-                drawTransverseWave(A, f);
+                btnTransverse.className = activeClass;
+                btnLongitudinal.className = inactiveClass;
+                descPanel.innerHTML = `
+                    <strong class="text-cyan-600 dark:text-cyan-400 block mb-1">SÓNG NGANG (Transverse)</strong>
+                    Các phần tử môi trường dao động <strong class="text-slate-800 dark:text-slate-200">vuông góc</strong> với phương truyền sóng.
+                    <br><br>
+                    <span class="inline-block w-2 h-2 rounded-full bg-yellow-400 mr-1"></span> Các điểm quan sát dao động lên xuống.
+                `;
             } else {
-                drawLongitudinalWave(A, f);
+                btnTransverse.className = inactiveClass;
+                btnLongitudinal.className = activeClass;
+                descPanel.innerHTML = `
+                    <strong class="text-pink-600 dark:text-pink-400 block mb-1">SÓNG DỌC (Longitudinal)</strong>
+                    Các phần tử môi trường dao động <strong class="text-slate-800 dark:text-slate-200">trùng phương</strong> với phương truyền sóng.
+                    <br><br>
+                    <span class="inline-block w-2 h-2 rounded-full bg-green-400 mr-1"></span> Các điểm quan sát nén/giãn trên trục ngang.
+                `;
             }
         }
 
-        /**
-         * Hàm vẽ Sóng Ngang (Transverse Wave)
-         */
-        function drawTransverseWave(A, f) {
+        btnTransverse.onclick = () => { waveType = 'transverse'; angle = 0; updateUI(); }
+        btnLongitudinal.onclick = () => { waveType = 'longitudinal'; angle = 0; updateUI(); }
+
+        ampSlider.oninput = updateUI;
+        freqSlider.oninput = updateUI;
+
+        // --- P5.js ---
+        function setup() {
+            const container = document.getElementById('p5-container');
+            const canvas = createCanvas(container.clientWidth, container.clientHeight);
+            canvas.parent('p5-container');
+            updateUI();
+        }
+
+        function windowResized() {
+            const container = document.getElementById('p5-container');
+            resizeCanvas(container.clientWidth, container.clientHeight);
+        }
+
+        function draw() {
+            const A = parseFloat(ampSlider.value);
+            const f = parseFloat(freqSlider.value);
+
+            // Theme colors
+            const isDark = document.documentElement.className.includes('dark') || localStorage.getItem('theme') === 'dark'; // Check tailwind
+            // Actually tailwind `dark` class is on html tag
+            const htmlDark = document.documentElement.classList.contains('dark');
+
+            if (htmlDark) background(15, 23, 42); else background(255);
+
+            angle += f * 0.1;
+
+            if (waveType === 'transverse') drawTransverse(A, f, htmlDark);
+            else drawLongitudinal(A, f, htmlDark);
+        }
+
+        function drawTransverse(A, f, isDark) {
             const yCenter = height / 2;
-            const labelX = 5; // Vị trí X cố định bên trái
-            const wavelengthFactor = 0.05;
+            const wlFactor = 0.02; // Wavelength factor scaling with width
 
-            // 1. VẼ TRỤC BIÊN ĐỘ (Y-Axis Labels) VÀ ĐƯỜNG CÂN BẰNG
+            // Grid Lines
+            stroke(isDark ? 40 : 220); strokeWeight(1);
+            line(0, yCenter, width, yCenter); // Ox
 
-            // Vẽ đường trung tâm (trục Ox/cân bằng)
-            const isDark = document.documentElement.classList.contains('dark');
-            stroke(isDark ? 100 : 180);
-            strokeWeight(1);
-            line(0, yCenter, width, yCenter);
-
-            // Thiết lập font và căn chỉnh cho nhãn
-            textSize(14);
-            textAlign(LEFT, CENTER);
-
-            // Đường tham chiếu Biên độ +A (Màu Đỏ)
-            stroke(255, 0, 0, 150);
-            strokeWeight(1);
-            drawingContext.setLineDash([5, 5]); // Đường nét đứt
+            // Amplitude Guides
+            drawingContext.setLineDash([4, 4]);
+            stroke(isDark ? 60 : 200);
             line(0, yCenter - A, width, yCenter - A);
-            fill(255, 0, 0);
-            text(`+A (${A} mm)`, labelX, yCenter - A);
-
-            // Đường tham chiếu Biên độ -A (Màu Đỏ)
             line(0, yCenter + A, width, yCenter + A);
-            text(`-A (${A} mm)`, labelX, yCenter + A);
-            drawingContext.setLineDash([]); // Trở lại đường liền
+            drawingContext.setLineDash([]);
 
-            // Nhãn Trục 0
-            fill(isDark ? 200 : 0);
-            noStroke(); // P5.js text doesn't need stroke usually
-            text("0 (Ox)", labelX, yCenter);
-
-            // 2. VẼ ĐƯỜNG CONG SÓNG NGANG (Lớp giữa)
-            stroke(isDark ? '#60a5fa' : '#0064c8'); // Màu xanh dương sáng hơn cho dark, đậm hơn cho light
-            strokeWeight(3);
-            noFill();
-
+            // Wave
+            stroke(isDark ? '#22d3ee' : '#0891b2'); // Cyan-400 / Cyan-600
+            strokeWeight(3); noFill();
             beginShape();
             for (let x = 0; x <= width; x += 5) {
-                // Tính toán vị trí y (dao động vuông góc với trục X)
-                let y = yCenter + A * sin(x * wavelengthFactor - angle);
+                const y = yCenter + A * sin(x * wlFactor - angle);
                 vertex(x, y);
             }
             endShape();
 
-            // 3. VẼ CÁC ĐƯỜNG VUÔNG GÓC VÀ LƯU VỊ TRÍ CHẤT ĐIỂM
-            let keyPointsTransverse = []; // Lưu tọa độ để vẽ chất điểm sau cùng
+            // Particles
+            for (let pct of keyPointPositions) {
+                const x = width * pct;
+                const y = yCenter + A * sin(x * wlFactor - angle);
 
-            // Lặp qua 5 vị trí X cố định
-            for (let percentX of keyPointPositions) {
-                let x = width * percentX;
-                let y = yCenter + A * sin(x * wavelengthFactor - angle);
-                keyPointsTransverse.push({ x, y });
-
-                // Đường vuông góc (Projection line to Ox/yCenter)
-                // Cập nhật: Dùng màu Hồng/Magenta (255, 0, 255) theo yêu cầu
-                stroke(255, 0, 255);
-                strokeWeight(1.5);
-                drawingContext.setLineDash([2, 3]);
+                // Guide Line
+                stroke(236, 72, 153); // Pink-500
+                strokeWeight(1);
                 line(x, yCenter, x, y);
-                drawingContext.setLineDash([]); // Trở lại đường liền
 
-                // Vòng tròn nhỏ ở trục cân bằng
-                fill(isDark ? 200 : 50);
-                noStroke();
-                ellipse(x, yCenter, 4, 4);
-            }
-
-            // 4. VẼ CHẤT ĐIỂM (LAYER TRƯỚC TIÊN)
-            for (let p of keyPointsTransverse) {
-                // Chất điểm (Hạt)
-                // Màu nổi bật ngược lại với màu sóng (Xanh Dương) và màu đường vuông góc (Magenta): Vàng Sáng
-                fill(255, 255, 0);
-                stroke(0); // Viền đen để nổi bật trên mọi nền
-                strokeWeight(2);
-                ellipse(p.x, p.y, 12, 12); // Kích thước lớn hơn
+                // Point
+                stroke(isDark ? 255 : 0); strokeWeight(2);
+                fill(250, 204, 21); // Yellow-400
+                circle(x, y, 12);
             }
         }
 
-        /**
-         * Hàm vẽ Sóng Dọc (Longitudinal Wave)
-         */
-        function drawLongitudinalWave(A, f) {
-            const particleRadius = 8;
-            const separation = width / (particleCount + 1); // Khoảng cách giữa các hạt
+        function drawLongitudinal(A, f, isDark) {
             const yCenter = height / 2;
-            // Biên độ dịch chuyển ngang tối đa (Max displacement is half of the visual amplitude A for better fit)
-            const maxDisplacement = A * 0.5;
+            const separation = width / (particleCount + 1);
+            const maxDisp = A * 0.8;
+            const wlFactor = 0.1;
 
-            // 1. VẼ TRỤC BIÊN ĐỘ (Nhãn Trục 0) VÀ ĐƯỜNG CÂN BẰNG
-            const isDark = document.documentElement.classList.contains('dark');
-            stroke(isDark ? 100 : 180);
-            strokeWeight(1);
-            line(0, yCenter, width, yCenter);
-
-            textSize(14);
-            textAlign(LEFT, CENTER);
-            fill(isDark ? 200 : 0);
-            noStroke();
-            text("0 (Ox)", 5, yCenter); // Nhãn Vị trí cân bằng
-
-            // 2. Vẽ TẤT CẢ các "hạt" (particles) NỀN và lưu 5 hạt quan sát
-            let keyPointsLongitudinal = []; // Lưu tọa độ và chỉ số của 5 hạt quan sát
+            // Grid Lines
+            stroke(isDark ? 40 : 220); strokeWeight(1);
+            line(0, yCenter, width, yCenter); // Ox
 
             for (let i = 0; i < particleCount; i++) {
-                const equilibriumX = (i + 1) * separation;
-                const displacement = maxDisplacement * sin(equilibriumX * 0.05 - angle);
-                const currentX = equilibriumX + displacement;
-                const isHighlighted = highlightIndices.includes(i);
+                const eqX = (i + 1) * separation;
+                const disp = maxDisp * sin(eqX * wlFactor - angle);
+                const curX = eqX + disp;
 
-                if (isHighlighted) {
-                    // Lưu vị trí của 5 hạt quan sát để vẽ sau (Layer trước tiên)
-                    keyPointsLongitudinal.push({ i, equilibriumX, currentX });
+                const isHighlight = highlightIndices.includes(i);
+
+                if (isHighlight) {
+                    // Guide Lines for Equil (Magenta) and Current (Cyan)
+                    drawingContext.setLineDash([2, 4]);
+                    stroke(236, 72, 153); strokeWeight(1);
+                    line(eqX, yCenter - 20, eqX, yCenter + 20);
+
+                    stroke(34, 211, 238);
+                    line(curX, yCenter - 20, curX, yCenter + 20);
+                    drawingContext.setLineDash([]);
+
+                    // Highlight Particle
+                    stroke(isDark ? 255 : 0); strokeWeight(2);
+                    fill(74, 222, 128); // Green-400
+                    circle(curX, yCenter, 14);
+
                 } else {
-                    // Hạt nền
-                    const colorValue = map(abs(displacement), 0, maxDisplacement, 50, 255);
-                    fill(colorValue, 0, 0); // Giữ màu đỏ cho hạt nền vì nó dễ nhìn
-                    stroke(255, 100, 100);
-                    strokeWeight(1);
-                    ellipse(currentX, yCenter, particleRadius * 2, particleRadius * 2);
+                    // Background Particle
+                    noStroke();
+                    // Color Fade based on disp
+                    const alpha = map(abs(disp), 0, maxDisp, 50, 200);
+                    fill(239, 68, 68, alpha); // Red-500
+                    circle(curX, yCenter, 6);
                 }
             }
-
-            // 3. VẼ ĐƯỜNG VUÔNG GÓC CHO 5 HẠT QUAN SÁT (Layer giữa)
-            for (let p of keyPointsLongitudinal) {
-                // Đường vuông góc (Projection line to Ox/yCenter)
-                // Cập nhật: Dùng màu Hồng/Magenta (255, 0, 255) theo yêu cầu cho vị trí cân bằng
-                // Màu nổi bật: Cyan (0, 255, 255) cho vị trí hiện tại
-
-                // Kẻ đường vuông góc MÀU KHÁC (Cyan) tại vị trí HIỆN TẠI (currentX)
-                stroke(0, 255, 255); // Cyan
-                strokeWeight(1.5);
-                drawingContext.setLineDash([2, 3]);
-                line(p.currentX, yCenter - particleRadius * 2, p.currentX, yCenter + particleRadius * 2);
-                drawingContext.setLineDash([]);
-
-                // Kẻ đường vuông góc MÀU KHÁC (Magenta) tại vị trí CÂN BẰNG (equilibriumX)
-                stroke(255, 0, 255); // Magenta
-                strokeWeight(1.5);
-                drawingContext.setLineDash([5, 5]); // Nét đứt to hơn để phân biệt
-                line(p.equilibriumX, yCenter - particleRadius * 2, p.equilibriumX, yCenter + particleRadius * 2);
-                drawingContext.setLineDash([]);
-            }
-
-            // 4. VẼ 5 HẠT QUAN SÁT (LAYER TRƯỚC TIÊN)
-            for (let p of keyPointsLongitudinal) {
-                // Vẽ Hạt lớn hơn
-                // Màu nổi bật ngược lại với màu đường vuông góc (Cyan/Magenta): Xanh Lá Cây Sáng
-                fill(0, 255, 0);
-                stroke(0); // Viền đen
-                strokeWeight(2);
-                ellipse(p.currentX, yCenter, 14, 14); // Kích thước lớn hơn
-            }
         }
 
-        /**
-         * Cập nhật hiển thị giá trị và lưu loại sóng, đồng thời cập nhật mô tả bên ngoài Canvas.
-         */
-        function updateDisplay() {
-            const A = parseFloat(amplitudeSlider.value).toFixed(0);
-
-            // Cập nhật giá trị hiển thị
-            amplitudeValueDisplay.textContent = A;
-            frequencyValueDisplay.textContent = parseFloat(frequencySlider.value).toFixed(1);
-
-            // Cập nhật mô tả chuyển động bên ngoài Canvas
-            if (waveType === 'transverse') {
-                waveDescriptionPanel.innerHTML = `
-                    <span class="text-blue-700 font-bold">SÓNG NGANG:</span> 
-                    Các phần tử môi trường dao động <span class="text-blue-500 font-extrabold">VUÔNG GÓC</span> (dọc theo trục Y) với phương truyền sóng (ngang). Biên độ tối đa là ${A} mm. <br>
-                    Các chất điểm <span class="text-yellow-500 font-extrabold">MÀU VÀNG SÁNG</span> đang dao động giữa giới hạn +A và -A, thể hiện biên độ qua đường vuông góc <span class="text-fuchsia-600 font-extrabold">MÀU HỒNG (MAGENTA)</span>.
-                `;
-            } else {
-                // Cập nhật mô tả chi tiết cho Sóng Dọc về vị trí cân bằng và biên độ
-                waveDescriptionPanel.innerHTML = `
-                    <span class="text-red-700 font-bold">SÓNG DỌC:</span> 
-                    Các phần tử môi trường dao động <span class="text-red-500 font-extrabold">SONG SONG</span> (trùng phương) với phương truyền sóng (ngang), tạo ra các vùng nén/giãn. 
-                    <ul class="list-disc list-inside mt-2 ml-4">
-                        <li><span class="text-blue-700 font-bold">Vị trí Cân bằng (Pha 0):</span> Là đường Ox, được đánh dấu bằng đường vuông góc <span class="text-fuchsia-600 font-extrabold">MÀU HỒNG (MAGENTA)</span> nét đứt lớn.</li>
-                        <li><span class="text-blue-700 font-bold">Vị trí Hiện tại:</span> Được đánh dấu bằng đường vuông góc <span class="text-cyan-500 font-extrabold">MÀU XANH CYAN</span> nét đứt nhỏ.</li>
-                        <li><span class="text-blue-700 font-bold">Biên độ (A):</span> Độ dịch chuyển tối đa của hạt so với vị trí cân bằng (A = ${A} mm).</li>
-                    </ul>
-                    Các chất điểm <span class="text-green-500 font-extrabold">MÀU XANH LÁ CÂY SÁNG</span> đang dao động qua lại trên trục Ox.
-                `;
-            }
-        }
-
-        /**
-         * Thay đổi loại sóng và cập nhật kiểu dáng nút
-         */
-        function setWaveType(newType) {
-            if (waveType === newType) return;
-            waveType = newType;
-            angle = 0; // Reset pha khi đổi loại sóng để bắt đầu từ điểm gốc
-            updateButtonStyles();
-            updateDisplay(); // Cập nhật mô tả ngay lập tức
-        }
-
-        /**
-         * Cập nhật kiểu dáng cho các nút (để biết nút nào đang được chọn)
-         */
-        function updateButtonStyles() {
-            const activeClass = 'bg-blue-500 hover:bg-blue-600';
-            const inactiveClass = 'bg-gray-400 hover:bg-gray-500';
-
-            if (waveType === 'transverse') {
-                waveButtons.transverse.classList.remove(...inactiveClass.split(' '));
-                waveButtons.transverse.classList.add(...activeClass.split(' '));
-
-                waveButtons.longitudinal.classList.remove(...inactiveClass.split(' '));
-                waveButtons.longitudinal.classList.add(...inactiveClass.split(' '));
-            } else {
-                waveButtons.longitudinal.classList.remove(...inactiveClass.split(' '));
-                waveButtons.longitudinal.classList.add(...activeClass.split(' '));
-
-                waveButtons.transverse.classList.remove(...activeClass.split(' '));
-                waveButtons.transverse.classList.add(...inactiveClass.split(' '));
-            }
-        }
+        // Icons
+        lucide.createIcons();
     </script>
-    <script src="js/theme.js"></script>
 </body>
 
 </html>

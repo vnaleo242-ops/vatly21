@@ -11,7 +11,7 @@
         rel="stylesheet">
 
     <!-- Icons: Lucide Icons -->
-    <script src="https://unpkg.com/lucide@latest"></script>
+    <script src="https://unpkg.com/lucide@latest" defer></script>
 
     <script src="js/tailwind-config.js"></script>
 
@@ -24,18 +24,18 @@
 
     <!-- Background Grid -->
     <div
-        class="fixed inset-0 bg-grid-pattern opacity-[0.3] pointer-events-none z-0 dark:opacity-[0.1] dark:bg-[linear-gradient(to_right,rgba(255,255,255,0.05)_1px,transparent_1px),linear-gradient(to_bottom,rgba(255,255,255,0.05)_1px,transparent_1px)]">
+        class="fixed inset-0 bg-grid-pattern opacity-[0.3] pointer-events-none z-0 dark:opacity-[0.1] dark:bg-[linear-gradient(to_right,rgba(255,255,255,0.05)_1px,transparent_1px),linear-gradient(to_bottom,rgba(255,255,255,0.05)_1px,transparent_1px)] will-change-transform transform-gpu">
     </div>
 
     <!-- SIDEBAR -->
     <aside
-        class="w-[280px] bg-white/80 dark:bg-lab-dark_panel backdrop-blur-md border-r border-lab-accent/30 dark:border-slate-700 flex-shrink-0 flex flex-col z-20 hidden lg:flex relative shadow-[4px_0_24px_rgba(178,152,211,0.08)] dark:shadow-none">
+        class="w-[280px] bg-white/60 dark:bg-lab-dark_panel/60 backdrop-blur-md border-r border-lab-accent/30 dark:border-slate-700 flex-shrink-0 flex flex-col z-20 hidden lg:flex relative shadow-[4px_0_24px_rgba(178,152,211,0.08)] dark:shadow-none">
         <!-- Logo Area -->
         <div
             class="h-[80px] flex items-center px-6 border-b border-lab-accent/20 dark:border-slate-700 flex items-center px-6 relative overflow-hidden group">
             <!-- Glare Effect on Hover -->
             <div
-                class="absolute inset-0 bg-lab-cyan/5 dark:bg-lab-dark_cyan/5 w-1/2 -skew-x-12 -translate-x-full group-hover:translate-x-full transition-transform duration-700 ease-out">
+                class="absolute inset-0 bg-lab-cyan/5 dark:bg-lab-dark_cyan/5 w-1/2 -skew-x-12 -translate-x-full group-hover:translate-x-full transition-transform duration-700 ease-out will-change-transform">
             </div>
             <div class="flex items-center gap-3 relative z-10">
                 <div
@@ -133,7 +133,7 @@
 
         <!-- Header -->
         <header
-            class="h-[80px] bg-white/80 dark:bg-lab-dark_panel/90 backdrop-blur-xl border-b border-lab-accent/20 dark:border-slate-700 flex items-center justify-between px-8 z-30 sticky top-0 shadow-sm">
+            class="h-[80px] bg-white/60 dark:bg-lab-dark_panel/60 backdrop-blur-xl border-b border-lab-accent/20 dark:border-slate-700 flex items-center justify-between px-8 z-30 sticky top-0 shadow-sm">
             <!-- Left Tabs -->
             <div class="flex items-center gap-6">
                 <!-- Mobile Menu Button -->
@@ -293,7 +293,7 @@
                         </div>
                         <!-- Scanner line -->
                         <div
-                            class="absolute top-0 left-0 w-full h-1 bg-lab-cyan/50 dark:bg-lab-dark_cyan/50 shadow-[0_0_15px_#b298d3] dark:shadow-[0_0_15px_#06b6d4] animate-scan opacity-70">
+                            class="absolute top-0 left-0 w-full h-1 bg-lab-cyan/50 dark:bg-lab-dark_cyan/50 shadow-[0_0_15px_#b298d3] dark:shadow-[0_0_15px_#06b6d4] animate-scan opacity-70 will-change-transform">
                         </div>
                     </div>
                 </div>
@@ -320,7 +320,7 @@
 
                 <!-- Card 1: Dao Động Điều Hòa -->
                 <a href="dao-dong-dieu-hoa.html"
-                    class="module-card glass-panel rounded-xl p-6 relative group block overflow-hidden">
+                    class="module-card glass-panel rounded-xl p-6 relative group block overflow-hidden will-change-transform">
                     <div class="corner-marker top-left"></div>
                     <div class="corner-marker top-right"></div>
                     <div class="corner-marker bottom-left"></div>
@@ -360,7 +360,7 @@
 
                 <!-- Card 2: Con Lắc Đơn / Lò Xo -->
                 <a href="con-lac-don-lo-xo.html"
-                    class="module-card glass-panel rounded-xl p-6 relative group block overflow-hidden">
+                    class="module-card glass-panel rounded-xl p-6 relative group block overflow-hidden will-change-transform">
                     <div class="corner-marker top-left"></div>
                     <div class="corner-marker top-right"></div>
                     <div class="corner-marker bottom-left"></div>
@@ -397,7 +397,7 @@
 
                 <!-- Card 3: Sóng Dọc & Ngang -->
                 <a href="song-doc-song-ngang.html"
-                    class="module-card glass-panel rounded-xl p-6 relative group block overflow-hidden">
+                    class="module-card glass-panel rounded-xl p-6 relative group block overflow-hidden will-change-transform">
                     <div class="corner-marker top-left"></div>
                     <div class="corner-marker top-right"></div>
                     <div class="corner-marker bottom-left"></div>
@@ -434,7 +434,7 @@
 
                 <!-- Card 4: Giao Thoa Sóng Cơ -->
                 <a href="giao-thoa-song-co.html"
-                    class="module-card glass-panel rounded-xl p-6 relative group block overflow-hidden">
+                    class="module-card glass-panel rounded-xl p-6 relative group block overflow-hidden will-change-transform">
                     <div class="corner-marker top-left"></div>
                     <div class="corner-marker top-right"></div>
                     <div class="corner-marker bottom-left"></div>
@@ -471,7 +471,7 @@
 
                 <!-- Card 5: Dao Động Tắt Dần -->
                 <a href="dao-dong-tat-dan.html"
-                    class="module-card glass-panel rounded-xl p-6 relative group block overflow-hidden">
+                    class="module-card glass-panel rounded-xl p-6 relative group block overflow-hidden will-change-transform">
                     <div class="corner-marker top-left"></div>
                     <div class="corner-marker top-right"></div>
                     <div class="corner-marker bottom-left"></div>
@@ -508,7 +508,7 @@
 
                 <!-- Card 6: Giao Thoa Ánh Sáng -->
                 <a href="giao-thoa-anh-sang.html"
-                    class="module-card glass-panel rounded-xl p-6 relative group block overflow-hidden">
+                    class="module-card glass-panel rounded-xl p-6 relative group block overflow-hidden will-change-transform">
                     <div class="corner-marker top-left"></div>
                     <div class="corner-marker top-right"></div>
                     <div class="corner-marker bottom-left"></div>
@@ -545,7 +545,7 @@
 
                 <!-- Card 7: Đo Tần Số Sóng Âm -->
                 <a href="do-tan-so-song-am.html"
-                    class="module-card glass-panel rounded-xl p-6 relative group block overflow-hidden">
+                    class="module-card glass-panel rounded-xl p-6 relative group block overflow-hidden will-change-transform">
                     <div class="corner-marker top-left"></div>
                     <div class="corner-marker top-right"></div>
                     <div class="corner-marker bottom-left"></div>
@@ -582,7 +582,7 @@
 
                 <!-- Card 8: Sóng Dừng (2 Cố Định) -->
                 <a href="song-dung-2-co-dinh.html"
-                    class="module-card glass-panel rounded-xl p-6 relative group block overflow-hidden">
+                    class="module-card glass-panel rounded-xl p-6 relative group block overflow-hidden will-change-transform">
                     <div class="corner-marker top-left"></div>
                     <div class="corner-marker top-right"></div>
                     <div class="corner-marker bottom-left"></div>
@@ -619,7 +619,7 @@
 
                 <!-- Card 9: Sóng Dừng (1 Tự Do) -->
                 <a href="song-dung-1-tu-do.html"
-                    class="module-card glass-panel rounded-xl p-6 relative group block overflow-hidden">
+                    class="module-card glass-panel rounded-xl p-6 relative group block overflow-hidden will-change-transform">
                     <div class="corner-marker top-left"></div>
                     <div class="corner-marker top-right"></div>
                     <div class="corner-marker bottom-left"></div>

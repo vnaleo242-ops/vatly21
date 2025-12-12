@@ -4,257 +4,344 @@
 <head>
     <meta charset="UTF-8">
     <meta name="viewport" content="width=device-width, initial-scale=1.0">
-    <title>Phân Tích Dao Động Điều Hòa</title>
+    <title>Mô Phỏng Dao Động Điều Hòa</title>
     <script src="https://cdn.tailwindcss.com"></script>
     <script src="js/tailwind-config.js"></script>
     <script src="https://unpkg.com/lucide@latest"></script>
+    <link
+        href="https://fonts.googleapis.com/css2?family=Inter:wght@400;500;600;700&family=Rajdhani:wght@500;600;700&display=swap"
+        rel="stylesheet">
     <link rel="stylesheet" href="css/global.css">
     <style>
-        @import url('https://fonts.googleapis.com/css2?family=Inter:wght@400;600;700&display=swap');
-
         body {
             font-family: 'Inter', sans-serif;
-            /* background-color removed */
         }
 
-        .container-bg {
-            background: linear-gradient(145deg, #ffffff, #e6e6e6);
-            box-shadow: 0 10px 30px rgba(0, 0, 0, 0.1);
+        .font-tech {
+            font-family: 'Rajdhani', sans-serif;
         }
 
-        .input-group label {
-            font-weight: 600;
-            color: #4a5568;
-        }
-
-        .input-group input[type="range"] {
+        /* Custom Range Slider Styling */
+        input[type=range] {
             -webkit-appearance: none;
-            width: 100%;
-            height: 8px;
-            background: #ddd;
-            border-radius: 4px;
-            outline: none;
-            opacity: 0.7;
-            transition: opacity .2s;
+            background: transparent;
         }
 
-        .input-group input[type="range"]::-webkit-slider-thumb {
+        input[type=range]::-webkit-slider-thumb {
             -webkit-appearance: none;
-            appearance: none;
-            width: 16px;
             height: 16px;
+            width: 16px;
             border-radius: 50%;
-            background: #4f46e5;
+            background: #06b6d4;
+            /* lab-cyan */
+            margin-top: -6px;
             cursor: pointer;
-            box-shadow: 0 0 5px rgba(0, 0, 0, 0.2);
+            box-shadow: 0 0 0 2px rgba(255, 255, 255, 0.5);
         }
 
-        .sim-canvas {
-            border: 1px solid #cbd5e1;
-            border-radius: 0.5rem;
-            background-color: #f9fafb;
-            margin-bottom: 1rem;
+        input[type=range]::-webkit-slider-runnable-track {
+            width: 100%;
+            height: 4px;
+            cursor: pointer;
+            background: #cbd5e1;
+            border-radius: 2px;
         }
 
-        .energy-graph-canvas {
-            border: 1px solid #cbd5e1;
-            border-radius: 0.5rem;
-            background-color: #ffffff;
+        .dark input[type=range]::-webkit-slider-runnable-track {
+            background: #475569;
         }
 
-        /* Dark Mode Overrides */
-        .dark .container-bg {
-            background: linear-gradient(145deg, #1e293b, #0f172a);
-            box-shadow: 0 10px 30px rgba(0, 0, 0, 0.3);
+        /* Stats HUD Glass */
+        .hud-panel {
+            background: rgba(255, 255, 255, 0.9);
+            backdrop-filter: blur(8px);
+            border: 1px solid rgba(255, 255, 255, 0.2);
+            box-shadow: 0 4px 6px -1px rgba(0, 0, 0, 0.1);
         }
 
-        .dark .sim-canvas {
-            border-color: #334155;
-            background-color: #1e293b;
-        }
-
-        .dark .energy-graph-canvas {
-            border-color: #334155;
-            background-color: #1e293b;
+        .dark .hud-panel {
+            background: rgba(15, 23, 42, 0.85);
+            /* slate-900 */
+            border: 1px solid rgba(255, 255, 255, 0.05);
         }
     </style>
 </head>
 
 <body
-    class="p-4 md:p-8 bg-lab-bg dark:bg-lab-dark_bg text-lab-text dark:text-lab-dark_text transition-colors duration-300">
+    class="h-screen flex overflow-hidden bg-slate-50 dark:bg-[#0f172a] text-slate-700 dark:text-slate-300 transition-colors duration-300">
 
-    <a href="index.html"
-        class="fixed top-4 left-4 z-50 p-3 bg-blue-600 text-white rounded-lg shadow-xl hover:bg-blue-700 transition duration-300 flex items-center space-x-2">
-        <svg xmlns="http://www.w3.org/2000/svg" class="h-5 w-5" viewBox="0 0 20 20" fill="currentColor">
-            <path
-                d="M10.707 2.293a1 1 0 00-1.414 0l-7 7a1 1 0 001.414 1.414L4 10.414V17a1 1 0 001 1h2a1 1 0 001-1v-2a1 1 0 011-1h2a1 1 0 011 1v2a1 1 0 001 1h2a1 1 0 001-1v-6.586l.293.293a1 1 0 001.414-1.414l-7-7z" />
-        </svg>
-        <span class="font-semibold hidden sm:inline">Quay về Trang Chủ</span>
-    </a>
-
-    <!-- Dark Mode Toggle -->
-    <button onclick="toggleDarkMode()"
-        class="fixed top-4 right-4 z-50 p-3 bg-white/80 dark:bg-slate-800/80 backdrop-blur-md text-slate-700 dark:text-slate-200 rounded-full shadow-lg border border-slate-200 dark:border-slate-700 hover:bg-slate-100 dark:hover:bg-slate-700 transition-all duration-300 group">
-        <i id="theme-icon" data-lucide="moon" class="w-5 h-5 group-hover:rotate-12 transition-transform"></i>
-    </button>
-
-    <div class="max-w-7xl mx-auto container-bg rounded-xl p-6 lg:p-10">
-        <h1 class="text-3xl font-bold text-center text-indigo-700 mb-6">Mô Phỏng Dao Động Điều Hòa (SHM)</h1>
-
-        <div class="mb-6 flex justify-center space-x-4">
-            <button id="springSelect"
-                class="px-6 py-3 rounded-lg font-semibold transition duration-200 bg-indigo-600 text-white shadow-md hover:bg-indigo-700">
-                Con Lắc Lò Xo
-            </button>
-            <button id="pendulumSelect"
-                class="px-6 py-3 rounded-lg font-semibold transition duration-200 bg-gray-200 text-gray-700 hover:bg-gray-300">
-                Con Lắc Đơn
-            </button>
+    <!-- SIDEBAR CONTROLS -->
+    <aside
+        class="w-72 flex-shrink-0 flex flex-col bg-white dark:bg-[#1e293b] border-r border-slate-200 dark:border-slate-800 z-20 shadow-lg">
+        <!-- Sidebar Header -->
+        <div class="h-16 flex items-center justify-between px-6 border-b border-slate-100 dark:border-slate-700/50">
+            <h1 class="font-tech font-bold text-xl text-slate-800 dark:text-white uppercase tracking-wider">
+                Control Panel
+            </h1>
+            <a href="index.html"
+                class="p-2 rounded-lg hover:bg-slate-100 dark:hover:bg-slate-700 text-slate-400 hover:text-cyan-500 transition-colors"
+                title="Trở về Trang chủ">
+                <i data-lucide="home" class="w-5 h-5"></i>
+            </a>
         </div>
 
-        <div class="grid grid-cols-1 lg:grid-cols-3 gap-8">
-            <div class="lg:col-span-1 space-y-6 p-4 bg-white rounded-lg shadow-inner">
-                <h2 class="text-xl font-bold text-gray-700 border-b pb-2 mb-4">Điều Khiển & Tham Số</h2>
+        <!-- Scrollable Content -->
+        <div class="flex-1 overflow-y-auto p-6 space-y-8 custom-scrollbar">
 
-                <div class="flex space-x-3 mb-4">
+            <!-- Type Selector -->
+            <div>
+                <label
+                    class="text-xs font-bold text-slate-400 dark:text-slate-500 uppercase tracking-widest mb-3 block">Loại
+                    Con Lắc</label>
+                <div class="grid grid-cols-2 gap-2 bg-slate-100 dark:bg-slate-800 p-1 rounded-lg">
+                    <button id="springSelect"
+                        class="px-4 py-2 rounded-md text-sm font-semibold transition-all shadow-sm bg-white dark:bg-slate-700 text-cyan-600 dark:text-cyan-400 ring-1 ring-black/5 dark:ring-white/10">
+                        Lò Xo
+                    </button>
+                    <button id="pendulumSelect"
+                        class="px-4 py-2 rounded-md text-sm font-medium text-slate-500 dark:text-slate-400 hover:text-slate-700 dark:hover:text-slate-200 hover:bg-slate-50 dark:hover:bg-slate-750 transition-all">
+                        Đơn
+                    </button>
+                </div>
+            </div>
+
+            <!-- Playback Controls -->
+            <div>
+                <label
+                    class="text-xs font-bold text-slate-400 dark:text-slate-500 uppercase tracking-widest mb-3 block">Điều
+                    Khiển</label>
+                <div class="flex gap-2 mb-2">
                     <button id="playPauseBtn"
-                        class="flex-1 px-4 py-2 bg-green-500 text-white rounded-lg hover:bg-green-600 font-medium transition duration-150 shadow-md">
-                        ▶ Chơi
+                        class="flex-1 flex items-center justify-center gap-2 px-4 py-2.5 bg-cyan-600 hover:bg-cyan-500 text-white rounded-lg font-medium transition shadow-sm hover:shadow-cyan-500/30">
+                        <i data-lucide="play" class="w-4 h-4 fill-current"></i> <span class="text-sm">Chạy</span>
                     </button>
                     <button id="restartBtn"
-                        class="flex-1 px-4 py-2 bg-red-500 text-white rounded-lg hover:bg-red-600 font-medium transition duration-150 shadow-md">
-                        ↺ Restart
+                        class="px-4 py-2.5 bg-slate-200 dark:bg-slate-700 text-slate-600 dark:text-slate-300 hover:text-slate-900 dark:hover:text-white rounded-lg transition">
+                        <i data-lucide="rotate-ccw" class="w-4 h-4"></i>
                     </button>
                 </div>
-
-                <div class="flex space-x-2 border-t pt-4">
-                    <span class="text-sm font-semibold text-gray-600 mb-2 w-full">Bước nhảy (Ưu tiên vị trí đặc
-                        biệt):</span>
-                </div>
-                <div class="flex space-x-3">
+                <div class="flex gap-2">
                     <button id="stepBackBtn" disabled
-                        class="flex-1 px-3 py-2 bg-yellow-500 text-white rounded-lg hover:bg-yellow-600 font-medium transition duration-150 disabled:opacity-50 shadow-md">
-                        Lùi
+                        class="flex-1 py-2 px-3 text-sm font-bold text-slate-700 dark:text-slate-200 bg-slate-200 dark:bg-slate-700 border border-slate-300 dark:border-slate-600 rounded shadow-sm hover:bg-slate-300 dark:hover:bg-slate-600 disabled:opacity-50 transition">
+                        &larr; Lùi
                     </button>
                     <button id="stepForwardBtn" disabled
-                        class="flex-1 px-3 py-2 bg-yellow-500 text-white rounded-lg hover:bg-yellow-600 font-medium transition duration-150 disabled:opacity-50 shadow-md">
-                        Tiến
+                        class="flex-1 py-2 px-3 text-sm font-bold text-slate-700 dark:text-slate-200 bg-slate-200 dark:bg-slate-700 border border-slate-300 dark:border-slate-600 rounded shadow-sm hover:bg-slate-300 dark:hover:bg-slate-600 disabled:opacity-50 transition">
+                        Tiến &rarr;
                     </button>
                 </div>
+            </div>
 
-
-                <div id="springParams" class="space-y-4 pt-4 border-t">
-                    <h3 class="text-lg font-semibold text-indigo-600 mb-2">Con Lắc Lò Xo</h3>
-
-                    <div class="flex space-x-4 mb-4 bg-gray-100 p-2 rounded-md">
-                        <label class="flex items-center cursor-pointer">
-                            <input type="radio" name="springType" value="vertical" checked
-                                class="form-radio h-4 w-4 text-indigo-600">
-                            <span class="ml-2 text-sm text-gray-700 font-medium">Thẳng đứng</span>
-                        </label>
-                        <label class="flex items-center cursor-pointer">
-                            <input type="radio" name="springType" value="horizontal"
-                                class="form-radio h-4 w-4 text-indigo-600">
-                            <span class="ml-2 text-sm text-gray-700 font-medium">Nằm ngang</span>
-                        </label>
-                    </div>
-
-                    <div class="input-group">
-                        <label for="mass">Khối lượng (m): <span id="massValue"
-                                class="font-normal text-indigo-500">1.0</span> kg</label>
-                        <input type="range" id="mass" min="0.1" max="5.0" step="0.1" value="1.0">
-                    </div>
-                    <div class="input-group">
-                        <label for="stiffness">Độ cứng (k): <span id="stiffnessValue"
-                                class="font-normal text-indigo-500">10.0</span> N/m</label>
-                        <input type="range" id="stiffness" min="1.0" max="50.0" step="0.5" value="10.0">
-                    </div>
-                    <div class="input-group">
-                        <label for="amplitude">Biên độ (A): <span id="amplitudeValue"
-                                class="font-normal text-indigo-500">10.0</span> cm</label>
-                        <input type="range" id="amplitude" min="1.0" max="30.0" step="1.0" value="10.0">
-                    </div>
-                    <div class="input-group">
-                        <label for="lengthSpring">Chiều dài tự nhiên (L₀): <span id="lengthSpringValue"
-                                class="font-normal text-indigo-500">0.5</span> m</label>
-                        <input type="range" id="lengthSpring" min="0.1" max="1.0" step="0.05" value="0.5">
-                    </div>
-                    <div class="input-group">
-                        <label for="gravitySpring">Gia tốc trọng trường (g): <span id="gravitySpringValue"
-                                class="font-normal text-indigo-500">9.8</span> m/s²</label>
-                        <input type="range" id="gravitySpring" min="9.0" max="10.0" step="0.01" value="9.8">
-                    </div>
+            <!-- Parameters (Spring) -->
+            <div id="springParams" class="space-y-5 animate-fade-in">
+                <div class="flex items-center gap-4 mb-4">
+                    <label class="flex items-center cursor-pointer group">
+                        <input type="radio" name="springType" value="vertical" checked class="hidden peer">
+                        <span
+                            class="w-4 h-4 rounded-full border border-slate-400 peer-checked:border-cyan-500 peer-checked:bg-cyan-500 flex items-center justify-center mr-2">
+                            <span class="w-1.5 h-1.5 bg-white rounded-full opacity-0 peer-checked:opacity-100"></span>
+                        </span>
+                        <span
+                            class="text-sm font-medium text-slate-600 dark:text-slate-400 group-hover:text-cyan-600">Thẳng
+                            đứng</span>
+                    </label>
+                    <label class="flex items-center cursor-pointer group">
+                        <input type="radio" name="springType" value="horizontal" class="hidden peer">
+                        <span
+                            class="w-4 h-4 rounded-full border border-slate-400 peer-checked:border-cyan-500 peer-checked:bg-cyan-500 flex items-center justify-center mr-2">
+                            <span class="w-1.5 h-1.5 bg-white rounded-full opacity-0 peer-checked:opacity-100"></span>
+                        </span>
+                        <span
+                            class="text-sm font-medium text-slate-600 dark:text-slate-400 group-hover:text-cyan-600">Nằm
+                            ngang</span>
+                    </label>
                 </div>
 
-                <div id="pendulumParams" class="space-y-4 pt-4 border-t hidden">
-                    <h3 class="text-lg font-semibold text-indigo-600">Con Lắc Đơn (Góc nhỏ)</h3>
-                    <div class="input-group">
-                        <label for="massPendulum">Khối lượng (m): <span id="massPendulumValue"
-                                class="font-normal text-indigo-500">0.5</span> kg</label>
-                        <input type="range" id="massPendulum" min="0.1" max="5.0" step="0.1" value="0.5">
+                <div class="space-y-4">
+                    <!-- Mass -->
+                    <div>
+                        <div class="flex justify-between text-xs mb-1.5">
+                            <label class="font-medium text-slate-600 dark:text-slate-300">Khối lượng (m)</label>
+                            <span class="font-mono text-cyan-600 dark:text-cyan-400"><span id="massValue">1.0</span>
+                                kg</span>
+                        </div>
+                        <input type="range" id="mass" min="0.1" max="5.0" step="0.1" value="1.0" class="w-full">
                     </div>
-                    <div class="input-group">
-                        <!-- Cập nhật: Chiều dài dây (l) -->
-                        <label for="lengthPendulum">Chiều dài dây (l): <span id="lengthPendulumValue"
-                                class="font-normal text-indigo-500">1.0</span> m</label>
-                        <input type="range" id="lengthPendulum" min="0.1" max="5.0" step="0.1" value="1.0">
+                    <!-- Stiffness -->
+                    <div>
+                        <div class="flex justify-between text-xs mb-1.5">
+                            <label class="font-medium text-slate-600 dark:text-slate-300">Độ cứng (k)</label>
+                            <span class="font-mono text-cyan-600 dark:text-cyan-400"><span
+                                    id="stiffnessValue">10.0</span> N/m</span>
+                        </div>
+                        <input type="range" id="stiffness" min="1.0" max="50.0" step="0.5" value="10.0" class="w-full">
                     </div>
-                    <div class="input-group">
-                        <label for="angleAmplitude">Biên độ Góc (A₀): <span id="angleAmplitudeValue"
-                                class="font-normal text-indigo-500">10.0</span> độ</label>
-                        <input type="range" id="angleAmplitude" min="1.0" max="30.0" step="1.0" value="10.0">
+                    <!-- Amplitude -->
+                    <div>
+                        <div class="flex justify-between text-xs mb-1.5">
+                            <label class="font-medium text-slate-600 dark:text-slate-300">Biên độ (A)</label>
+                            <span class="font-mono text-cyan-600 dark:text-cyan-400"><span
+                                    id="amplitudeValue">10.0</span> cm</span>
+                        </div>
+                        <input type="range" id="amplitude" min="1.0" max="30.0" step="1.0" value="10.0" class="w-full">
                     </div>
-                    <div class="input-group">
-                        <label for="gravityPendulum">Gia tốc trọng trường (g): <span id="gravityPendulumValue"
-                                class="font-normal text-indigo-500">9.8</span> m/s²</label>
-                        <input type="range" id="gravityPendulum" min="9.0" max="10.0" step="0.01" value="9.8">
+                    <!-- Length -->
+                    <div>
+                        <div class="flex justify-between text-xs mb-1.5">
+                            <label class="font-medium text-slate-600 dark:text-slate-300">Chiều dài tự nhiên
+                                (L₀)</label>
+                            <span class="font-mono text-cyan-600 dark:text-cyan-400"><span
+                                    id="lengthSpringValue">0.5</span> m</span>
+                        </div>
+                        <input type="range" id="lengthSpring" min="0.1" max="1.0" step="0.05" value="0.5"
+                            class="w-full">
+                    </div>
+                    <!-- Gravity -->
+                    <div>
+                        <div class="flex justify-between text-xs mb-1.5">
+                            <label class="font-medium text-slate-600 dark:text-slate-300">Gia tốc (g)</label>
+                            <span class="font-mono text-cyan-600 dark:text-cyan-400"><span
+                                    id="gravitySpringValue">9.8</span> m/s²</span>
+                        </div>
+                        <input type="range" id="gravitySpring" min="9.0" max="10.0" step="0.01" value="9.8"
+                            class="w-full">
                     </div>
                 </div>
             </div>
 
-            <div class="lg:col-span-2 relative">
-                <h2 class="text-xl font-bold text-gray-700 border-b pb-2 mb-4">Hình Ảnh Trực Quan</h2>
-                <canvas id="simCanvas" class="sim-canvas w-full h-96"></canvas>
+            <!-- Parameters (Pendulum) -->
+            <div id="pendulumParams" class="space-y-5 hidden animate-fade-in">
+                <div class="space-y-4">
+                    <!-- Mass -->
+                    <div>
+                        <div class="flex justify-between text-xs mb-1.5">
+                            <label class="font-medium text-slate-600 dark:text-slate-300">Khối lượng (m)</label>
+                            <span class="font-mono text-cyan-600 dark:text-cyan-400"><span
+                                    id="massPendulumValue">0.5</span> kg</span>
+                        </div>
+                        <input type="range" id="massPendulum" min="0.1" max="5.0" step="0.1" value="0.5" class="w-full">
+                    </div>
+                    <!-- Length -->
+                    <div>
+                        <div class="flex justify-between text-xs mb-1.5">
+                            <label class="font-medium text-slate-600 dark:text-slate-300">Chiều dài dây (l)</label>
+                            <span class="font-mono text-cyan-600 dark:text-cyan-400"><span
+                                    id="lengthPendulumValue">1.0</span> m</span>
+                        </div>
+                        <input type="range" id="lengthPendulum" min="0.1" max="5.0" step="0.1" value="1.0"
+                            class="w-full">
+                    </div>
+                    <!-- Angle -->
+                    <div>
+                        <div class="flex justify-between text-xs mb-1.5">
+                            <label class="font-medium text-slate-600 dark:text-slate-300">Biên độ Góc (A₀)</label>
+                            <span class="font-mono text-cyan-600 dark:text-cyan-400"><span
+                                    id="angleAmplitudeValue">10.0</span> độ</span>
+                        </div>
+                        <input type="range" id="angleAmplitude" min="1.0" max="30.0" step="1.0" value="10.0"
+                            class="w-full">
+                    </div>
+                    <!-- Gravity -->
+                    <div>
+                        <div class="flex justify-between text-xs mb-1.5">
+                            <label class="font-medium text-slate-600 dark:text-slate-300">Gia tốc (g)</label>
+                            <span class="font-mono text-cyan-600 dark:text-cyan-400"><span
+                                    id="gravityPendulumValue">9.8</span> m/s²</span>
+                        </div>
+                        <input type="range" id="gravityPendulum" min="9.0" max="10.0" step="0.01" value="9.8"
+                            class="w-full">
+                    </div>
+                </div>
+            </div>
 
-                <div class="mt-4 p-4 bg-indigo-50 rounded-lg border border-indigo-200">
-                    <h3 class="text-lg font-bold text-indigo-700 mb-2">Thông số tức thời</h3>
-                    <div class="grid grid-cols-4 gap-4 text-sm font-mono">
-                        <div id="displayTime"
-                            class="p-2 bg-white rounded-md shadow-sm border whitespace-nowrap overflow-hidden">Thời gian
-                            (t): 0.00 s</div>
-                        <div id="displayPosition"
-                            class="p-2 bg-white rounded-md shadow-sm border whitespace-nowrap overflow-hidden">Vị trí
-                            (x): 0.00 cm</div>
+        </div>
 
-                        <div id="displayPeriod"
-                            class="p-2 bg-white rounded-md shadow-sm border font-semibold text-purple-700 whitespace-nowrap overflow-hidden">
-                            Chu kỳ (T): 0.00 s</div>
-                        <div id="displayFrequency"
-                            class="p-2 bg-white rounded-md shadow-sm border font-semibold text-purple-700 whitespace-nowrap overflow-hidden">
-                            Tần số (f): 0.00 Hz</div>
+        <!-- Sidebar Footer -->
+        <div class="p-4 border-t border-slate-200 dark:border-slate-800 bg-slate-50 dark:bg-slate-900/50">
+            <button onclick="toggleDarkMode()"
+                class="w-full flex items-center justify-center gap-2 py-2 rounded-lg text-slate-500 hover:bg-slate-200 dark:hover:bg-slate-800 transition">
+                <i id="theme-icon" data-lucide="moon" class="w-4 h-4"></i>
+                <span class="text-xs font-medium uppercase">Toggle Theme</span>
+            </button>
+        </div>
+    </aside>
 
-                        <div id="displayKinetic"
-                            class="p-2 bg-green-50 border-green-300 border rounded-md shadow-sm font-semibold text-green-700 whitespace-nowrap overflow-hidden min-w-0">
-                            Eđ: 0.0000 J</div>
-                        <div id="displayPotential"
-                            class="p-2 bg-red-50 border-red-300 border rounded-md shadow-sm font-semibold text-red-700 whitespace-nowrap overflow-hidden min-w-0">
-                            Et: 0.0000 J</div>
+    <!-- MAIN CONTENT -->
+    <main class="flex-1 flex flex-col relative min-w-0">
 
-                        <div id="displayTotalEnergy"
-                            class="p-2 bg-blue-100 border-blue-400 border rounded-md shadow-sm col-span-2 font-bold text-base text-blue-700 whitespace-nowrap overflow-hidden min-w-0">
-                            Cơ năng (E = Eđ + Et): <span id="totalEnergyValue">0.0000</span> J (Không đổi)
+        <!-- Simulation Canvas Area -->
+        <div class="flex-1 relative bg-slate-50 dark:bg-[#0f172a] overflow-hidden">
+            <!-- Canvas -->
+            <canvas id="simCanvas" class="absolute inset-0 w-full h-full block"></canvas>
+
+            <!-- Floating HUD (Stats) -->
+            <div class="absolute top-4 right-4 w-64 hud-panel rounded-xl p-4 shadow-xl z-10 backdrop-blur-md">
+                <h3
+                    class="text-xs font-bold text-slate-500 dark:text-slate-400 uppercase tracking-wider mb-3 border-b border-slate-200 dark:border-slate-700 pb-2">
+                    Real-time Data</h3>
+
+                <div class="space-y-3 font-mono text-sm">
+                    <div class="flex justify-between">
+                        <span class="text-slate-600 dark:text-slate-400">Time (t)</span>
+                        <span id="displayTime" class="font-bold text-slate-800 dark:text-white">0.00 s</span>
+                    </div>
+                    <div class="flex justify-between">
+                        <span class="text-slate-600 dark:text-slate-400" id="posLabel">Vị trí (x)</span>
+                        <span id="displayPosition" class="font-bold text-slate-800 dark:text-white">0.00 cm</span>
+                    </div>
+
+                    <div class="w-full h-px bg-slate-200 dark:bg-slate-700 my-2"></div>
+
+                    <div class="flex justify-between">
+                        <span class="text-purple-600 dark:text-purple-400">Chu kỳ (T)</span>
+                        <span id="displayPeriod" class="font-bold">0.00 s</span>
+                    </div>
+                    <div class="flex justify-between">
+                        <span class="text-purple-600 dark:text-purple-400">Tần số (f)</span>
+                        <span id="displayFrequency" class="font-bold">0.00 Hz</span>
+                    </div>
+
+                    <div class="w-full h-px bg-slate-200 dark:bg-slate-700 my-2"></div>
+
+                    <div class="space-y-1">
+                        <div class="flex justify-between text-xs">
+                            <span class="text-green-600 dark:text-green-500">Động năng (Eđ)</span>
+                            <span id="displayKinetic">0.00 J</span>
+                        </div>
+                        <!-- Progress bar for Kinetic -->
+                        <div class="w-full h-1.5 bg-slate-200 dark:bg-slate-700 rounded-full overflow-hidden">
+                            <div id="barKinetic" class="h-full bg-green-500 rounded-full" style="width: 0%"></div>
                         </div>
                     </div>
+
+                    <div class="space-y-1">
+                        <div class="flex justify-between text-xs">
+                            <span class="text-red-600 dark:text-red-500">Thế năng (Et)</span>
+                            <span id="displayPotential">0.00 J</span>
+                        </div>
+                        <!-- Progress bar for Potential -->
+                        <div class="w-full h-1.5 bg-slate-200 dark:bg-slate-700 rounded-full overflow-hidden">
+                            <div id="barPotential" class="h-full bg-red-500 rounded-full" style="width: 0%"></div>
+                        </div>
+                    </div>
+
+                    <div
+                        class="pt-2 text-xs flex justify-between items-center text-blue-600 dark:text-blue-400 font-bold border-t border-slate-200 dark:border-slate-700 mt-2">
+                        <span>Cơ năng (E)</span>
+                        <span id="totalEnergyValue">0.0000</span> J
+                    </div>
                 </div>
             </div>
         </div>
 
-        <div class="mt-8">
-            <h2 class="text-xl font-bold text-gray-700 border-b pb-2 mb-4">Đồ Thị Năng Lượng - Thời Gian (Eđ + Et = E)
-            </h2>
-            <canvas id="energyGraphCanvas" class="energy-graph-canvas w-full h-80"></canvas>
+        <!-- Energy Graph (Bottom Panel) -->
+        <div
+            class="h-48 flex-shrink-0 border-t border-slate-200 dark:border-slate-800 bg-white dark:bg-[#1e293b] relative">
+            <h3 class="absolute top-2 left-4 text-xs font-bold text-slate-400 z-10">ENERGY GRAPH (E = Eđ + Et)</h3>
+            <canvas id="energyGraphCanvas" class="w-full h-full block"></canvas>
         </div>
-    </div>
+
+    </main>
 
     <script src="js/theme.js"></script>
     <script type="module">
@@ -263,10 +350,10 @@
         // Các giá trị cos(omega*t) cho vị trí đặc biệt
         const SPECIAL_COS_VALUES = [1.0, Math.sqrt(3) / 2, Math.sqrt(2) / 2, 0.5, 0.0, -0.5, -Math.sqrt(2) / 2, -Math.sqrt(3) / 2, -1.0];
         const STEP_TIME_FRACTION = 1 / 80;
-        const GRAPH_WINDOW_TIME = 5.0; // Hiển thị 5 giây trên đồ thị tại một thời điểm
-        const MAX_PENDULUM_L_INPUT = 5.0; // Giá trị max của slider l
+        const GRAPH_WINDOW_TIME = 5.0;
+        const MAX_PENDULUM_L_INPUT = 5.0;
 
-        // --- CÁC BIẾN TRẠNG THÁI ---
+        // --- CÁC BIẾN TRẠNG thái ---
         let animationFrameId;
         let isPlaying = false;
         let currentTime = 0;
@@ -282,6 +369,9 @@
         const restartBtn = document.getElementById('restartBtn');
         const stepForwardBtn = document.getElementById('stepForwardBtn');
         const stepBackBtn = document.getElementById('stepBackBtn');
+        // Visual Bars
+        const barKinetic = document.getElementById('barKinetic');
+        const barPotential = document.getElementById('barPotential');
 
         // Params
         const params = {
@@ -289,11 +379,8 @@
             m_pendulum: 0.5, l: 1.0, A0: 10 * PI / 180, g_pendulum: 9.8
         };
 
-        // Graph data: Lưu trữ lịch sử, nhưng chỉ vẽ cửa sổ thời gian
-        // E (Cơ năng) sẽ lưu giá trị HẰNG SỐ (E_constant) để đồ thị là đường thẳng
         const energyData = { t: [], Ed: [], Et: [], E: [] };
 
-        // --- HÀM HỖ TRỢ ---
         const round = (num, dp) => Math.round(num * Math.pow(10, dp)) / Math.pow(10, dp);
         const degToRad = (deg) => deg * PI / 180;
         const radToDeg = (rad) => rad * 180 / PI;
@@ -308,12 +395,10 @@
                 const A = params.A;
                 omega = Math.sqrt(k / m);
                 T = 2 * PI / omega;
-                // x=0 tại VTCB, chiều dương hướng ra xa điểm cố định (xuống hoặc phải)
                 x = A * Math.cos(omega * time);
                 v = -A * omega * Math.sin(omega * time);
                 Ed = 0.5 * m * v * v;
                 Et = 0.5 * k * x * x;
-                // E_constant là cơ năng bảo toàn (tính bằng năng lượng cực đại tại biên)
                 E_constant = 0.5 * k * A * A;
             } else {
                 const m = params.m_pendulum;
@@ -322,27 +407,20 @@
                 const g = params.g_pendulum;
                 omega = Math.sqrt(g / l);
                 T = 2 * PI / omega;
-                // x là góc alpha
                 x = A0 * Math.cos(omega * time);
                 const omega_angle = -A0 * omega * Math.sin(omega * time);
 
-                // Tính thế năng (lấy mốc tại VTCB)
                 const h = l * (1 - Math.cos(x));
                 Et = m * g * h;
 
-                // Tính động năng (v = l * omega_angle)
                 const v_sq = (l * omega_angle) ** 2;
                 Ed = 0.5 * m * v_sq;
 
-                // E_constant là cơ năng bảo toàn (tính bằng năng lượng cực đại tại biên)
                 const h_max = l * (1 - Math.cos(A0));
                 E_constant = m * g * h_max;
             }
 
-            // Tính tổng năng lượng hiện tại (chỉ để hiển thị text tức thời, không dùng để vẽ đồ thị E)
             E_current = Ed + Et;
-
-            // Tính tần số f
             const f = 1 / T;
 
             return { T, f, omega, x, Ed, Et, E_constant: Math.max(1e-6, E_constant), E_current: Math.max(1e-6, E_current) };
@@ -350,48 +428,55 @@
 
         // --- VẼ TRỰC QUAN (SIMULATION) ---
         function resizeCanvas() {
-            simCanvas.width = simCanvas.offsetWidth;
-            simCanvas.height = simCanvas.offsetHeight;
-            energyGraphCanvas.width = energyGraphCanvas.offsetWidth;
-            energyGraphCanvas.height = energyGraphCanvas.offsetHeight;
+            // Updated to use clientWidth/Height for responsiveness
+            simCanvas.width = simCanvas.clientWidth;
+            simCanvas.height = simCanvas.clientHeight;
+            energyGraphCanvas.width = energyGraphCanvas.clientWidth;
+            energyGraphCanvas.height = energyGraphCanvas.clientHeight;
             drawGraph();
             updateStateAndDraw(currentTime);
         }
 
+        // Use ResizeObserver for more robust resizing of flex elements
+        const resizeObserver = new ResizeObserver(() => {
+            resizeCanvas();
+        });
+        resizeObserver.observe(simCanvas.parentElement); // Observe the container
+
         function drawSpringPendulum(time, x, A, L0, w, h) {
             ctxSim.clearRect(0, 0, w, h);
-
-            // Xử lý chung: Tỷ lệ và Vị trí
             const PADDING = 40;
             const BLOCK_SIZE = 40;
-            const FIXED_SIZE = 100; // Kích thước tường/trần cố định
 
-            // Phân biệt vẽ theo loại lò xo
             if (params.springType === 'vertical') {
-                // --- LÒ XO THẲNG ĐỨNG ---
                 const C_x = w / 2;
                 const Fixed_Y = PADDING;
 
                 const deltaL = params.m * params.g_spring / params.k;
                 const L_eq = params.L0_spring + deltaL;
-                const totalSimHeight = h - 2 * PADDING - BLOCK_SIZE;
+
+                // Allow spring to take up 80% of height max
+                const totalSimHeight = h * 0.8;
+                // Need to estimate max extension to scale properly
                 const maxSimLength = L_eq + params.A;
-                const SCALE_FACTOR = maxSimLength > 0.01 ? totalSimHeight / maxSimLength : 100;
+
+                // Dynamic scaling
+                const SCALE_FACTOR = totalSimHeight / (maxSimLength * 1.2);
                 const L_eq_px = L_eq * SCALE_FACTOR;
 
                 const Y_eq_center = Fixed_Y + L_eq_px + BLOCK_SIZE / 2;
-                const Y_current_center = Y_eq_center + x * SCALE_FACTOR; // x dương hướng xuống
+                const Y_current_center = Y_eq_center + x * SCALE_FACTOR;
                 const Y_current_top = Y_current_center - BLOCK_SIZE / 2;
 
-                // Vẽ Điểm cố định
-                ctxSim.fillStyle = '#4a5568';
+                // Wall
+                ctxSim.fillStyle = '#475569';
                 ctxSim.fillRect(C_x - 50, 0, 100, Fixed_Y);
 
-                // Vẽ Lò xo
+                // Spring
                 const spring_y_end = Y_current_top;
                 const numCoils = 15;
                 const coilHeight = spring_y_end - Fixed_Y;
-                ctxSim.strokeStyle = '#4f46e5';
+                ctxSim.strokeStyle = '#06b6d4'; // Cyan-500
                 ctxSim.lineWidth = 3;
                 ctxSim.beginPath();
                 ctxSim.moveTo(C_x, Fixed_Y);
@@ -403,71 +488,73 @@
                 ctxSim.lineTo(C_x, spring_y_end);
                 ctxSim.stroke();
 
-                // Vẽ Vật
-                ctxSim.fillStyle = '#3b82f6';
-                ctxSim.fillRect(C_x - BLOCK_SIZE / 2, Y_current_top, BLOCK_SIZE, BLOCK_SIZE);
-                ctxSim.strokeStyle = '#1e40af';
+                // Object
+                ctxSim.fillStyle = '#3b82f6'; // Blue-500
                 ctxSim.lineWidth = 2;
+                ctxSim.strokeStyle = '#1d4ed8'; // Blue-700
+                ctxSim.fillRect(C_x - BLOCK_SIZE / 2, Y_current_top, BLOCK_SIZE, BLOCK_SIZE);
                 ctxSim.strokeRect(C_x - BLOCK_SIZE / 2, Y_current_top, BLOCK_SIZE, BLOCK_SIZE);
 
-                // Vẽ Trục VTCB và Biên độ
-                ctxSim.strokeStyle = 'rgba(0, 0, 0, 0.3)';
+                // Center of Gravity Dot (Green if special)
+                const isSpecial = currentSpecialLabel !== null;
+                ctxSim.fillStyle = isSpecial ? '#22c55e' : '#ef4444';
+                ctxSim.beginPath();
+                ctxSim.arc(C_x, Y_current_top + BLOCK_SIZE / 2, isSpecial ? 5 : 3, 0, 2 * Math.PI);
+                ctxSim.fill();
+                if (isSpecial) {
+                    ctxSim.font = 'bold 12px Inter';
+                    ctxSim.fillStyle = '#22c55e';
+                    ctxSim.fillText(currentSpecialLabel, C_x + 10, Y_current_top + BLOCK_SIZE / 2 - 5);
+                }
+
+                // Axis Lines (Ghostly)
+                ctxSim.strokeStyle = 'rgba(100, 116, 139, 0.3)'; // Slate-500 with opacity
                 ctxSim.lineWidth = 1;
                 ctxSim.setLineDash([5, 5]);
-                // Ngang VTCB
-                ctxSim.beginPath(); ctxSim.moveTo(C_x - 100, Y_eq_center); ctxSim.lineTo(C_x + 100, Y_eq_center); ctxSim.stroke();
-                // Dọc
-                ctxSim.beginPath(); ctxSim.moveTo(C_x, Y_eq_center - params.A * SCALE_FACTOR - 20); ctxSim.lineTo(C_x, Y_eq_center + params.A * SCALE_FACTOR + 20); ctxSim.stroke();
-                ctxSim.setLineDash([]);
+                // EQ Line
+                ctxSim.beginPath(); ctxSim.moveTo(C_x - 80, Y_eq_center); ctxSim.lineTo(C_x + 80, Y_eq_center); ctxSim.stroke();
 
-                ctxSim.fillStyle = 'rgba(0, 0, 0, 0.7)'; ctxSim.font = '12px Inter'; ctxSim.textAlign = 'left';
-                ctxSim.fillText('VTCB', C_x + 40, Y_eq_center + 5);
-
-                // Biên độ
+                // Amplitude Markers
                 const A_px = params.A * SCALE_FACTOR;
-                ctxSim.strokeStyle = 'rgba(255, 0, 0, 0.7)'; ctxSim.lineWidth = 1; ctxSim.fillStyle = 'red';
-                // +A (dưới)
-                ctxSim.beginPath(); ctxSim.moveTo(C_x - 20, Y_eq_center + A_px); ctxSim.lineTo(C_x + 20, Y_eq_center + A_px); ctxSim.stroke();
-                ctxSim.textAlign = 'right'; ctxSim.fillText(`+A`, C_x - 25, Y_eq_center + A_px + 5);
-                // -A (trên)
-                ctxSim.beginPath(); ctxSim.moveTo(C_x - 20, Y_eq_center - A_px); ctxSim.lineTo(C_x + 20, Y_eq_center - A_px); ctxSim.stroke();
-                ctxSim.fillText(`-A`, C_x - 25, Y_eq_center - A_px + 5);
+                ctxSim.strokeStyle = 'rgba(239, 68, 68, 0.5)'; // Red-500
+                // +A
+                ctxSim.beginPath(); ctxSim.moveTo(C_x - 30, Y_eq_center + A_px); ctxSim.lineTo(C_x + 30, Y_eq_center + A_px); ctxSim.stroke();
+                // -A
+                ctxSim.beginPath(); ctxSim.moveTo(C_x - 30, Y_eq_center - A_px); ctxSim.lineTo(C_x + 30, Y_eq_center - A_px); ctxSim.stroke();
 
-                // Marker vị trí hiện tại (x cm)
-                ctxSim.fillStyle = '#f97316'; ctxSim.textAlign = 'left';
-                ctxSim.fillText(`x=${round(x * 100, 1)} cm`, C_x + 30, Y_current_center + 5);
-                ctxSim.beginPath(); ctxSim.arc(C_x, Y_current_center, 4, 0, 2 * PI); ctxSim.fill();
+                ctxSim.fillStyle = '#94a3b8'; ctxSim.font = '12px Inter'; ctxSim.textAlign = 'left';
+                ctxSim.fillText('VTCB', C_x + 45, Y_eq_center + 4);
 
+                ctxSim.setLineDash([]);
             } else {
-                // --- LÒ XO NẰM NGANG ---
+                // --- HORIZONTAL ---
                 const Fixed_X = PADDING;
                 const Center_Y = h / 2;
 
-                // Vị trí cân bằng là L0 (do nằm ngang không có deltaL do trọng lực trong phương chuyển động)
                 const L_eq = params.L0_spring;
-                const totalSimWidth = w - 2 * PADDING - BLOCK_SIZE;
+                const totalSimWidth = w * 0.8;
                 const maxSimLength = L_eq + params.A;
-                const SCALE_FACTOR = maxSimLength > 0.01 ? totalSimWidth / maxSimLength : 100;
+                const SCALE_FACTOR = totalSimWidth / (maxSimLength * 1.2);
 
                 const L_eq_px = L_eq * SCALE_FACTOR;
                 const X_eq_center = Fixed_X + L_eq_px + BLOCK_SIZE / 2;
-                const X_current_center = X_eq_center + x * SCALE_FACTOR; // x dương hướng phải
+                const X_current_center = X_eq_center + x * SCALE_FACTOR;
                 const X_current_left = X_current_center - BLOCK_SIZE / 2;
 
-                // Vẽ Tường (Bên trái)
-                ctxSim.fillStyle = '#4a5568';
+                // Wall
+                ctxSim.fillStyle = '#475569';
                 ctxSim.fillRect(0, Center_Y - 50, Fixed_X, 100);
 
-                // Vẽ Sàn
-                ctxSim.strokeStyle = '#9ca3af'; ctxSim.lineWidth = 2;
+                // Floor
+                ctxSim.strokeStyle = '#94a3b8'; ctxSim.lineWidth = 2;
                 ctxSim.beginPath(); ctxSim.moveTo(0, Center_Y + BLOCK_SIZE / 2); ctxSim.lineTo(w, Center_Y + BLOCK_SIZE / 2); ctxSim.stroke();
 
-                // Vẽ Lò xo
+                // Spring
                 const spring_x_end = X_current_left;
                 const numCoils = 15;
-                const coilWidth = 20; // Chiều cao cuộn trong vẽ ngang
                 const coilLength = spring_x_end - Fixed_X;
-                ctxSim.strokeStyle = '#4f46e5'; ctxSim.lineWidth = 3;
+                ctxSim.strokeStyle = '#06b6d4';
+                ctxSim.lineWidth = 3;
                 ctxSim.beginPath(); ctxSim.moveTo(Fixed_X, Center_Y);
                 for (let i = 0; i < numCoils; i++) {
                     const x_pos = Fixed_X + (coilLength / numCoils) * (i + 0.5);
@@ -477,140 +564,144 @@
                 ctxSim.lineTo(spring_x_end, Center_Y);
                 ctxSim.stroke();
 
-                // Vẽ Vật
+                // Object
                 ctxSim.fillStyle = '#3b82f6';
                 ctxSim.fillRect(X_current_left, Center_Y - BLOCK_SIZE / 2, BLOCK_SIZE, BLOCK_SIZE);
-                ctxSim.strokeStyle = '#1e40af'; ctxSim.lineWidth = 2;
+                ctxSim.strokeStyle = '#1d4ed8'; ctxSim.lineWidth = 2;
                 ctxSim.strokeRect(X_current_left, Center_Y - BLOCK_SIZE / 2, BLOCK_SIZE, BLOCK_SIZE);
 
-                // Vẽ Trục VTCB và Biên độ
-                ctxSim.strokeStyle = 'rgba(0, 0, 0, 0.3)'; ctxSim.lineWidth = 1; ctxSim.setLineDash([5, 5]);
+                // Center of Gravity Dot (Green if special)
+                const isSpecial = currentSpecialLabel !== null;
+                ctxSim.fillStyle = isSpecial ? '#22c55e' : '#ef4444';
+                ctxSim.beginPath();
+                ctxSim.arc(X_current_center, Center_Y, isSpecial ? 5 : 3, 0, 2 * Math.PI);
+                ctxSim.fill();
+                if (isSpecial) {
+                    ctxSim.font = 'bold 12px Inter';
+                    ctxSim.fillStyle = '#22c55e';
+                    ctxSim.fillText(currentSpecialLabel, X_current_center + 10, Center_Y - 10);
+                }
 
-                // Dọc VTCB
+                // EQ Line
+                ctxSim.strokeStyle = 'rgba(100, 116, 139, 0.3)'; ctxSim.setLineDash([5, 5]);
                 ctxSim.beginPath(); ctxSim.moveTo(X_eq_center, Center_Y - 60); ctxSim.lineTo(X_eq_center, Center_Y + 60); ctxSim.stroke();
-                // Ngang Trục
-                ctxSim.beginPath(); ctxSim.moveTo(X_eq_center - params.A * SCALE_FACTOR - 20, Center_Y); ctxSim.lineTo(X_eq_center + params.A * SCALE_FACTOR + 20, Center_Y); ctxSim.stroke();
                 ctxSim.setLineDash([]);
-
-                ctxSim.fillStyle = 'rgba(0, 0, 0, 0.7)'; ctxSim.font = '12px Inter'; ctxSim.textAlign = 'center';
-                ctxSim.fillText('VTCB', X_eq_center, Center_Y - 70);
-
-                // Biên độ
-                const A_px = params.A * SCALE_FACTOR;
-                ctxSim.strokeStyle = 'rgba(255, 0, 0, 0.7)'; ctxSim.lineWidth = 1; ctxSim.fillStyle = 'red';
-
-                // +A (Phải)
-                ctxSim.beginPath(); ctxSim.moveTo(X_eq_center + A_px, Center_Y - 20); ctxSim.lineTo(X_eq_center + A_px, Center_Y + 20); ctxSim.stroke();
-                ctxSim.fillText(`+A`, X_eq_center + A_px, Center_Y - 30);
-
-                // -A (Trái)
-                ctxSim.beginPath(); ctxSim.moveTo(X_eq_center - A_px, Center_Y - 20); ctxSim.lineTo(X_eq_center - A_px, Center_Y + 20); ctxSim.stroke();
-                ctxSim.fillText(`-A`, X_eq_center - A_px, Center_Y - 30);
-
-                // Marker vị trí hiện tại
-                ctxSim.fillStyle = '#f97316'; ctxSim.textAlign = 'center';
-                ctxSim.fillText(`x=${round(x * 100, 1)} cm`, X_current_center, Center_Y + BLOCK_SIZE + 15);
-                ctxSim.beginPath(); ctxSim.arc(X_current_center, Center_Y, 4, 0, 2 * PI); ctxSim.fill();
             }
         }
 
         function drawSimplePendulum(time, alpha, A0, l, w, h) {
             ctxSim.clearRect(0, 0, w, h);
             const C_x = w / 2;
-            const C_y = 50;
+            const C_y = 40;
             const BLOCK_RADIUS = 20;
 
-            // Tính độ dài pixel dựa trên giá trị l
-            const MAX_VISUAL_L = Math.min(h - C_y - 50, C_x * 0.9);
-            // L_PX sẽ tỷ lệ thuận với l so với giá trị l max (5.0m)
+            // Scale L to fit 80% height Max
+            const MAX_VISUAL_L = h * 0.8;
             const L_PX = (l / MAX_PENDULUM_L_INPUT) * MAX_VISUAL_L;
 
             const x_mass = C_x + L_PX * Math.sin(alpha);
             const y_mass = C_y + L_PX * Math.cos(alpha);
 
-            // Vẽ Điểm treo cố định
-            ctxSim.fillStyle = '#4a5568';
+            // Ceiling
+            ctxSim.fillStyle = '#475569';
             ctxSim.fillRect(C_x - 50, 0, 100, C_y);
-            ctxSim.beginPath(); ctxSim.arc(C_x, C_y, 5, 0, 2 * PI); ctxSim.fill();
 
-            // Vẽ Dây treo
-            ctxSim.strokeStyle = '#4f46e5';
-            ctxSim.lineWidth = 3;
+            // Pivot
+            ctxSim.beginPath(); ctxSim.arc(C_x, C_y, 4, 0, 2 * PI); ctxSim.fillStyle = '#94a3b8'; ctxSim.fill();
+
+            // String
+            ctxSim.strokeStyle = '#64748b'; // Slate-500
+            ctxSim.lineWidth = 2;
             ctxSim.beginPath(); ctxSim.moveTo(C_x, C_y); ctxSim.lineTo(x_mass, y_mass); ctxSim.stroke();
 
-            // Vẽ Quả nặng
-            ctxSim.fillStyle = '#f97316';
+            // Mass
+            ctxSim.fillStyle = '#f97316'; // Orange
             ctxSim.beginPath(); ctxSim.arc(x_mass, y_mass, BLOCK_RADIUS, 0, 2 * PI); ctxSim.fill();
-            ctxSim.strokeStyle = '#a16207'; ctxSim.lineWidth = 2; ctxSim.stroke();
+            ctxSim.strokeStyle = '#c2410c'; ctxSim.lineWidth = 2; ctxSim.stroke();
 
-            // VTCB (Trục Y)
-            ctxSim.strokeStyle = 'rgba(0,0,0,0.3)';
-            ctxSim.setLineDash([5, 5]);
-            ctxSim.beginPath(); ctxSim.moveTo(C_x, C_y); ctxSim.lineTo(C_x, C_y + L_PX + 20); ctxSim.stroke();
-            ctxSim.setLineDash([]);
+            // Center of Gravity Dot (Green if special)
+            const isSpecial = currentSpecialLabel !== null;
+            ctxSim.fillStyle = isSpecial ? '#22c55e' : '#ef4444';
+            ctxSim.beginPath();
+            ctxSim.arc(x_mass, y_mass, isSpecial ? 5 : 3, 0, 2 * PI);
+            ctxSim.fill();
+            if (isSpecial) {
+                ctxSim.font = 'bold 12px Inter';
+                ctxSim.fillStyle = '#22c55e';
+                ctxSim.fillText(currentSpecialLabel, x_mass + 10, y_mass - 10);
+            }
 
-            // Cung dao động (Biên độ góc)
-            ctxSim.strokeStyle = 'rgba(255,0,0,0.4)';
+            // Angle Arc
+            ctxSim.strokeStyle = 'rgba(239, 68, 68, 0.3)';
             ctxSim.beginPath(); ctxSim.arc(C_x, C_y, L_PX, PI / 2 - A0, PI / 2 + A0); ctxSim.stroke();
-
-            // Nhãn góc
-            ctxSim.fillStyle = '#059669';
-            ctxSim.font = '14px Inter';
-            ctxSim.textAlign = 'center';
-            ctxSim.fillText(`α=${round(radToDeg(alpha), 1)}°`, x_mass, y_mass + BLOCK_RADIUS + 20);
         }
 
-        // --- VẼ ĐỒ THỊ NĂNG LƯỢNG (SCROLLING) ---
         function drawGraph() {
             const W = energyGraphCanvas.width;
             const H = energyGraphCanvas.height;
             ctxGraph.clearRect(0, 0, W, H);
 
-            const PADDING = 40;
-            const GRAPH_W = W - PADDING - 10;
-            const GRAPH_H = H - 2 * PADDING;
+            const PADDING_TOP = 20;
+            const PADDING_BOTTOM = 30;
+            const PADDING_LEFT = 40;
+            const PADDING_RIGHT = 10;
 
-            // Xác định cửa sổ thời gian hiển thị: [t_end - GRAPH_WINDOW_TIME, t_end]
+            const GRAPH_W = W - PADDING_LEFT - PADDING_RIGHT;
+            const GRAPH_H = H - PADDING_TOP - PADDING_BOTTOM;
+
             let t_end = Math.max(currentTime, GRAPH_WINDOW_TIME);
             let t_start = t_end - GRAPH_WINDOW_TIME;
 
-            // Cơ năng toàn phần (E_constant) dùng để scale trục Y
-            // Dùng E_constant (Năng lượng lý thuyết) cho trục Y cố định
             const { E_constant } = getPhysicsConstants(currentPendulum, 0);
             const maxE = E_constant * 1.2;
 
-            // Vẽ Trục
-            ctxGraph.strokeStyle = '#4a5568';
+            // Axes
+            ctxGraph.strokeStyle = '#94a3b8'; // Slate-400
             ctxGraph.lineWidth = 1;
             ctxGraph.beginPath();
-            ctxGraph.moveTo(PADDING, PADDING); // Top Y
-            ctxGraph.lineTo(PADDING, H - PADDING); // Bottom Y (Origin)
-            ctxGraph.lineTo(W - 10, H - PADDING); // Right X
+            ctxGraph.moveTo(PADDING_LEFT, PADDING_TOP);
+            ctxGraph.lineTo(PADDING_LEFT, H - PADDING_BOTTOM);
+            ctxGraph.lineTo(W - PADDING_RIGHT, H - PADDING_BOTTOM);
             ctxGraph.stroke();
 
-            // Label trục
-            ctxGraph.fillStyle = '#4a5568';
+            // Text
+            ctxGraph.fillStyle = '#64748b';
             ctxGraph.font = '10px Inter';
             ctxGraph.textAlign = 'right';
-            ctxGraph.fillText('Thời gian (s)', W - 10, H - PADDING + 30);
-            ctxGraph.textAlign = 'left';
-            ctxGraph.fillText('Năng lượng (J)', 5, PADDING - 10);
-            ctxGraph.fillText(round(E_constant, 3), 0, H - PADDING - (E_constant / maxE) * GRAPH_H);
-            ctxGraph.fillText('0', 5, H - PADDING);
+            ctxGraph.fillText('Time (s)', W - 10, H - 10);
 
             if (energyData.t.length === 0) return;
 
-            // Hàm chuyển đổi tọa độ
-            const getX = (t) => PADDING + ((t - t_start) / GRAPH_WINDOW_TIME) * GRAPH_W;
-            const getY = (e) => H - PADDING - (e / maxE) * GRAPH_H;
+            const getX = (t) => PADDING_LEFT + ((t - t_start) / GRAPH_WINDOW_TIME) * GRAPH_W;
+            const getY = (e) => H - PADDING_BOTTOM - (e / maxE) * GRAPH_H;
 
-            // Clip region để đồ thị không vẽ đè lên trục
+            // --- GRID & LABELS ---
+            ctxGraph.textAlign = 'center';
+            ctxGraph.textBaseline = 'top';
+            ctxGraph.font = '10px Inter';
+            ctxGraph.fillStyle = '#94a3b8';
+            ctxGraph.strokeStyle = document.documentElement.classList.contains('dark') ? 'rgba(148, 163, 184, 0.1)' : 'rgba(0, 0, 0, 0.05)';
+            ctxGraph.lineWidth = 1;
+
+            const tStartGrid = Math.ceil(t_start);
+            const tEndGrid = Math.floor(t_end);
+
+            for (let t = tStartGrid; t <= tEndGrid; t++) {
+                const x = getX(t);
+                // Grid Line
+                ctxGraph.beginPath();
+                ctxGraph.moveTo(x, PADDING_TOP);
+                ctxGraph.lineTo(x, H - PADDING_BOTTOM);
+                ctxGraph.stroke();
+
+                // Label
+                ctxGraph.fillText(t, x, H - PADDING_BOTTOM + 4);
+            }
+
+            // Clip
             ctxGraph.save();
-            ctxGraph.beginPath();
-            ctxGraph.rect(PADDING, PADDING, GRAPH_W, GRAPH_H);
-            ctxGraph.clip();
+            ctxGraph.beginPath(); ctxGraph.rect(PADDING_LEFT, PADDING_TOP, GRAPH_W, GRAPH_H); ctxGraph.clip();
 
-            // Vẽ các đường
             const drawLine = (dataArr, color) => {
                 ctxGraph.strokeStyle = color;
                 ctxGraph.lineWidth = 2;
@@ -620,48 +711,65 @@
                     const t = energyData.t[i];
                     if (t < t_start) continue;
                     if (t > t_end) break;
-
                     const x = getX(t);
                     const y = getY(dataArr[i]);
-                    if (!started) {
-                        ctxGraph.moveTo(x, y);
-                        started = true;
-                    } else {
-                        ctxGraph.lineTo(x, y);
-                    }
+                    if (!started) { ctxGraph.moveTo(x, y); started = true; }
+                    else { ctxGraph.lineTo(x, y); }
                 }
                 ctxGraph.stroke();
             };
 
-            drawLine(energyData.Et, 'red'); // Thế năng (Et)
-            drawLine(energyData.Ed, 'green'); // Động năng (Ed)
-            // Cập nhật: Vẽ Cơ năng (E) bằng giá trị HẰNG SỐ (E_constant)
-            drawLine(energyData.E, 'blue');
+            drawLine(energyData.Et, '#ef4444'); // Red
+            drawLine(energyData.Ed, '#22c55e'); // Green
+            drawLine(energyData.E, '#3b82f6'); // Blue
 
             ctxGraph.restore();
-
-            // Vẽ mốc thời gian hiện tại
-            if (currentTime >= t_start && currentTime <= t_end) {
-                const curX = getX(currentTime);
-                ctxGraph.strokeStyle = '#333';
-                ctxGraph.setLineDash([4, 4]);
-                ctxGraph.beginPath();
-                ctxGraph.moveTo(curX, PADDING);
-                ctxGraph.lineTo(curX, H - PADDING);
-                ctxGraph.stroke();
-                ctxGraph.setLineDash([]);
-            }
-
-            // Chú thích
-            ctxGraph.font = '12px Inter';
-            ctxGraph.textAlign = 'right';
-            const legendX = W - 20;
-            ctxGraph.fillStyle = 'green'; ctxGraph.fillText('Động năng (Eđ)', legendX, PADDING + 10);
-            ctxGraph.fillStyle = 'red'; ctxGraph.fillText('Thế năng (Et)', legendX, PADDING + 25);
-            ctxGraph.fillStyle = 'blue'; ctxGraph.fillText('Cơ năng (E)', legendX, PADDING + 40);
         }
 
-        // --- CẬP NHẬT TRẠNG THÁI ---
+        function updateStateAndDraw(time) {
+            const { T, f, x, Ed, Et, E_constant, E_current } = getPhysicsConstants(currentPendulum, time);
+
+            const posDisplay = currentPendulum === 'spring' ? x * 100 : radToDeg(x);
+            const unit = currentPendulum === 'spring' ? 'cm' : '°';
+
+            // Update HUD
+            document.getElementById('displayTime').textContent = `${round(time, 2)} s`;
+            document.getElementById('posLabel').textContent = currentPendulum === 'spring' ? 'Vị trí (x)' : 'Góc (α)';
+            document.getElementById('displayPosition').textContent = `${round(posDisplay, 2)} ${unit}`;
+            document.getElementById('displayPeriod').textContent = `${round(T, 3)} s`;
+            document.getElementById('displayFrequency').textContent = `${round(f, 3)} Hz`;
+
+            document.getElementById('displayKinetic').textContent = `${round(Ed, 4)} J`;
+            document.getElementById('displayPotential').textContent = `${round(Et, 4)} J`;
+            document.getElementById('totalEnergyValue').textContent = round(E_constant, 4);
+
+            // Update Progress Bars
+            const pKinetic = Math.min(100, (Ed / E_constant) * 100);
+            const pPotential = Math.min(100, (Et / E_constant) * 100);
+            barKinetic.style.width = `${pKinetic}%`;
+            barPotential.style.width = `${pPotential}%`;
+
+            if (currentPendulum === 'spring') {
+                drawSpringPendulum(time, x, params.A, params.L0_spring, simCanvas.width, simCanvas.height);
+            } else {
+                drawSimplePendulum(time, x, params.A0, params.l, simCanvas.width, simCanvas.height);
+            }
+
+            if (energyData.t.length === 0 || time > energyData.t[energyData.t.length - 1]) {
+                energyData.t.push(time);
+                energyData.Ed.push(Ed);
+                energyData.Et.push(Et);
+                energyData.E.push(E_constant);
+
+                while (energyData.t.length > 0 && energyData.t[0] < time - GRAPH_WINDOW_TIME - 2) {
+                    energyData.t.shift();
+                    energyData.Ed.shift(); energyData.Et.shift(); energyData.E.shift();
+                }
+            }
+            drawGraph();
+        }
+
+        // --- GAME LOOP ---
         let lastTime = 0;
         function updateSimulation(timestamp) {
             if (!isPlaying) { lastTime = timestamp; return; }
@@ -672,65 +780,18 @@
             animationFrameId = requestAnimationFrame(updateSimulation);
         }
 
-        function updateStateAndDraw(time) {
-            // Lấy T, f, x, Ed, Et, E_constant (max lý thuyết), và E_current (Ed+Et)
-            const { T, f, x, Ed, Et, E_constant, E_current } = getPhysicsConstants(currentPendulum, time);
-
-            const posDisplay = currentPendulum === 'spring' ? x * 100 : radToDeg(x);
-            const unit = currentPendulum === 'spring' ? 'cm' : '°';
-            const label = currentPendulum === 'spring' ? 'x' : 'α';
-
-            document.getElementById('displayTime').textContent = `Thời gian (t): ${round(time, 2)} s`;
-            document.getElementById('displayPosition').textContent = `Vị trí (${label}): ${round(posDisplay, 2)} ${unit}`;
-
-            // Cập nhật giá trị Chu kỳ và Tần số
-            document.getElementById('displayPeriod').textContent = `Chu kỳ (T): ${round(T, 3)} s`;
-            document.getElementById('displayFrequency').textContent = `Tần số (f): ${round(f, 3)} Hz`;
-
-            // Cập nhật giá trị Động năng và Thế năng (Đã rút gọn nhãn hiển thị)
-            document.getElementById('displayKinetic').textContent = `Eđ: ${round(Ed, 4)} J`;
-            document.getElementById('displayPotential').textContent = `Et: ${round(Et, 4)} J`;
-
-            // Cập nhật: Hiển thị giá trị Cơ năng LÝ THUYẾT KHÔNG ĐỔI (E_constant)
-            document.getElementById('totalEnergyValue').textContent = round(E_constant, 4);
-
-            if (currentPendulum === 'spring') {
-                drawSpringPendulum(time, x, params.A, params.L0_spring, simCanvas.width, simCanvas.height);
-            } else {
-                // Truyền tham số l vào hàm vẽ con lắc đơn
-                drawSimplePendulum(time, x, params.A0, params.l, simCanvas.width, simCanvas.height);
-            }
-
-            if (energyData.t.length === 0 || time > energyData.t[energyData.t.length - 1]) {
-                energyData.t.push(time);
-                energyData.Ed.push(Ed);
-                energyData.Et.push(Et);
-                // Cập nhật: LƯU GIÁ TRỊ CƠ NĂNG KHÔNG ĐỔI (E_constant) để vẽ đường thẳng hoàn hảo
-                energyData.E.push(E_constant);
-
-                maxEnergy = Math.max(maxEnergy, E_constant * 1.05);
-
-                while (energyData.t.length > 0 && energyData.t[0] < time - GRAPH_WINDOW_TIME - 2) {
-                    energyData.t.shift();
-                    energyData.Ed.shift();
-                    energyData.Et.shift();
-                    energyData.E.shift();
-                }
-            }
-            drawGraph();
-        }
-
-        // --- ĐIỀU KHIỂN & BƯỚC NHẢY ---
         function togglePlayPause() {
             isPlaying = !isPlaying;
             if (isPlaying) {
-                playPauseBtn.textContent = '⏸ Tạm dừng';
+                playPauseBtn.innerHTML = '<i data-lucide="pause" class="w-4 h-4 fill-current"></i> <span class="text-sm">Tạm dừng</span>';
+                lucide.createIcons();
                 stepForwardBtn.disabled = true;
                 stepBackBtn.disabled = true;
                 lastTime = performance.now();
                 animationFrameId = requestAnimationFrame(updateSimulation);
             } else {
-                playPauseBtn.textContent = '▶ Chơi';
+                playPauseBtn.innerHTML = '<i data-lucide="play" class="w-4 h-4 fill-current"></i> <span class="text-sm">Chạy</span>';
+                lucide.createIcons();
                 stepForwardBtn.disabled = false;
                 stepBackBtn.disabled = false;
                 cancelAnimationFrame(animationFrameId);
@@ -744,50 +805,111 @@
             updateStateAndDraw(0);
         }
 
+        // --- STEP LOGIC ---
+        // Special values relative to Amplitude: 0, 0.5, 0.707, 0.866, 1
+        const SPECIAL_RATIOS = [
+            { val: 0, label: "0" },
+            { val: 0.5, label: "A/2" },
+            { val: Math.sqrt(2) / 2, label: "A√2/2" },
+            { val: Math.sqrt(3) / 2, label: "A√3/2" },
+            { val: 1, label: "A" }
+        ];
+
+        let currentSpecialLabel = null; // To track if we are at a special spot
+
         function calculateStepTime(direction) {
             if (isPlaying) return;
             const { T, omega } = getPhysicsConstants(currentPendulum, currentTime);
             if (!T || !omega) return;
 
-            const standardStep = direction * T * STEP_TIME_FRACTION;
-            let targetTime = currentTime + standardStep;
-            let bestJumpTime = null;
+            // Standard step: T/80
+            const nominalDt = T / 80;
+            const targetT = currentTime + direction * nominalDt;
+
+            // Find closest special time
+            // x = A * cos(omega * t) -> cos(omega * t) = x/A
+            // We correspond ratios to phases.
+            // But we can also checking current phase.
+            // Phase = omega * t
+            // Target Phase = omega * targetT
+
+            let bestTime = targetT;
             let minDiff = Infinity;
+            let foundLabel = null;
 
-            for (let cosVal of SPECIAL_COS_VALUES) {
-                const phiBase = Math.acos(Math.max(-1, Math.min(1, cosVal)));
-                const phases = [phiBase];
-                if (phiBase > 0 && phiBase < PI) phases.push(2 * PI - phiBase);
+            // Search range: current to target + some buffer to "snap"
+            // Actually, we want to "land" on a special value if we pass it or get close.
 
-                for (let phi of phases) {
-                    let t_spec_base = phi / omega;
-                    let k = Math.round((currentTime - t_spec_base) / T);
-                    let t_spec = t_spec_base + k * T;
+            // Normalize phase to 0..2PI
+            // We just check cos(phase) against ratios.
 
-                    if (Math.abs(t_spec - currentTime) > T / 2) {
-                        t_spec = t_spec_base + (k + 1) * T;
-                        if (Math.abs(t_spec - currentTime) > T / 2) t_spec = t_spec_base + (k - 1) * T;
+            // Better approach: Calculate all "Special Times" near the current time window.
+            // t_special = (acos(ratio) + k2PI)/omega  OR  (2PI - acos(ratio) + k2PI)/omega
+
+            const ratios = SPECIAL_RATIOS;
+
+            // Check potential special times near targetT
+            const searchWindow = nominalDt * 1.5; // Snap within this range matches "priority"
+
+            ratios.forEach(r => {
+                // cos(phi) = +/- ratio
+                const angle = Math.acos(r.val); // 0 to PI/2 usually for these positive ratios
+                // We need to check both +ratio and -ratio if we want symmetric snaps
+                // Let's assume we want +/- values.
+
+                const anglesToCheck = [
+                    angle,              // +ratio (1st quad)
+                    Math.PI - angle,    // -ratio (2nd quad)
+                    Math.PI + angle,    // -ratio (3rd quad)
+                    2 * Math.PI - angle   // +ratio (4th quad)
+                ];
+
+                // Remove duplicates (e.g. angle=0 gives 0 and 2PI)
+
+                anglesToCheck.forEach(ang => {
+                    // t = (ang + k*2PI) / omega
+                    // Find k such that t is close to targetT
+                    const baseT = ang / omega;
+                    const period = (2 * Math.PI) / omega;
+
+                    const k = Math.round((targetT - baseT) / period);
+                    const t_candidate = baseT + k * period;
+
+                    const diff = direction * (t_candidate - currentTime); // distance in direction
+
+                    // We only snap if the special point is "ahead" (in direction) and "close enough"
+                    // OR if we are doing a "smart step" that jumps exactly to it
+                    // Rule: If a special point is within [currentTime, currentTime + direction*nominalDt*1.2], snap to it.
+                    // Also check strict proximity
+
+                    if (diff > 1e-5 && diff < nominalDt * 1.5) {
+                        // Found a candidate
+                        if (Math.abs(t_candidate - targetT) < minDiff) {
+                            minDiff = Math.abs(t_candidate - targetT);
+                            bestTime = t_candidate;
+                            // Check Sign for label
+                            const realCos = Math.cos(omega * bestTime);
+                            const sign = realCos >= 0 ? "+" : "-";
+                            // Avoid "+0"
+                            const finalSign = (Math.abs(realCos) < 1e-5) ? "" : sign;
+                            const finalLabel = (r.val === 0) ? "VTCB" : (finalSign + r.label);
+                            foundLabel = finalLabel;
+                        }
                     }
+                });
+            });
 
-                    if (direction > 0 && t_spec <= currentTime + 1e-5) t_spec += T;
-                    if (direction < 0 && t_spec >= currentTime - 1e-5) t_spec -= T;
+            // Update
+            // If we snapped, `foundLabel` is set.
+            // If we didn't snap, `bestTime` is just `targetT`, and label is null.
 
-                    if (Math.abs(t_spec - currentTime) > Math.abs(standardStep) * 1.5) continue;
+            // Logic shift: if we found a label, it matches priority.
 
-                    const diff = Math.abs(targetTime - t_spec);
-                    if (diff < minDiff) {
-                        minDiff = diff;
-                        bestJumpTime = t_spec;
-                    }
-                }
-            }
+            let finalTime = bestTime;
 
-            if (bestJumpTime !== null) targetTime = bestJumpTime;
-
-            targetTime = Math.max(0, targetTime);
-
-            if (targetTime < currentTime) {
-                let idx = energyData.t.findIndex(t => t >= targetTime - 1e-5);
+            // Handle history splicing (Backwards erase)
+            if (finalTime < currentTime) {
+                let idx = energyData.t.findIndex(t => t >= finalTime - 1e-5);
                 if (idx !== -1) {
                     energyData.t.splice(idx);
                     energyData.Ed.splice(idx);
@@ -795,85 +917,99 @@
                     energyData.E.splice(idx);
                 }
             }
-            currentTime = targetTime;
+
+            currentTime = finalTime;
+            currentSpecialLabel = foundLabel; // Global var to read in draw
             updateStateAndDraw(currentTime);
         }
 
-        // --- INIT ---
-        window.addEventListener('resize', resizeCanvas);
-        window.addEventListener('load', () => {
-            resizeCanvas(); restartSimulation();
-        });
-        playPauseBtn.onclick = togglePlayPause;
-        restartBtn.onclick = restartSimulation;
-        stepForwardBtn.onclick = () => calculateStepTime(1);
-        stepBackBtn.onclick = () => calculateStepTime(-1);
-
-        // Inputs Setup
-        const setParam = (key, val, displayId, factor = 1) => {
-            params[key] = val * factor;
-            document.getElementById(displayId).textContent = val.toFixed(key.startsWith('g') ? 2 : 1);
-            restartSimulation(); // Đảm bảo mô phỏng được khởi động lại và vẽ lại
-        };
-
-        const springRadios = document.getElementsByName('springType');
-        springRadios.forEach(radio => {
-            radio.addEventListener('change', (e) => {
-                params.springType = e.target.value;
-                restartSimulation();
-            });
-        });
-
-        document.getElementById('springSelect').onclick = () => {
-            currentPendulum = 'spring';
-            document.getElementById('springParams').classList.remove('hidden');
-            document.getElementById('pendulumParams').classList.add('hidden');
-            document.getElementById('springSelect').classList.replace('bg-gray-200', 'bg-indigo-600');
-            document.getElementById('springSelect').classList.replace('text-gray-700', 'text-white');
-            document.getElementById('pendulumSelect').classList.replace('bg-indigo-600', 'bg-gray-200');
-            document.getElementById('pendulumSelect').classList.replace('text-white', 'text-gray-700');
-            restartSimulation();
-        };
-        document.getElementById('pendulumSelect').onclick = () => {
-            currentPendulum = 'pendulum';
-            document.getElementById('springParams').classList.add('hidden');
-            document.getElementById('pendulumParams').classList.remove('hidden');
-            document.getElementById('pendulumSelect').classList.replace('bg-gray-200', 'bg-indigo-600');
-            document.getElementById('pendulumSelect').classList.replace('text-gray-700', 'text-white');
-            document.getElementById('springSelect').classList.replace('bg-indigo-600', 'bg-gray-200');
-            document.getElementById('springSelect').classList.replace('text-white', 'text-gray-700');
-            restartSimulation();
-        };
-
-        // Bind Inputs
-        document.getElementById('mass').oninput = e => setParam('m', +e.target.value, 'massValue');
-        document.getElementById('stiffness').oninput = e => setParam('k', +e.target.value, 'stiffnessValue');
-        document.getElementById('amplitude').oninput = e => setParam('A', +e.target.value, 'amplitudeValue', 0.01);
-        document.getElementById('lengthSpring').oninput = e => setParam('L0_spring', +e.target.value, 'lengthSpringValue');
-        document.getElementById('gravitySpring').oninput = e => setParam('g_spring', +e.target.value, 'gravitySpringValue');
-
-        document.getElementById('massPendulum').oninput = e => setParam('m_pendulum', +e.target.value, 'massPendulumValue');
-        // Kích hoạt setParam để cập nhật l và gọi restartSimulation
-        document.getElementById('lengthPendulum').oninput = e => setParam('l', +e.target.value, 'lengthPendulumValue');
-        document.getElementById('angleAmplitude').oninput = e => setParam('A0', +e.target.value, 'angleAmplitudeValue', PI / 180);
-        document.getElementById('gravityPendulum').oninput = e => setParam('g_pendulum', +e.target.value, 'gravityPendulumValue');
-
         // --- AUTO-PAUSE LOGIC ---
         window.addEventListener('app-paused', () => {
-            if (isPlaying) {
-                cancelAnimationFrame(animationFrameId);
-                console.log('Simulation paused via tab switch');
-                // Note: We keep isPlaying = true so we know to resume
-            }
+            cancelAnimationFrame(animationFrameId);
         });
 
         window.addEventListener('app-resumed', () => {
             if (isPlaying) {
-                lastTime = performance.now(); // Reset lastTime to avoid huge dt jump
+                lastTime = performance.now();
                 animationFrameId = requestAnimationFrame(updateSimulation);
-                console.log('Simulation resumed via tab switch');
             }
         });
+
+        // --- EVENTS ---
+        stepForwardBtn.addEventListener('click', () => calculateStepTime(1));
+        stepBackBtn.addEventListener('click', () => calculateStepTime(-1));
+        playPauseBtn.addEventListener('click', togglePlayPause);
+        restartBtn.addEventListener('click', restartSimulation);
+
+        // Input Listeners
+        function updateParams() {
+            params.m = parseFloat(document.getElementById('mass').value);
+            params.k = parseFloat(document.getElementById('stiffness').value);
+            params.A = parseFloat(document.getElementById('amplitude').value) / 100;
+            params.L0_spring = parseFloat(document.getElementById('lengthSpring').value);
+            params.g_spring = parseFloat(document.getElementById('gravitySpring').value);
+
+            params.m_pendulum = parseFloat(document.getElementById('massPendulum').value);
+            params.l = parseFloat(document.getElementById('lengthPendulum').value);
+            params.A0 = degToRad(parseFloat(document.getElementById('angleAmplitude').value));
+            params.g_pendulum = parseFloat(document.getElementById('gravityPendulum').value);
+
+            const radios = document.getElementsByName('springType');
+            for (let r of radios) if (r.checked) params.springType = r.value;
+
+            // Update labels
+            document.getElementById('massValue').innerText = params.m.toFixed(1);
+            document.getElementById('stiffnessValue').innerText = params.k.toFixed(1);
+            document.getElementById('amplitudeValue').innerText = (params.A * 100).toFixed(1);
+            document.getElementById('lengthSpringValue').innerText = params.L0_spring.toFixed(2);
+            document.getElementById('gravitySpringValue').innerText = params.g_spring.toFixed(2);
+
+            document.getElementById('massPendulumValue').innerText = params.m_pendulum.toFixed(1);
+            document.getElementById('lengthPendulumValue').innerText = params.l.toFixed(1);
+            document.getElementById('angleAmplitudeValue').innerText = radToDeg(params.A0).toFixed(1);
+            document.getElementById('gravityPendulumValue').innerText = params.g_pendulum.toFixed(2);
+
+            // Reset graph history immediately
+            energyData.t = []; energyData.Ed = []; energyData.Et = []; energyData.E = [];
+            currentTime = 0; // Reset time to origin
+
+            if (!isPlaying) {
+                updateStateAndDraw(currentTime);
+            }
+        }
+
+        document.querySelectorAll('input[type=range], input[type=radio]').forEach(el => {
+            el.addEventListener('input', updateParams);
+        });
+
+        // Toggle Type
+        const springSelect = document.getElementById('springSelect');
+        const pendulumSelect = document.getElementById('pendulumSelect');
+        const springParams = document.getElementById('springParams');
+        const pendulumParams = document.getElementById('pendulumParams');
+
+        springSelect.addEventListener('click', () => {
+            currentPendulum = 'spring';
+            springSelect.className = "px-4 py-2 rounded-md text-sm font-semibold transition-all shadow-sm bg-white dark:bg-slate-700 text-cyan-600 dark:text-cyan-400 ring-1 ring-black/5 dark:ring-white/10";
+            pendulumSelect.className = "px-4 py-2 rounded-md text-sm font-medium text-slate-500 dark:text-slate-400 hover:text-slate-700 dark:hover:text-slate-200 hover:bg-slate-50 dark:hover:bg-slate-750 transition-all";
+            springParams.classList.remove('hidden');
+            pendulumParams.classList.add('hidden');
+            restartSimulation();
+        });
+
+        pendulumSelect.addEventListener('click', () => {
+            currentPendulum = 'pendulum';
+            pendulumSelect.className = "px-4 py-2 rounded-md text-sm font-semibold transition-all shadow-sm bg-white dark:bg-slate-700 text-cyan-600 dark:text-cyan-400 ring-1 ring-black/5 dark:ring-white/10";
+            springSelect.className = "px-4 py-2 rounded-md text-sm font-medium text-slate-500 dark:text-slate-400 hover:text-slate-700 dark:hover:text-slate-200 hover:bg-slate-50 dark:hover:bg-slate-750 transition-all";
+            pendulumParams.classList.remove('hidden');
+            springParams.classList.add('hidden');
+            restartSimulation();
+        });
+
+        // Init
+        lucide.createIcons();
+        resizeCanvas();
+        updateParams();
 
     </script>
 </body>
