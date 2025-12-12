@@ -733,16 +733,22 @@
 
             // --- CHECK SPECIAL ANGLE ---
             let isSpecialIdx = -1;
-            const PHASE_TOLERANCE = 0.02;
 
-            for (let i = 0; i < SPECIAL_ANGLES.length; i++) {
-                const sp = SPECIAL_ANGLES[i];
-                let diff = Math.abs(phase - sp.rad);
-                if (diff > Math.PI) diff = 2 * Math.PI - diff;
+            // Only show special values when PAUSED or STEPPING (not during animation)
+            if (!isRunning) {
+                // Dynamic tolerance based on speed to ensure we catch it at 60fps
+                // Base tolerance 0.05, plus frame-step buffer
+                const PHASE_TOLERANCE = Math.max(0.05, omega * 0.04);
 
-                if (diff < PHASE_TOLERANCE) {
-                    isSpecialIdx = i;
-                    break;
+                for (let i = 0; i < SPECIAL_ANGLES.length; i++) {
+                    const sp = SPECIAL_ANGLES[i];
+                    let diff = Math.abs(phase - sp.rad);
+                    if (diff > Math.PI) diff = 2 * Math.PI - diff;
+
+                    if (diff < PHASE_TOLERANCE) {
+                        isSpecialIdx = i;
+                        break;
+                    }
                 }
             }
 
