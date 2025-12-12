@@ -1267,7 +1267,18 @@
             animate();
         });
 
-        // Loop Removed - Duplicate Logic
+        // --- LOOP ---
+        function animate() {
+            if (isSimPaused) return;
+
+            requestAnimationFrame(animate);
+
+            updatePhysics();
+            controls.update(); // OrbitControls
+            renderer.render(scene, camera);
+        }
+
+        animate();
 
     </script>
 </body>

@@ -23,16 +23,17 @@
 
         .control-panel {
             position: absolute;
-            bottom: 30px;
+            bottom: 20px;
             left: 50%;
             transform: translateX(-50%);
-            width: 90%;
-            max-width: 850px;
+            width: auto;
+            min-width: 400px;
+            max-width: 600px;
             background: rgba(255, 255, 255, 0.9);
             backdrop-filter: blur(12px);
-            border-radius: 20px;
-            padding: 24px;
-            box-shadow: 0 20px 50px rgba(0, 0, 0, 0.1);
+            border-radius: 16px;
+            padding: 16px;
+            box-shadow: 0 10px 30px rgba(0, 0, 0, 0.1);
             transition: all 0.3s ease;
         }
 
@@ -77,77 +78,76 @@
     <canvas id="waveCanvas"></canvas>
 
     <div class="control-panel">
-        <div class="flex flex-col gap-6">
+        <div class="flex flex-col gap-4">
 
             <!-- Header / Mode Selection -->
-            <div class="flex items-center justify-between pb-4 border-b border-gray-200 dark:border-gray-700">
-                <h2 class="text-xl font-bold text-slate-800 dark:text-white flex items-center gap-2">
-                    <i data-lucide="activity" class="text-lab-cyan"></i>
+            <div class="flex items-center justify-between pb-2 border-b border-gray-200 dark:border-gray-700">
+                <h2 class="text-lg font-bold text-slate-800 dark:text-white flex items-center gap-2">
+                    <i data-lucide="activity" class="w-4 h-4 text-lab-cyan"></i>
                     Sóng Dừng
                 </h2>
-                <div class="flex bg-gray-100 dark:bg-slate-800 p-1 rounded-lg">
+                <div class="flex bg-gray-100 dark:bg-slate-800 p-0.5 rounded-lg scale-90 origin-right">
                     <button id="btn-2fixed" onclick="setMode('2fixed')"
-                        class="px-4 py-2 rounded-md text-sm font-medium transition-all bg-white dark:bg-slate-700 shadow text-lab-cyan">
+                        class="px-3 py-1.5 rounded-md text-xs font-medium transition-all bg-white dark:bg-slate-700 shadow text-lab-cyan">
                         2 Đầu Cố Định
                     </button>
                     <button id="btn-1free" onclick="setMode('1free')"
-                        class="px-4 py-2 rounded-md text-sm font-medium transition-all text-slate-500 dark:text-slate-400 hover:text-slate-700 dark:hover:text-slate-200">
+                        class="px-3 py-1.5 rounded-md text-xs font-medium transition-all text-slate-500 dark:text-slate-400 hover:text-slate-700 dark:hover:text-slate-200">
                         1 Đầu Tự Do
                     </button>
                 </div>
             </div>
 
             <!-- Controls Grid -->
-            <div class="grid grid-cols-1 md:grid-cols-2 gap-6">
+            <div class="grid grid-cols-1 md:grid-cols-2 gap-4">
                 <!-- Inputs -->
-                <div class="space-y-4">
+                <div class="space-y-3">
                     <!-- Frequency -->
                     <div>
-                        <div class="flex justify-between mb-1">
-                            <label class="text-xs font-semibold uppercase text-slate-500 dark:text-slate-400">Tần Số
+                        <div class="flex justify-between mb-1.5">
+                            <label class="text-[10px] font-bold uppercase text-slate-500 dark:text-slate-400">Tần Số
                                 (Hz)</label>
-                            <span id="val-freq" class="text-xs font-bold text-lab-cyan">5.00</span>
+                            <span id="val-freq" class="text-[10px] font-bold text-lab-cyan">5.00</span>
                         </div>
-                        <input type="range" class="slider" id="freq" min="0.5" max="30" step="0.1" value="5">
-
+                        <input type="range" class="slider h-1" id="freq" min="0.5" max="30" step="0.1" value="5">
                     </div>
                     <!-- Tension -->
                     <div>
-                        <div class="flex justify-between mb-1">
-                            <label class="text-xs font-semibold uppercase text-slate-500 dark:text-slate-400">Sức Căng
-                                Dây</label>
-                            <span id="val-tens" class="text-xs font-bold text-lab-cyan">50%</span>
+                        <div class="flex justify-between mb-1.5">
+                            <label class="text-[10px] font-bold uppercase text-slate-500 dark:text-slate-400">Sức
+                                Căng</label>
+                            <span id="val-tens" class="text-[10px] font-bold text-lab-cyan">50%</span>
                         </div>
-                        <input type="range" class="slider" id="tens" min="10" max="100" step="10" value="50">
+                        <input type="range" class="slider h-1" id="tens" min="10" max="100" step="10" value="50">
                     </div>
                     <!-- Amplitude (Compact) -->
                     <div>
-                        <div class="flex justify-between mb-1">
-                            <label class="text-xs font-semibold uppercase text-slate-500 dark:text-slate-400">Biên
+                        <div class="flex justify-between mb-1.5">
+                            <label class="text-[10px] font-bold uppercase text-slate-500 dark:text-slate-400">Biên
                                 Độ</label>
-                            <span id="val-amp" class="text-xs font-bold text-lab-cyan">50%</span>
+                            <span id="val-amp" class="text-[10px] font-bold text-lab-cyan">50%</span>
                         </div>
-                        <input type="range" class="slider" id="amp" min="0" max="100" value="50">
+                        <input type="range" class="slider h-1" id="amp" min="0" max="100" value="50">
                     </div>
                 </div>
 
                 <!-- Info / Stats -->
-                <div class="bg-indigo-50 dark:bg-slate-800/50 rounded-xl p-4 flex flex-col justify-center gap-2">
-                    <div class="flex justify-between text-sm">
+                <div
+                    class="bg-indigo-50 dark:bg-slate-800/50 rounded-lg p-3 flex flex-col justify-center gap-1.5 border border-indigo-100 dark:border-slate-700">
+                    <div class="flex justify-between text-xs">
                         <span class="text-slate-600 dark:text-slate-400">Số Bụng Sóng:</span>
                         <span id="stat-antinodes"
                             class="font-mono font-bold text-indigo-600 dark:text-indigo-400">--</span>
                     </div>
-                    <div class="flex justify-between text-sm">
+                    <div class="flex justify-between text-xs">
                         <span class="text-slate-600 dark:text-slate-400">Số Nút Sóng:</span>
                         <span id="stat-nodes" class="font-mono font-bold text-indigo-600 dark:text-indigo-400">--</span>
                     </div>
-                    <div class="flex justify-between text-sm">
+                    <div class="flex justify-between text-xs">
                         <span class="text-slate-600 dark:text-slate-400">Bước Sóng (λ):</span>
                         <span id="stat-lambda"
                             class="font-mono font-bold text-indigo-600 dark:text-indigo-400">--</span>
                     </div>
-                    <!-- HIDDEN LENGTH DISPLAY -->
                 </div>
             </div>
         </div>

@@ -56,14 +56,14 @@ function toggleDarkMode() {
 function applyInitialTheme() {
     const storedTheme = localStorage.getItem('theme');
 
-    // Mặc định luôn là 'light' khi không có cài đặt nào được lưu.
-    let initialTheme = 'light';
+    // Mặc định luôn là 'dark' khi không có cài đặt nào được lưu.
+    let initialTheme = 'dark';
 
     // Nếu có theme đã lưu trong Local Storage, sử dụng nó.
     if (storedTheme) {
         initialTheme = storedTheme;
     }
-    // Nếu không, nó sẽ giữ nguyên 'light', bỏ qua tùy chọn hệ thống (prefers-color-scheme).
+    // Nếu không, nó sẽ giữ nguyên 'dark', bỏ qua tùy chọn hệ thống (prefers-color-scheme).
 
     setTheme(initialTheme);
 }
@@ -182,8 +182,8 @@ function createGlobalSidebar() {
             left: 0;
             height: 100vh;
             width: 280px;
-            background: rgba(255, 255, 255, 0.95);
-            backdrop-filter: blur(10px);
+            background: rgba(255, 255, 255, 0.6);
+            backdrop-filter: blur(12px);
             box-shadow: 4px 0 15px rgba(0,0,0,0.1);
             z-index: 9999;
             transform: translateX(-100%);
@@ -193,7 +193,7 @@ function createGlobalSidebar() {
             border-right: 1px solid rgba(0,0,0,0.1);
         }
         .dark #global-sidebar {
-            background: rgba(15, 23, 42, 0.95);
+            background: rgba(15, 23, 42, 0.6);
             border-right: 1px solid rgba(255,255,255,0.1);
             box-shadow: 4px 0 15px rgba(0,0,0,0.5);
         }
