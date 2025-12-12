@@ -412,12 +412,75 @@ function createGlobalSidebar() {
     toggleBtn.innerHTML = `<i data-lucide="menu" class="w-6 h-6"></i>`;
     document.body.appendChild(toggleBtn);
 
+    // --- DRAGGABLE LOGIC ---
+    let isDragging = false;
+    let hasMoved = false;
+
+    // Restore Position
+    const savedPos = JSON.parse(localStorage.getItem('sidebar_toggle_pos'));
+    if (savedPos) {
+        toggleBtn.style.left = savedPos.x + 'px';
+        toggleBtn.style.top = savedPos.y + 'px';
+        toggleBtn.style.right = 'auto'; // Override default if any
+    }
+
+    // Drag Implementation
+    toggleBtn.addEventListener('mousedown', (e) => {
+        isDragging = true;
+        hasMoved = false; // Reset move check
+
+        const rect = toggleBtn.getBoundingClientRect();
+        const offsetX = e.clientX - rect.left;
+        const offsetY = e.clientY - rect.top;
+
+        const onMouseMove = (moveEvent) => {
+            if (!isDragging) return;
+            hasMoved = true;
+            toggleBtn.style.transition = 'none'; // Disable transition during drag
+
+            let newX = moveEvent.clientX - offsetX;
+            let newY = moveEvent.clientY - offsetY;
+
+            // Boundaries
+            const maxW = window.innerWidth - rect.width;
+            const maxH = window.innerHeight - rect.height;
+            newX = Math.max(0, Math.min(newX, maxW));
+            newY = Math.max(0, Math.min(newY, maxH));
+
+            toggleBtn.style.left = newX + 'px';
+            toggleBtn.style.top = newY + 'px';
+        };
+
+        const onMouseUp = () => {
+            isDragging = false;
+            toggleBtn.style.transition = 'all 0.2s ease'; // Restore transition
+
+            // Save Position
+            const finalRect = toggleBtn.getBoundingClientRect();
+            localStorage.setItem('sidebar_toggle_pos', JSON.stringify({ x: finalRect.left, y: finalRect.top }));
+
+            document.removeEventListener('mousemove', onMouseMove);
+            document.removeEventListener('mouseup', onMouseUp);
+        };
+        document.addEventListener('mousemove', onMouseMove);
+        document.addEventListener('mouseup', onMouseUp);
+    });
+
     // Logic
     function toggleSidebar() {
         sidebar.classList.toggle('open');
     }
 
-    toggleBtn.addEventListener('click', toggleSidebar);
+    // Handle Click (Only if not dragged)
+    toggleBtn.addEventListener('click', (e) => {
+        if (hasMoved) {
+            e.preventDefault();
+            e.stopPropagation();
+        } else {
+            toggleSidebar();
+        }
+    });
+
     sidebar.querySelector('#sidebar-close').addEventListener('click', toggleSidebar);
 
     // Re-init icons
