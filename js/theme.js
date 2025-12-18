@@ -305,6 +305,7 @@ function createGlobalSidebar() {
         { name: "Dao Động Tắt Dần", file: "dao-dong-tat-dan.html", icon: "bar-chart-2" },
         { name: "Giao Thoa Sóng Cơ", file: "giao-thoa-song-co.html", icon: "waves" },
         { name: "Sóng Âm", file: "do-tan-so-song-am.html", icon: "mic" },
+        { name: "Đo Tốc Độ Sóng Âm", file: "thi-nghiem-song-dung.html", icon: "music" },
         { name: "Sóng Dừng", file: "js/song-dung.html", icon: "align-center", isSpecial: true },
         { name: "Giao Thoa Ánh Sáng", file: "giao-thoa-anh-sang.html", icon: "sun" },
         { name: "Chuyển Thể 3D - Beta", file: "js/su-chuyen-the.html", icon: "box", isSpecial: true }
@@ -373,7 +374,11 @@ function createGlobalSidebar() {
 
         a.href = href;
         a.className = 'sidebar-link';
-        if (currentPath.includes(link.file.split('/').pop())) {
+        // Strict check for active state to avoid partial matches (e.g. song-dung matching thi-nghiem-song-dung)
+        const currentFilename = currentPath.split('/').pop().split('?')[0]; // Handle query params if any
+        const linkFilename = link.file.split('/').pop();
+
+        if (currentFilename === linkFilename) {
             a.classList.add('active');
         }
 
