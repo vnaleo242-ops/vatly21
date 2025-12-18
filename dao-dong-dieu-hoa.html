@@ -67,8 +67,8 @@
     class="h-screen flex overflow-hidden bg-slate-50 dark:bg-[#0f172a] text-slate-700 dark:text-slate-300 transition-colors duration-300">
 
     <!-- SIDEBAR -->
-    <aside
-        class="w-72 flex-shrink-0 flex flex-col bg-white dark:bg-[#1e293b] border-r border-slate-200 dark:border-slate-800 z-20 shadow-lg">
+    <aside id="mainSidebar"
+        class="w-72 flex-shrink-0 flex flex-col bg-white dark:bg-[#1e293b] border-r border-slate-200 dark:border-slate-800 z-20 shadow-lg transition-all duration-300 ease-in-out transform">
         <div class="h-16 flex items-center justify-between px-6 border-b border-slate-100 dark:border-slate-700/50">
             <h1 class="font-tech font-bold text-xl text-slate-800 dark:text-white uppercase tracking-wider">BẢNG ĐIỀU
                 KHIỂN</h1>
@@ -183,15 +183,22 @@
 
     <!-- MAIN -->
     <main class="flex-1 relative bg-white dark:bg-[#0f172a] overflow-hidden flex flex-col">
+        <!-- Sidebar Toggle Button -->
+        <button id="sidebarToggle"
+            class="absolute top-4 left-4 z-50 px-4 py-2 flex items-center gap-2 bg-white/80 dark:bg-slate-800/80 backdrop-blur rounded-lg shadow-sm border border-slate-200 dark:border-slate-700 text-slate-600 dark:text-slate-300 hover:text-cyan-600 dark:hover:text-cyan-400 transition-colors text-sm font-medium">
+            <i data-lucide="menu" class="w-4 h-4"></i>
+            <span>Ẩn/Hiện bảng điều khiển</span>
+        </button>
         <!-- Canvas Container -->
         <div class="flex-1 relative flex items-center justify-center">
             <!-- Canvas phải chiếm toàn bộ và nằm đúng vị trí -->
             <canvas id="physicsCanvas" class="absolute inset-0 w-full h-full block"></canvas>
 
             <!-- HUD -->
-            <div class="absolute top-4 right-4 w-64 hud-panel rounded-xl p-4 shadow-xl z-10 backdrop-blur-md">
-                <h3
-                    class="text-xs font-bold text-slate-500 dark:text-slate-400 uppercase tracking-wider mb-3 border-b border-slate-200 dark:border-slate-700 pb-2">
+            <div id="infoPanel"
+                class="absolute top-4 right-4 w-64 hud-panel rounded-xl p-4 shadow-xl z-10 backdrop-blur-md">
+                <h3 id="infoPanelHeader"
+                    class="text-xs font-bold text-slate-500 dark:text-slate-400 uppercase tracking-wider mb-3 border-b border-slate-200 dark:border-slate-700 pb-2 cursor-move select-none">
                     Thông số Thời thực</h3>
                 <div class="space-y-2 font-mono text-sm">
                     <div class="flex justify-between">
@@ -987,6 +994,65 @@
             resizeCanvas();
             updateAllParams();
         }, 100);
+
+        // --- DRAG LOGIC ---
+        const draggablePanel = document.getElementById('infoPanel');
+        const dragHeader = document.getElementById('infoPanelHeader');
+
+        let isDragging = false;
+        let startX, startY, initialLeft, initialTop;
+
+        dragHeader.addEventListener('mousedown', (e) => {
+            isDragging = true;
+            startX = e.clientX;
+            startY = e.clientY;
+
+            // Get current position relative to offsetParent
+            initialLeft = draggablePanel.offsetLeft;
+            initialTop = draggablePanel.offsetTop;
+
+            // Switch to left/top positioning 
+            draggablePanel.style.right = 'auto'; // Disable right anchoring
+            draggablePanel.style.left = initialLeft + 'px';
+            draggablePanel.style.top = initialTop + 'px';
+
+            document.body.style.cursor = 'move';
+        });
+
+        window.addEventListener('mousemove', (e) => {
+            if (!isDragging) return;
+            e.preventDefault(); // Prevent selection
+            const dx = e.clientX - startX;
+            const dy = e.clientY - startY;
+            draggablePanel.style.left = `${initialLeft + dx}px`;
+            draggablePanel.style.top = `${initialTop + dy}px`;
+        });
+
+        window.addEventListener('mouseup', () => {
+            if (isDragging) {
+                isDragging = false;
+                document.body.style.cursor = 'default';
+            }
+        });
+
+        // --- SIDEBAR TOGGLE LOGIC ---
+        const sidebar = document.getElementById('mainSidebar');
+        const sidebarToggle = document.getElementById('sidebarToggle');
+        let isSidebarOpen = true;
+
+        sidebarToggle.addEventListener('click', () => {
+            isSidebarOpen = !isSidebarOpen;
+            if (isSidebarOpen) {
+                sidebar.classList.remove('-ml-72');
+            } else {
+                sidebar.classList.add('-ml-72');
+            }
+
+            // Wait for transition to finish then resize
+            setTimeout(() => {
+                resizeCanvas();
+            }, 300); // Match transition duration
+        });
     </script>
 </body>
 

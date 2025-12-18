@@ -71,12 +71,12 @@
     class="h-screen flex overflow-hidden bg-slate-50 dark:bg-[#0f172a] text-slate-700 dark:text-slate-300 transition-colors duration-300">
 
     <!-- SIDEBAR CONTROLS -->
-    <aside
-        class="w-72 flex-shrink-0 flex flex-col bg-white dark:bg-[#1e293b] border-r border-slate-200 dark:border-slate-800 z-20 shadow-lg">
+    <aside id="mainSidebar"
+        class="w-72 flex-shrink-0 flex flex-col bg-white dark:bg-[#1e293b] border-r border-slate-200 dark:border-slate-800 z-20 shadow-lg transition-all duration-300 ease-in-out transform">
         <!-- Sidebar Header -->
         <div class="h-16 flex items-center justify-between px-6 border-b border-slate-100 dark:border-slate-700/50">
             <h1 class="font-tech font-bold text-xl text-slate-800 dark:text-white uppercase tracking-wider">
-                Control Panel
+                BẢNG ĐIỀU KHIỂN
             </h1>
             <a href="index.html"
                 class="p-2 rounded-lg hover:bg-slate-100 dark:hover:bg-slate-700 text-slate-400 hover:text-cyan-500 transition-colors"
@@ -261,13 +261,19 @@
             <button onclick="toggleDarkMode()"
                 class="w-full flex items-center justify-center gap-2 py-2 rounded-lg text-slate-500 hover:bg-slate-200 dark:hover:bg-slate-800 transition">
                 <i id="theme-icon" data-lucide="moon" class="w-4 h-4"></i>
-                <span class="text-xs font-medium uppercase">Toggle Theme</span>
+                <span class="text-xs font-medium uppercase">Giao diện Tối/Sáng</span>
             </button>
         </div>
     </aside>
 
     <!-- MAIN CONTENT -->
     <main class="flex-1 flex flex-col relative min-w-0">
+        <!-- Sidebar Toggle Button -->
+        <button id="sidebarToggle"
+            class="absolute top-4 left-4 z-50 px-4 py-2 flex items-center gap-2 bg-white/80 dark:bg-slate-800/80 backdrop-blur rounded-lg shadow-sm border border-slate-200 dark:border-slate-700 text-slate-600 dark:text-slate-300 hover:text-cyan-600 dark:hover:text-cyan-400 transition-colors text-sm font-medium">
+            <i data-lucide="menu" class="w-4 h-4"></i>
+            <span>Ẩn/Hiện bảng điều khiển</span>
+        </button>
 
         <!-- Simulation Canvas Area -->
         <div class="flex-1 relative bg-slate-50 dark:bg-[#0f172a] overflow-hidden">
@@ -275,14 +281,15 @@
             <canvas id="simCanvas" class="absolute inset-0 w-full h-full block"></canvas>
 
             <!-- Floating HUD (Stats) -->
-            <div class="absolute top-4 right-4 w-64 hud-panel rounded-xl p-4 shadow-xl z-10 backdrop-blur-md">
-                <h3
-                    class="text-xs font-bold text-slate-500 dark:text-slate-400 uppercase tracking-wider mb-3 border-b border-slate-200 dark:border-slate-700 pb-2">
-                    Real-time Data</h3>
+            <div id="infoPanel"
+                class="absolute top-4 right-4 w-64 hud-panel rounded-xl p-4 shadow-xl z-10 backdrop-blur-md">
+                <h3 id="infoPanelHeader"
+                    class="text-xs font-bold text-slate-500 dark:text-slate-400 uppercase tracking-wider mb-3 border-b border-slate-200 dark:border-slate-700 pb-2 cursor-move select-none">
+                    Thông số thời thực</h3>
 
                 <div class="space-y-3 font-mono text-sm">
                     <div class="flex justify-between">
-                        <span class="text-slate-600 dark:text-slate-400">Time (t)</span>
+                        <span class="text-slate-600 dark:text-slate-400">Thời gian (t)</span>
                         <span id="displayTime" class="font-bold text-slate-800 dark:text-white">0.00 s</span>
                     </div>
                     <div class="flex justify-between">
@@ -341,7 +348,7 @@
         <!-- Energy Graph (Bottom Panel) -->
         <div
             class="h-48 flex-shrink-0 border-t border-slate-200 dark:border-slate-800 bg-white dark:bg-[#1e293b] relative">
-            <h3 class="absolute top-2 left-4 text-xs font-bold text-slate-400 z-10">ENERGY GRAPH (E = Eđ + Et)</h3>
+            <h3 class="absolute top-2 left-4 text-xs font-bold text-slate-400 z-10">ĐỒ THỊ NĂNG LƯỢNG (E = Eđ + Et)</h3>
             <canvas id="energyGraphCanvas" class="w-full h-full block"></canvas>
         </div>
 
@@ -682,7 +689,7 @@
             ctxGraph.fillStyle = '#64748b';
             ctxGraph.font = '10px Inter';
             ctxGraph.textAlign = 'right';
-            ctxGraph.fillText('Time (s)', W - 10, H - 10);
+            ctxGraph.fillText('Thời gian (s)', W - 10, H - 10);
 
             if (energyData.t.length === 0) return;
 
@@ -956,9 +963,70 @@
             }
         });
 
+        // Listeners for Steps
+        stepForwardBtn.addEventListener('click', () => { calculateStepTime(1); });
+        stepBackBtn.addEventListener('click', () => { calculateStepTime(-1); });
+
+        // --- DRAG LOGIC ---
+        const draggablePanel = document.getElementById('infoPanel');
+        const dragHeader = document.getElementById('infoPanelHeader');
+
+        let isDragging = false;
+        let startX, startY, initialLeft, initialTop;
+
+        dragHeader.addEventListener('mousedown', (e) => {
+            isDragging = true;
+            startX = e.clientX;
+            startY = e.clientY;
+
+            // Get current position relative to offsetParent
+            initialLeft = draggablePanel.offsetLeft;
+            initialTop = draggablePanel.offsetTop;
+
+            // Switch to left/top positioning 
+            draggablePanel.style.right = 'auto'; // Disable right anchoring
+            draggablePanel.style.left = initialLeft + 'px';
+            draggablePanel.style.top = initialTop + 'px';
+
+            document.body.style.cursor = 'move';
+        });
+
+        window.addEventListener('mousemove', (e) => {
+            if (!isDragging) return;
+            e.preventDefault(); // Prevent selection
+            const dx = e.clientX - startX;
+            const dy = e.clientY - startY;
+            draggablePanel.style.left = `${initialLeft + dx}px`;
+            draggablePanel.style.top = `${initialTop + dy}px`;
+        });
+
+        window.addEventListener('mouseup', () => {
+            if (isDragging) {
+                isDragging = false;
+                document.body.style.cursor = 'default';
+            }
+        });
+
+        // --- SIDEBAR TOGGLE LOGIC ---
+        const sidebar = document.getElementById('mainSidebar');
+        const sidebarToggle = document.getElementById('sidebarToggle');
+        let isSidebarOpen = true;
+
+        sidebarToggle.addEventListener('click', () => {
+            isSidebarOpen = !isSidebarOpen;
+            if (isSidebarOpen) {
+                sidebar.classList.remove('-ml-72');
+            } else {
+                sidebar.classList.add('-ml-72');
+            }
+
+            // Wait for transition to finish then resize
+            setTimeout(() => {
+                resizeCanvas();
+            }, 300); // Match transition duration
+        });
+
         // --- EVENTS ---
-        stepForwardBtn.addEventListener('click', () => calculateStepTime(1));
-        stepBackBtn.addEventListener('click', () => calculateStepTime(-1));
         playPauseBtn.addEventListener('click', togglePlayPause);
         restartBtn.addEventListener('click', restartSimulation);
 
